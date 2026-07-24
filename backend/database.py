@@ -314,6 +314,24 @@ CREATE INDEX IF NOT EXISTS idx_inventory_status ON inventory_units (status);
 CREATE INDEX IF NOT EXISTS idx_inventory_logs_date ON inventory_logs (date);
 """
 
+class PgRowWrapper(dict):
+    def __init__(self, real_dict_row, description=None):
+        super().__init__(real_dict_row)
+        if description:
+            self._keys = [col[0] for col in description]
+        else:
+            self._keys = list(real_dict_row.keys())
+        self._values = [real_dict_row.get(k) for k in self._keys]
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._values[item]
+        return super().__getitem__(item)
+
+    def keys(self):
+        return self._keys
+
+
 class PgWrapperCursor:
     def __init__(self, cursor):
         self.cursor = cursor
@@ -334,11 +352,20 @@ class PgWrapperCursor:
         self.description = self.cursor.description
         return self
 
+    def _wrap_row(self, row):
+        if row is None:
+            return None
+        if isinstance(row, dict):
+            return PgRowWrapper(row, self.description)
+        return row
+
     def fetchone(self):
-        return self.cursor.fetchone()
+        row = self.cursor.fetchone()
+        return self._wrap_row(row)
 
     def fetchall(self):
-        return self.cursor.fetchall()
+        rows = self.cursor.fetchall()
+        return [self._wrap_row(r) for r in rows] if rows else []
 
     def __iter__(self):
         return iter(self.fetchall())

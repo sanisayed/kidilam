@@ -2823,8 +2823,10 @@ def import_customers_from_sales_and_deliveries():
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def get_user(username):
+    if not username:
+        return None
     conn = get_connection()
-    user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    user = conn.execute("SELECT * FROM users WHERE LOWER(username) = LOWER(?)", (username.strip(),)).fetchone()
     conn.close()
     return dict(user) if user else None
 

@@ -8,7 +8,7 @@ async function safeJsonParse(response) {
       return JSON.parse(text);
     } catch (e) {
       console.warn('Response is not valid JSON:', text.substring(0, 100));
-      return { error: 'Invalid response from server' };
+      return { error: `Server error (${response.status})` };
     }
   }
   return {};
@@ -41,21 +41,26 @@ export const apiService = {
 
   // Perform Login
   async login(identifier, password) {
-    const response = await fetch(getApiUrl('/api/auth/login'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: identifier,
-        password: password,
-      }),
-    });
+    let response;
+    try {
+      response = await fetch(getApiUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: identifier,
+          password: password,
+        }),
+      });
+    } catch (netErr) {
+      throw new Error(`Network Connection Failed (${getApiUrl('/api/auth/login')})`);
+    }
 
     const data = await safeJsonParse(response);
 
     if (!response.ok || !data.ok) {
-      throw new Error(data.error || 'Login failed. Please check your credentials.');
+      throw new Error(data.error || `HTTP ${response.status}: Invalid username or password.`);
     }
 
     // Save token and user details in storage
@@ -68,22 +73,27 @@ export const apiService = {
 
   // Perform Registration
   async register(username, email, password) {
-    const response = await fetch(getApiUrl('/api/auth/register'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username,
-        email,
-        password,
-      }),
-    });
+    let response;
+    try {
+      response = await fetch(getApiUrl('/api/auth/register'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
+      });
+    } catch (netErr) {
+      throw new Error(`Network Connection Failed (${getApiUrl('/api/auth/register')})`);
+    }
 
     const data = await safeJsonParse(response);
 
     if (!response.ok || !data.ok) {
-      throw new Error(data.error || 'Registration failed.');
+      throw new Error(data.error || `HTTP ${response.status}: Registration failed.`);
     }
 
     const user = data.user;

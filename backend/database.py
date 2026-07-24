@@ -437,11 +437,16 @@ def init_db():
             if isinstance(conn, PgWrapperConnection):
                 conn.executescript(POSTGRES_SCHEMA)
                 print("Supabase PostgreSQL DB schema initialized!")
+                seed_admin_user()
                 return
         except Exception as ex:
             print(f"PostgreSQL schema init warning: {ex}")
 
     conn = get_connection()
+    try:
+        seed_admin_user()
+    except Exception:
+        pass
 
     
     # Check display_pieces columns to see if it needs date column migration
@@ -2809,3 +2814,65 @@ def import_customers_from_sales_and_deliveries():
     conn.commit()
     conn.close()
     return {"status": "success", "imported_count": imported_count}
+
+
+# ==========================================================
+# USERS & AUTH MANAGEMENT
+# ==========================================================
+
+from werkzeug.security import generate_password_hash, check_password_hash
+
+def get_user(username):
+    conn = get_connection()
+    user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+def get_all_users():
+    conn = get_connection()
+    users = conn.execute("SELECT id, username, role, permissions, created_at FROM users ORDER BY id ASC").fetchall()
+    conn.close()
+    return [dict(u) for u in users]
+
+def create_user(username, password, role="staff", permissions="[]"):
+    import json
+    conn = get_connection()
+    existing = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    if existing:
+        conn.close()
+        return {"ok": False, "error": "Username already exists"}
+    
+    password_hash = generate_password_hash(password)
+    perm_str = permissions if isinstance(permissions, str) else json.dumps(permissions)
+    conn.execute(
+        "INSERT INTO users (username, password_hash, role, permissions) VALUES (?, ?, ?, ?)",
+        (username, password_hash, role, perm_str)
+    )
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+def seed_admin_user():
+    conn = get_connection()
+    try:
+        admin = conn.execute("SELECT id FROM users WHERE username = 'admin'").fetchone()
+        admin_hash = generate_password_hash("admin123")
+        if not admin:
+            conn.execute(
+                "INSERT INTO users (username, password_hash, role, permissions) VALUES (?, ?, ?, ?)",
+                ("admin", admin_hash, "admin", '["all"]')
+            )
+            conn.commit()
+            print("Default admin user created: admin / admin123")
+        else:
+            conn.execute(
+                "UPDATE users SET password_hash = ?, role = 'admin' WHERE username = 'admin'",
+                (admin_hash,)
+            )
+            conn.commit()
+            print("Default admin user password updated to admin123")
+    except Exception as e:
+        print(f"Seed admin note: {e}")
+    finally:
+        conn.close()
+

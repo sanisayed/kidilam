@@ -172,6 +172,36 @@ def api_auth_me():
     })
 
 
+@app.route("/api/auth/register", methods=["POST"])
+def api_auth_register():
+    data = request.get_json() or {}
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+    role = data.get("role") or "staff"
+    
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
+
+    res = db.create_user(username, password, role, '["all"]' if role == 'admin' else '[]')
+    if not res.get("ok"):
+        return jsonify({"error": res.get("error", "Registration failed")}), 400
+
+    user = db.get_user(username)
+    session["user_id"] = user["id"]
+    session["username"] = user["username"]
+    session["role"] = user["role"]
+    session["permissions"] = user["permissions"]
+
+    return jsonify({
+        "ok": True,
+        "user": {
+            "username": user["username"],
+            "role": user["role"],
+            "permissions": user["permissions"]
+        }
+    })
+
+
 @app.route("/api/users", methods=["GET"])
 @admin_required
 def api_users_list():

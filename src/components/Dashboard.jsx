@@ -10399,7 +10399,7 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
 
   // Lifted up billsList state — start empty, real data fetched from Flask API immediately.
   // billsSeed kept as emergency offline fallback only if API call fails on first load.
-  const [billsList, setBillsList] = useState([]);
+  const [billsList, setBillsList] = useState(billsSeed);
 
   const [pendingBills, setPendingBills] = useState(() => {
     try {
@@ -10603,12 +10603,12 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
       const res = await fetch(getApiUrl('/api/bills?all=true'));
       if (res.ok) {
         const data = await res.json();
-        setBillsList(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setBillsList(data);
+        }
       }
     } catch (err) {
-      // Flask offline — fall back to seed data only if billsList is currently empty
       console.log('Skipping real-time database sync (backend offline):', err);
-      setBillsList(prev => prev.length === 0 ? billsSeed : prev);
     }
   }, []);
 

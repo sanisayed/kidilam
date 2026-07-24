@@ -2,6 +2,11 @@
 
 let rawUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '').trim();
 
+// If rawUrl is an internal Render service name (e.g. "kidilam-backend" without dot/domain), clear it to use relative /api proxy
+if (rawUrl && !rawUrl.includes('.')) {
+  rawUrl = '';
+}
+
 if (rawUrl && !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
   rawUrl = `https://${rawUrl}`;
 }

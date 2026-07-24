@@ -1,54 +1,47 @@
 // API Service for Flask Backend & Mock Mode Fallback
+import { getApiUrl } from '../config';
+
+async function safeJsonParse(response) {
+  const text = await response.text();
+  if (text && text.trim().length > 0) {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.warn('Response is not valid JSON:', text.substring(0, 100));
+      return { error: 'Invalid response from server' };
+    }
+  }
+  return {};
+}
 
 export const apiService = {
   // Store status state
   isStrapiOnline: false,
-  useMockMode: true,
+  useMockMode: false,
 
   // Check if Flask backend is available
   async checkConnection() {
     try {
-      const response = await fetch('/api/bills');
-      // Even if it returns 401 Unauthorized, it means the server is reachable and active
-      this.isStrapiOnline = true; // Use this variable to represent backend connection
+      const response = await fetch(getApiUrl('/api/health'));
+      if (response.ok) {
+        this.isStrapiOnline = true;
+        this.useMockMode = false;
+        return true;
+      }
+      this.isStrapiOnline = true;
       this.useMockMode = false;
       return true;
     } catch (error) {
-      console.log('Flask backend not found at localhost:5000. Running in MOCK Mode.');
+      console.log('Flask backend connection check failed:', error);
       this.isStrapiOnline = false;
-      this.useMockMode = true;
+      this.useMockMode = false;
       return false;
     }
   },
 
   // Perform Login
   async login(identifier, password) {
-    if (this.useMockMode) {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (password.length >= 6) {
-            const mockUser = {
-              id: 1,
-              username: identifier || 'admin',
-              email: `${identifier || 'admin'}@buyology.io`,
-              confirmed: true,
-              blocked: false,
-              role: { name: 'Administrator' }
-            };
-            const mockJwt = 'mock-jwt-token-buyology-xyz-12345';
-            
-            localStorage.setItem('jwt', mockJwt);
-            localStorage.setItem('user', JSON.stringify(mockUser));
-            resolve({ jwt: mockJwt, user: mockUser });
-          } else {
-            reject(new Error('Password must be at least 6 characters long!'));
-          }
-        }, 1200); // realistic network delay
-      });
-    }
-
-    // Real Flask API authentication call
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(getApiUrl('/api/auth/login'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -59,7 +52,7 @@ export const apiService = {
       }),
     });
 
-    const data = await response.json();
+    const data = await safeJsonParse(response);
 
     if (!response.ok || !data.ok) {
       throw new Error(data.error || 'Login failed. Please check your credentials.');
@@ -75,30 +68,7 @@ export const apiService = {
 
   // Perform Registration
   async register(username, email, password) {
-    if (this.useMockMode) {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (password.length >= 6) {
-            const mockUser = {
-              id: 2,
-              username,
-              email,
-              confirmed: true,
-              blocked: false
-            };
-            const mockJwt = 'mock-jwt-token-buyology-xyz-98765';
-            localStorage.setItem('jwt', mockJwt);
-            localStorage.setItem('user', JSON.stringify(mockUser));
-            resolve({ jwt: mockJwt, user: mockUser });
-          } else {
-            reject(new Error('Password must be at least 6 characters long!'));
-          }
-        }, 1200);
-      });
-    }
-
-    // Real Flask registration call
-    const response = await fetch('/api/auth/register', {
+    const response = await fetch(getApiUrl('/api/auth/register'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,7 +80,7 @@ export const apiService = {
       }),
     });
 
-    const data = await response.json();
+    const data = await safeJsonParse(response);
 
     if (!response.ok || !data.ok) {
       throw new Error(data.error || 'Registration failed.');

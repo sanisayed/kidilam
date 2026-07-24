@@ -1,0 +1,36 @@
+services:
+  # ── Backend Web Service (Flask API) ───────────────────────────────────────────
+  - type: web
+    name: kidilam-backend
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+  # ── Frontend Static Site (React Vite SPA) ────────────────────────────────────
+  - type: web
+    name: kidilam-frontend
+    env: static
+    region: singapore
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: kidilam-backend
+          property: host

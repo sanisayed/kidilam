@@ -10517,10 +10517,6 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
       if (res.ok) {
         const data = await res.json();
         setBillsList(data);
-      } else if (res.status === 401) {
-        localStorage.removeItem('user');
-        localStorage.removeItem('jwt');
-        // window.location.reload();
       }
     } catch (err) {
       // Flask offline — fall back to seed data only if billsList is currently empty

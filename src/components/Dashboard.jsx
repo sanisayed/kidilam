@@ -1,3 +1,4 @@
+import { getApiUrl } from '../config';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -2196,7 +2197,7 @@ function TodayBillPanel({ billsList, setBillsList, productsList, setProductsList
   const handleDeleteBill = async (id) => {
     if (window.confirm("Are you sure you want to delete this invoice?")) {
       try {
-        const res = await fetch(`/api/bills/${id}`, {
+        const res = await fetch(getApiUrl(`/api/bills/${id}`), {
           method: 'DELETE'
         });
         if (res.ok) {
@@ -2237,7 +2238,7 @@ function TodayBillPanel({ billsList, setBillsList, productsList, setProductsList
   const handleAddInvoice = async (newInvoice) => {
     try {
       if (editingBill) {
-        const res = await fetch(`/api/bills/${editingBill.id}`, {
+        const res = await fetch(getApiUrl(`/api/bills/${editingBill.id}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newInvoice)
@@ -2248,7 +2249,7 @@ function TodayBillPanel({ billsList, setBillsList, productsList, setProductsList
           alert('Warning: Could not update invoice in database. Please check your connection.');
         }
       } else {
-        const res = await fetch('/api/bills', {
+        const res = await fetch(getApiUrl('/api/bills'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newInvoice)
@@ -2520,7 +2521,7 @@ function SalesHistoryPanel({ billsList, setBillsList, productsList, setProductsL
   const handleDeleteBill = async (id) => {
     if (window.confirm("Are you sure you want to delete this transaction from archive?")) {
       try {
-        const res = await fetch(`/api/bills/${id}`, {
+        const res = await fetch(getApiUrl(`/api/bills/${id}`), {
           method: 'DELETE'
         });
         if (res.ok) {
@@ -2537,7 +2538,7 @@ function SalesHistoryPanel({ billsList, setBillsList, productsList, setProductsL
   const handleAddInvoice = async (newInvoice) => {
     try {
       if (editingBill) {
-        const res = await fetch(`/api/bills/${editingBill.id}`, {
+        const res = await fetch(getApiUrl(`/api/bills/${editingBill.id}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newInvoice)
@@ -2548,7 +2549,7 @@ function SalesHistoryPanel({ billsList, setBillsList, productsList, setProductsL
           alert('Warning: Could not update invoice in database. Please check your connection.');
         }
       } else {
-        const res = await fetch('/api/bills', {
+        const res = await fetch(getApiUrl('/api/bills'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newInvoice)
@@ -2947,7 +2948,7 @@ function ProductDbPanel({ productsList, setProductsList }) {
       price: newProduct.price
     };
     try {
-      const res = await fetch('/api/products', {
+      const res = await fetch(getApiUrl('/api/products'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(apiPayload)
@@ -2970,7 +2971,7 @@ function ProductDbPanel({ productsList, setProductsList }) {
       price: p.price
     }));
     try {
-      const res = await fetch('/api/products', {
+      const res = await fetch(getApiUrl('/api/products'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(apiPayload)
@@ -3099,7 +3100,7 @@ function DisplayPiecesPanel() {
     setLoading(true);
     try {
       const activeDate = toApiDate(selectedDate);
-      const res = await fetch(`/api/display?date=${activeDate}`);
+      const res = await fetch(getApiUrl(`/api/display?date=${activeDate}`));
       if (res.ok) {
         const data = await res.json();
         setPieces(data || []);
@@ -3125,14 +3126,14 @@ function DisplayPiecesPanel() {
     try {
       const activeDate = toApiDate(selectedDate);
       if (delta === 1) {
-        const res = await fetch('/api/display', {
+        const res = await fetch(getApiUrl('/api/display'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dta, force: true, date: activeDate })
         });
         if (res.ok) loadPieces();
       } else if (delta === -1) {
-        const res = await fetch(`/api/display/${encodeURIComponent(dta)}?date=${activeDate}`, {
+        const res = await fetch(getApiUrl(`/api/display/${encodeURIComponent(dta)}?date=${activeDate}`), {
           method: 'DELETE'
         });
         if (res.ok) loadPieces();
@@ -3189,7 +3190,7 @@ function DisplayPiecesPanel() {
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      const res = await fetch('/api/display/rollover', {
+      const res = await fetch(getApiUrl('/api/display/rollover'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source_date: prevDateStr, target_date: activeDate })
@@ -3220,7 +3221,7 @@ function DisplayPiecesPanel() {
     const dta = addDta.trim().toUpperCase();
     if (!dta) return;
     try {
-      const res = await fetch(`/api/products/${encodeURIComponent(dta)}`);
+      const res = await fetch(getApiUrl(`/api/products/${encodeURIComponent(dta)}`));
       if (res.ok) {
         const product = await res.json();
         if (product && !product.error) {
@@ -3241,7 +3242,7 @@ function DisplayPiecesPanel() {
     setIsAdding(true);
     try {
       const activeDate = toApiDate(selectedDate);
-      const res = await fetch('/api/display', {
+      const res = await fetch(getApiUrl('/api/display'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dta, brand: addBrand, model: addModel, date: activeDate })
@@ -3727,7 +3728,7 @@ function StickerScannerModal({ isOpen, onClose, mode, targetDate, onCompleted })
   const handleQrScanSuccess = async (dta) => {
     setStatusMsg(`Checking database for DTA ${dta}...`);
     try {
-      const res = await fetch(`/api/products/${encodeURIComponent(dta)}`);
+      const res = await fetch(getApiUrl(`/api/products/${encodeURIComponent(dta)}`));
       let product = null;
       if (res.ok) {
         product = await res.json();
@@ -3743,7 +3744,7 @@ function StickerScannerModal({ isOpen, onClose, mode, targetDate, onCompleted })
           setStatusMsg('Sticker photo mode: Position specs horizontally and tap Capture');
         } else {
           // Product exists, add to display registry directly!
-          const saveRes = await fetch('/api/display', {
+          const saveRes = await fetch(getApiUrl('/api/display'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ dta, date: targetDate })
@@ -3752,7 +3753,7 @@ function StickerScannerModal({ isOpen, onClose, mode, targetDate, onCompleted })
             const saveJson = await saveRes.json();
             if (saveJson.duplicate) {
               // Increment quantity silently
-              await fetch('/api/display', {
+              await fetch(getApiUrl('/api/display'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ dta, force: true, date: targetDate })
@@ -3863,7 +3864,7 @@ function StickerScannerModal({ isOpen, onClose, mode, targetDate, onCompleted })
       // Stop camera stream during review editing
       stopCamera();
 
-      const res = await fetch('/api/ocr/scan', {
+      const res = await fetch(getApiUrl('/api/ocr/scan'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: dataUrl, pending_dta: formDta, api_key: ocrApiKey })
@@ -3895,7 +3896,7 @@ function StickerScannerModal({ isOpen, onClose, mode, targetDate, onCompleted })
       const fullModel = formSpecs ? `${formModel} | ${formSpecs}` : formModel;
 
       // 1. Always create/save product in database catalog
-      const prodRes = await fetch('/api/products', {
+      const prodRes = await fetch(getApiUrl('/api/products'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dta: formDta, brand: formBrand, model: fullModel, price: 0 })
@@ -3908,7 +3909,7 @@ function StickerScannerModal({ isOpen, onClose, mode, targetDate, onCompleted })
 
       // 2. If display mode, add to display registry as well
       if (mode === 'display') {
-        const displayRes = await fetch('/api/display', {
+        const displayRes = await fetch(getApiUrl('/api/display'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dta: formDta, brand: formBrand, model: fullModel, date: targetDate })
@@ -4588,7 +4589,7 @@ function DeliveriesPanel({ productsList, onRefreshApprovals }) {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this delivery record?")) return;
     try {
-      const res = await fetch(`/api/deliveries/${id}`, {
+      const res = await fetch(getApiUrl(`/api/deliveries/${id}`), {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -4606,7 +4607,7 @@ function DeliveriesPanel({ productsList, onRefreshApprovals }) {
     if (!original) return;
     const updated = { ...original, status: newStatus };
     try {
-      const res = await fetch(`/api/deliveries/${id}`, {
+      const res = await fetch(getApiUrl(`/api/deliveries/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated)
@@ -5695,7 +5696,7 @@ function WarrantyPanel({ productsList = [] }) {
   const loadClaims = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/warranty');
+      const res = await fetch(getApiUrl('/api/warranty'));
       if (res.ok) {
         const data = await res.json();
         setClaims(data || []);
@@ -5877,7 +5878,7 @@ function WarrantyPanel({ productsList = [] }) {
           warranty_claim_id: parseInt(resolveClaimId)
         };
 
-        const billRes = await fetch('/api/bills', {
+        const billRes = await fetch(getApiUrl('/api/bills'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(billPayload)
@@ -5901,7 +5902,7 @@ function WarrantyPanel({ productsList = [] }) {
           warranty_claim_id: parseInt(resolveClaimId)
         };
 
-        const billRes = await fetch('/api/bills', {
+        const billRes = await fetch(getApiUrl('/api/bills'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(billPayload)
@@ -5909,7 +5910,7 @@ function WarrantyPanel({ productsList = [] }) {
         if (!billRes.ok) console.error('Failed to create return bill transaction');
       }
 
-      const res = await fetch(`/api/warranty/${resolveClaimId}/resolve`, {
+      const res = await fetch(getApiUrl(`/api/warranty/${resolveClaimId}/resolve`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatePayload)
@@ -5934,7 +5935,7 @@ function WarrantyPanel({ productsList = [] }) {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this claim log?')) return;
     try {
-      const res = await fetch(`/api/warranty/${id}`, {
+      const res = await fetch(getApiUrl(`/api/warranty/${id}`), {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -6589,7 +6590,7 @@ function CustomerCrmPanel() {
   const loadCustomers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/customers${search ? `?search=${encodeURIComponent(search)}` : ''}`);
+      const res = await fetch(getApiUrl(`/api/customers${search ? `?search=${encodeURIComponent(search)}` : ''}`));
       if (res.ok) {
         const data = await res.json();
         setCustomers(data);
@@ -6629,7 +6630,7 @@ function CustomerCrmPanel() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this customer entry from CRM?')) return;
     try {
-      const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/customers/${id}`), { method: 'DELETE' });
       if (res.ok) {
         setCustomers(prev => prev.filter(c => c.id !== id));
         setToastMessage('Customer removed from CRM.');
@@ -6642,7 +6643,7 @@ function CustomerCrmPanel() {
 
   const handleAutoImport = async () => {
     try {
-      const res = await fetch('/api/customers/import-sales', { method: 'POST' });
+      const res = await fetch(getApiUrl('/api/customers/import-sales'), { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setToastMessage(`Auto-imported ${data.imported_count || 0} unique contacts from past sales & deliveries!`);
@@ -9328,7 +9329,7 @@ function StaffPanel() {
   const fetchStaff = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/staff');
+      const res = await fetch(getApiUrl('/api/staff'));
       if (res.ok) {
         const data = await res.json();
         setStaff(data);
@@ -9429,7 +9430,7 @@ function StaffPanel() {
     }
 
     try {
-      const res = await fetch(`/api/staff/${userId}`, {
+      const res = await fetch(getApiUrl(`/api/staff/${userId}`), {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -9694,7 +9695,7 @@ function PendingImportsPanel({ pendingBills, setPendingBills, productsList, setP
   const scanLocalFolder = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/local-pdfs');
+      const res = await fetch(getApiUrl('/api/local-pdfs'));
       if (res.ok) {
         const filenames = await res.json();
         const existingNames = pendingBills.map(b => b.fileName);
@@ -9703,7 +9704,7 @@ function PendingImportsPanel({ pendingBills, setPendingBills, productsList, setP
         const newPending = [];
         for (const filename of newFiles) {
           try {
-            const fileRes = await fetch(`/api/local-pdfs/${encodeURIComponent(filename)}`);
+            const fileRes = await fetch(getApiUrl(`/api/local-pdfs/${encodeURIComponent(filename)}`));
             if (fileRes.ok) {
               const arrayBuffer = await fileRes.arrayBuffer();
               const fileObj = new File([arrayBuffer], filename, { type: "application/pdf" });
@@ -9786,7 +9787,7 @@ function PendingImportsPanel({ pendingBills, setPendingBills, productsList, setP
     setPendingBills(prev => prev.filter(b => b.id !== pb.id));
     if (pb.isLocalFile) {
       try {
-        await fetch(`/api/local-pdfs/${encodeURIComponent(pb.fileName)}`, {
+        await fetch(getApiUrl(`/api/local-pdfs/${encodeURIComponent(pb.fileName)}`), {
           method: 'DELETE'
         });
       } catch (err) {
@@ -9797,7 +9798,7 @@ function PendingImportsPanel({ pendingBills, setPendingBills, productsList, setP
 
   const handleSaveInvoice = async (newInvoice) => {
     try {
-      const res = await fetch('/api/bills', {
+      const res = await fetch(getApiUrl('/api/bills'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newInvoice)
@@ -9811,7 +9812,7 @@ function PendingImportsPanel({ pendingBills, setPendingBills, productsList, setP
           
           if (activePrefill.isLocalFile) {
             try {
-              await fetch(`/api/local-pdfs/${encodeURIComponent(activePrefill.fileName)}`, {
+              await fetch(getApiUrl(`/api/local-pdfs/${encodeURIComponent(activePrefill.fileName)}`), {
                 method: 'DELETE'
               });
             } catch (err) {
@@ -9940,7 +9941,7 @@ function PendingImportsPanel({ pendingBills, setPendingBills, productsList, setP
                 for (const pb of pendingBills) {
                   if (pb.isLocalFile) {
                     try {
-                      await fetch(`/api/local-pdfs/${encodeURIComponent(pb.fileName)}`, {
+                      await fetch(getApiUrl(`/api/local-pdfs/${encodeURIComponent(pb.fileName)}`), {
                         method: 'DELETE'
                       });
                     } catch (err) {
@@ -10339,7 +10340,7 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
 
   const loadAllDeliveries = useCallback(async () => {
     try {
-      const res = await fetch('/api/deliveries');
+      const res = await fetch(getApiUrl('/api/deliveries'));
       if (res.ok) {
         const data = await res.json();
         setAllDeliveries(data);
@@ -10411,7 +10412,7 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
     }
 
     try {
-      const billRes = await fetch('/api/bills', {
+      const billRes = await fetch(getApiUrl('/api/bills'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(billPayload)
@@ -10427,7 +10428,7 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
           status: 'Delivered'
         };
 
-        const deliveryRes = await fetch(`/api/deliveries/${delivery.id}`, {
+        const deliveryRes = await fetch(getApiUrl(`/api/deliveries/${delivery.id}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedDelivery)
@@ -10458,7 +10459,7 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
     };
 
     try {
-      const res = await fetch(`/api/deliveries/${delivery.id}`, {
+      const res = await fetch(getApiUrl(`/api/deliveries/${delivery.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedDelivery)
@@ -10487,7 +10488,7 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
           ...d,
           bill_id: -1
         };
-        return fetch(`/api/deliveries/${d.id}`, {
+        return fetch(getApiUrl(`/api/deliveries/${d.id}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedDelivery)
@@ -10512,14 +10513,14 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
   // Dynamic real-time sqlite polling sync (without refresh)
   const fetchLatestBills = useCallback(async () => {
     try {
-      const res = await fetch('/api/bills?all=true');
+      const res = await fetch(getApiUrl('/api/bills?all=true'));
       if (res.ok) {
         const data = await res.json();
         setBillsList(data);
       } else if (res.status === 401) {
         localStorage.removeItem('user');
         localStorage.removeItem('jwt');
-        window.location.reload();
+        // window.location.reload();
       }
     } catch (err) {
       // Flask offline — fall back to seed data only if billsList is currently empty
@@ -10530,7 +10531,7 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
 
   const fetchLatestProducts = useCallback(async () => {
     try {
-      const res = await fetch('/api/products');
+      const res = await fetch(getApiUrl('/api/products'));
       if (res.ok) {
         const data = await res.json();
         

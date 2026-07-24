@@ -18,10 +18,8 @@ services:
         value: 3.11.0
 
   # ── Frontend Static Site (React Vite SPA) ────────────────────────────────────
-  - type: web
+  - type: static
     name: kidilam-frontend
-    env: static
-    region: singapore
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     routes:

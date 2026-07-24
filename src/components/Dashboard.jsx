@@ -4356,7 +4356,7 @@ function DeliveriesPanel({ productsList, onRefreshApprovals }) {
       } else if (deliveryMode === 'daily') {
         url += `?date=${toApiDate(selectedDate)}`;
       }
-      const res = await fetch(url);
+      const res = await fetch(getApiUrl(url));
       if (res.ok) {
         const data = await res.json();
         // Sort chronologically
@@ -4558,7 +4558,7 @@ function DeliveriesPanel({ productsList, onRefreshApprovals }) {
         ? `/api/deliveries/${editingId}`
         : '/api/deliveries';
       const method = editingId ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await fetch(getApiUrl(url), {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -5807,7 +5807,7 @@ function WarrantyPanel({ productsList = [] }) {
         ? `/api/warranty/${editingId}/edit`
         : '/api/warranty';
       
-      const res = await fetch(url, {
+      const res = await fetch(getApiUrl(url), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -6690,7 +6690,7 @@ function CustomerCrmPanel() {
       const url = editingId ? `/api/customers/${editingId}` : '/api/customers';
       const method = editingId ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await fetch(getApiUrl(url), {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -6929,27 +6929,114 @@ function CustomerCrmPanel() {
    ========================================================= */
 
 function InventoryPanel() {
+  const [units, setUnits] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const loadInventory = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(getApiUrl('/api/inventory'));
+      if (res.ok) {
+        const data = await res.json();
+        setUnits(data);
+      }
+    } catch (err) {
+      console.error('Failed to load inventory units:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadInventory();
+  }, [loadInventory]);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return units;
+    const q = search.toLowerCase();
+    return units.filter(u => 
+      String(u.dta || '').toLowerCase().includes(q) ||
+      String(u.model || '').toLowerCase().includes(q) ||
+      String(u.serial_number || '').toLowerCase().includes(q) ||
+      String(u.status || '').toLowerCase().includes(q)
+    );
+  }, [units, search]);
+
+  const totalUnits = units.length;
+  const inStockCount = units.filter(u => u.status === 'In Stock' || u.status === 'Available').length;
+  const soldCount = units.filter(u => u.status === 'Sold' || u.status === 'Delivered').length;
+
   return (
     <div>
-      <div className="page-title">Inventory Center</div>
-      <div className="page-subtitle">Stock management and asset overview</div>
-      <div className="stats-grid">
-        <StatCard label="Total Products" value={942}  icon={Box}         iconBg="var(--citrus)"      delay={0}    chartData={[820,855,878,900,920,935,942]} chartColor="#d8ff36" />
-        <StatCard label="Low Stock Alerts" value={18} icon={TrendingDown} iconBg="var(--pink-soft)"  delay={0.05} trend="down" trendVal="-3" />
-        <StatCard label="Asset Value" value={124000} prefix="AED " icon={DollarSign} iconBg="var(--purple-soft)" delay={0.1} chartData={[100,108,112,116,120,122,124]} chartColor="#8b5cf6" />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <div className="page-title">Inventory Center</div>
+          <div className="page-subtitle">Live serial numbers, stock tracking, and unit statuses</div>
+        </div>
+        <button className="btn btn-citrus" onClick={loadInventory} style={{ gap: 6 }}>
+          <RefreshCw size={14} className={loading ? 'spin' : ''} />
+          <span>Refresh Inventory</span>
+        </button>
       </div>
-      <div className="card card-p static">
-        <h4 style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: 14 }}>Low Stock Alert Log</h4>
-        {[
-          { item:'Intent Core Processor Module', left:2, sev:'critical' },
-          { item:'Sales Stand Type-C Rack',       left:5, sev:'low' },
-          { item:'Display Cable HDMI 4K',         left:9, sev:'low' },
-        ].map((a, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: 'var(--border-light)' }}>
-            <span style={{ fontWeight: 600 }}>⚠ {a.item}</span>
-            <span className={`badge ${a.sev === 'critical' ? 'badge-pink' : 'badge-citrus'}`}>ONLY {a.left} LEFT</span>
+
+      <div className="stats-grid">
+        <StatCard label="Total Units Managed" value={totalUnits} icon={Box} iconBg="var(--citrus)" delay={0} />
+        <StatCard label="Available In Stock" value={inStockCount} icon={TrendingUp} iconBg="var(--purple-soft)" delay={0.05} />
+        <StatCard label="Units Sold / Delivered" value={soldCount} icon={ShoppingBag} iconBg="var(--pink-soft)" delay={0.1} />
+      </div>
+
+      <div className="card card-p" style={{ marginTop: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+          <h4 style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.9rem', textTransform: 'uppercase' }}>
+            Managed Inventory Units ({filtered.length})
+          </h4>
+          <div style={{ position: 'relative', width: 280 }}>
+            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+            <input
+              type="text"
+              placeholder="Search serial, DTA, or model..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ width: '100%', paddingLeft: 32, paddingRight: 12, paddingTop: 6, paddingBottom: 6, fontSize: '0.82rem' }}
+            />
           </div>
-        ))}
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', opacity: 0.7 }}>Loading live inventory units...</div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: 40, textAlign: 'center', opacity: 0.6 }}>No inventory units found.</div>
+        ) : (
+          <div className="table-responsive">
+            <table className="table" style={{ width: '100%', fontSize: '0.82rem' }}>
+              <thead>
+                <tr>
+                  <th>DTA / Code</th>
+                  <th>Model / Item</th>
+                  <th>Serial Number</th>
+                  <th>Status</th>
+                  <th>Location</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.slice(0, 100).map((u, i) => (
+                  <tr key={u.id || i}>
+                    <td style={{ fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{u.dta || '-'}</td>
+                    <td>{u.model || u.brand || '-'}</td>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>{u.serial_number || u.unit_id || '-'}</td>
+                    <td>
+                      <span className={`badge ${u.status === 'In Stock' || u.status === 'Available' ? 'badge-citrus' : 'badge-pink'}`}>
+                        {u.status || 'In Stock'}
+                      </span>
+                    </td>
+                    <td style={{ opacity: 0.8 }}>{u.location || u.warehouse || 'Store Warehouse'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -9391,7 +9478,7 @@ function StaffPanel() {
         method = 'PUT';
       }
 
-      const res = await fetch(url, {
+      const res = await fetch(getApiUrl(url), {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

@@ -16,10 +16,29 @@ app = Flask(__name__)
 
 try:
     from flask_cors import CORS
-    allowed_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
-    CORS(app, origins=allowed_origins if allowed_origins else "*", supports_credentials=True)
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 except ImportError:
     pass
+
+@app.before_request
+def handle_options_preflight():
+    if request.method == "OPTIONS":
+        response = jsonify({"status": "ok"})
+        origin = request.headers.get("Origin", "*")
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, X-User-ID"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        return response, 200
+
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get("Origin", "*")
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, X-User-ID"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    return response
 
 # ── Gzip compression for all responses (makes HTML/JSON ~70% smaller) ─────────
 try:

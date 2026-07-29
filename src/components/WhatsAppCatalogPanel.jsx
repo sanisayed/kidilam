@@ -685,6 +685,19 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [selectedGpu, setSelectedGpu] = useState('ALL');
   const [selectedFeature, setSelectedFeature] = useState('ALL');
   const [showLivePreview, setShowLivePreview] = useState(true);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+
+  const activeMoreFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategory !== 'ALL') count++;
+    if (selectedGpu !== 'ALL') count++;
+    if (selectedCpu !== 'ALL') count++;
+    if (selectedGen !== 'ALL') count++;
+    if (selectedRam !== 'ALL') count++;
+    if (selectedStorage !== 'ALL') count++;
+    if (selectedFeature !== 'ALL') count++;
+    return count;
+  }, [selectedCategory, selectedGpu, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedFeature]);
 
   // Copy Feedback State
   const [copiedId, setCopiedId] = useState(null);
@@ -1383,285 +1396,461 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         <>
           <div className="card static card-p-lg" style={{ border: 'var(--border)', display: 'flex', flexDirection: 'column', gap: 18, width: '100%' }}>
             
-            {/* Search Input Bar */}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
-                <input 
-                  type="text" 
-                  className="field-input" 
-                  placeholder="🔍 Type customer specs (e.g. Precision, Workstation, i7, 16GB RAM, 4GB GPU, 512GB SSD)..." 
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  style={{ paddingLeft: 46, paddingRight: 40, fontSize: '0.98rem', height: '46px', width: '100%' }}
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '1rem' }}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              {(searchQuery || selectedCategory !== 'ALL' || selectedBudget !== 'ALL' || selectedBrand !== 'ALL' || selectedCpu !== 'ALL' || selectedGen !== 'ALL' || selectedRam !== 'ALL' || selectedStorage !== 'ALL' || selectedGpu !== 'ALL' || selectedFeature !== 'ALL') && (
-                <button 
-                  className="btn btn-ghost" 
-                  style={{ padding: '8px 16px', fontSize: '0.82rem', color: 'var(--pink)', fontWeight: 800, whiteSpace: 'nowrap' }}
-                  onClick={resetAllFilters}
-                >
-                  Reset All Filters
-                </button>
-              )}
-            </div>
-
-            {/* MOBILE ONLY: Single Collapsible Filter Toggle Button */}
-            {isMobile && (
-              <button 
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'space-between', padding: '10px 14px', fontWeight: 900 }}
-                onClick={() => setShowMobileFilters(!showMobileFilters)}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Filter size={15} />
-                  <span>⚡ Filter Stock {(selectedCategory !== 'ALL' || selectedBudget !== 'ALL' || selectedBrand !== 'ALL' || selectedCpu !== 'ALL' || selectedGen !== 'ALL' || selectedRam !== 'ALL' || selectedStorage !== 'ALL' || selectedGpu !== 'ALL') ? '(Active Filters)' : ''}</span>
-                </span>
-                <ChevronDown size={16} style={{ transform: showMobileFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-              </button>
-            )}
-
-            {/* Custom Buyology Styled Dropdown Control Grid */}
-            {(!isMobile || showMobileFilters) && (
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', 
-                gap: 14, 
-                paddingTop: 14, 
-                borderTop: '1px solid var(--border-light-color)' 
-              }}>
-              
-              {/* 1. Category / Purpose */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  🎯 Purpose / Category
-                </label>
+            {/* Responsive Filter Console (Clean Mobile 1-Tap Toggle + Desktop 1-Row Bar) */}
+            {isMobile ? (
+              /* MOBILE MINIMALISTIC FILTER BAR */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+                {/* 1. Mobile Search Bar */}
                 <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedCategory}
-                    onChange={e => setSelectedCategory(e.target.value)}
-                    style={dropdownStyle(selectedCategory !== 'ALL', 'var(--orange)', '#ffffff')}
-                  >
-                    <option value="ALL">All Categories</option>
-                    <option value="WORKSTATION">🖥️ Workstation (Precision, P14s)</option>
-                    <option value="BUSINESS">💼 Business (Latitude, EliteBook, ThinkPad)</option>
-                    <option value="EXECUTIVE">✨ Executive (Spectre, X1, Surface, Mac)</option>
-                    <option value="CONVERTIBLE">🔄 2-in-1 Touch (X360, Touch)</option>
-                  </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedCategory !== 'ALL' ? '#ffffff' : '#000000' }} />
+                  <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                  <input 
+                    type="text" 
+                    className="field-input" 
+                    placeholder="🔍 Search laptop specs (e.g. i7, 16GB, 4GB GPU)..." 
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    style={{ paddingLeft: 42, paddingRight: 36, fontSize: '0.9rem', height: '42px', width: '100%' }}
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
-              </div>
 
-              {/* 2. Brand */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  🏷️ Brand
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedBrand}
-                    onChange={e => setSelectedBrand(e.target.value)}
-                    style={dropdownStyle(selectedBrand !== 'ALL', 'var(--purple)', '#ffffff')}
+                {/* 2. Mobile 1-Tap Filter Action Row */}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <button 
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ 
+                      flex: 1, 
+                      height: '42px', 
+                      justify: 'space-between', 
+                      padding: '0 14px', 
+                      fontWeight: 900, 
+                      fontSize: '0.85rem',
+                      background: (selectedBrand !== 'ALL' || selectedBudget !== 'ALL' || selectedSeries !== 'ALL' || selectedGpu !== 'ALL' || selectedCategory !== 'ALL' || selectedCpu !== 'ALL' || selectedRam !== 'ALL') ? 'var(--purple)' : 'var(--citrus)',
+                      color: (selectedBrand !== 'ALL' || selectedBudget !== 'ALL' || selectedSeries !== 'ALL' || selectedGpu !== 'ALL' || selectedCategory !== 'ALL' || selectedCpu !== 'ALL' || selectedRam !== 'ALL') ? '#ffffff' : '#000000'
+                    }}
+                    onClick={() => setShowMobileFilters(!showMobileFilters)}
                   >
-                    <option value="ALL">All Brands</option>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Filter size={15} />
+                      <span>{showMobileFilters ? 'Hide Filters' : '⚡ Filter Stock Specs'}</span>
+                    </span>
+
+                    {(selectedBrand !== 'ALL' || selectedBudget !== 'ALL' || selectedSeries !== 'ALL' || selectedGpu !== 'ALL' || selectedCategory !== 'ALL' || selectedCpu !== 'ALL' || selectedRam !== 'ALL') && (
+                      <span style={{ background: '#ffffff', color: '#000000', fontSize: '0.68rem', fontWeight: 900, padding: '1px 7px', borderRadius: '10px' }}>
+                        Active
+                      </span>
+                    )}
+                    <ChevronDown size={15} style={{ transform: showMobileFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                  </button>
+
+                  {(searchQuery || selectedCategory !== 'ALL' || selectedSeries !== 'ALL' || selectedBudget !== 'ALL' || selectedBrand !== 'ALL' || selectedCpu !== 'ALL' || selectedGen !== 'ALL' || selectedRam !== 'ALL' || selectedStorage !== 'ALL' || selectedGpu !== 'ALL' || selectedFeature !== 'ALL') && (
+                    <button 
+                      className="btn btn-ghost" 
+                      style={{ padding: '0 12px', height: '42px', fontSize: '0.78rem', color: 'var(--pink)', fontWeight: 800, whiteSpace: 'nowrap' }}
+                      onClick={resetAllFilters}
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+
+                {/* 3. Mobile Collapsible Filter Sheet */}
+                <AnimatePresence>
+                  {showMobileFilters && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: 12, 
+                        padding: '14px', 
+                        background: 'var(--bg)', 
+                        borderRadius: 'var(--radius)', 
+                        border: '1px solid var(--border-light-color)',
+                        marginTop: 4
+                      }}
+                    >
+                      {/* Brand */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>🏷️ BRAND</label>
+                        <div style={{ position: 'relative' }}>
+                          <select value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)} style={dropdownStyle(selectedBrand !== 'ALL', 'var(--purple)', '#ffffff')}>
+                            <option value="ALL">All Brands</option>
+                            <option value="DELL">DELL</option>
+                            <option value="HP">HP</option>
+                            <option value="LENOVO">LENOVO</option>
+                            <option value="SURFACE">MICROSOFT SURFACE</option>
+                            <option value="MACBOOK">APPLE MACBOOK</option>
+                          </select>
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                        </div>
+                      </div>
+
+                      {/* Budget */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>💰 MAX BUDGET</label>
+                        <div style={{ position: 'relative' }}>
+                          <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)} style={dropdownStyle(selectedBudget !== 'ALL', 'var(--citrus)', '#000000')}>
+                            <option value="ALL">All Prices</option>
+                            <option value="500">Under 500 AED</option>
+                            <option value="1000">Under 1000 AED</option>
+                            <option value="1500">Under 1500 AED</option>
+                            <option value="2000">Under 2000 AED</option>
+                            <option value="2000+">2000+ AED</option>
+                          </select>
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                        </div>
+                      </div>
+
+                      {/* Model Series */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>💻 MODEL SERIES</label>
+                        <div style={{ position: 'relative' }}>
+                          <select value={selectedSeries} onChange={e => setSelectedSeries(e.target.value)} style={dropdownStyle(selectedSeries !== 'ALL', 'var(--cyan)', '#000000')}>
+                            <option value="ALL">All Series</option>
+                            <option value="Latitude">Dell Latitude</option>
+                            <option value="Precision">Dell Precision</option>
+                            <option value="Vostro">Dell Vostro</option>
+                            <option value="Elite">HP EliteBook</option>
+                            <option value="Spectre">HP Spectre</option>
+                            <option value="ThinkPad">Lenovo ThinkPad</option>
+                            <option value="IdeaPad">Lenovo IdeaPad</option>
+                            <option value="Surface">Surface</option>
+                            <option value="MacBook">MacBook</option>
+                          </select>
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                        </div>
+                      </div>
+
+                      {/* GPU / Graphics */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>🎮 GRAPHICS & GPU</label>
+                        <div style={{ position: 'relative' }}>
+                          <select value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)} style={dropdownStyle(selectedGpu !== 'ALL', 'var(--orange)', '#ffffff')}>
+                            <option value="ALL">Any Graphics</option>
+                            <option value="dedicated">🎮 Dedicated GPU (2GB & 4GB)</option>
+                            <option value="4gb">🔥 4GB Dedicated</option>
+                            <option value="2gb">⚡ 2GB Dedicated</option>
+                            <option value="iris">💻 Intel Iris Xe</option>
+                          </select>
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                        </div>
+                      </div>
+
+                      {/* Memory RAM & SSD Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>💾 RAM</label>
+                          <select value={selectedRam} onChange={e => setSelectedRam(e.target.value)} style={dropdownStyle(selectedRam !== 'ALL', 'var(--pink)', '#ffffff')}>
+                            <option value="ALL">Any RAM</option>
+                            <option value="4">4 GB</option>
+                            <option value="8">8 GB</option>
+                            <option value="16">16 GB</option>
+                            <option value="32">32 GB</option>
+                          </select>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>💿 SSD</label>
+                          <select value={selectedStorage} onChange={e => setSelectedStorage(e.target.value)} style={dropdownStyle(selectedStorage !== 'ALL', 'var(--purple)', '#ffffff')}>
+                            <option value="ALL">Any SSD</option>
+                            <option value="32">32 GB</option>
+                            <option value="256">256 GB</option>
+                            <option value="512">512 GB</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* CPU & Generation Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>⚡ CPU</label>
+                          <select value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)} style={dropdownStyle(selectedCpu !== 'ALL', 'var(--cyan)', '#000000')}>
+                            <option value="ALL">Any CPU</option>
+                            <option value="i5">Core i5</option>
+                            <option value="i7">Core i7</option>
+                            <option value="Ultra 7">Ultra 7</option>
+                          </select>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>🎓 GEN</label>
+                          <select value={selectedGen} onChange={e => setSelectedGen(e.target.value)} style={dropdownStyle(selectedGen !== 'ALL', 'var(--green)', '#000000')}>
+                            <option value="ALL">Any Gen</option>
+                            <option value="4">4th Gen</option>
+                            <option value="8">8th Gen</option>
+                            <option value="10">10th Gen</option>
+                            <option value="11">11th Gen</option>
+                            <option value="12">12th Gen</option>
+                            <option value="13">13th Gen</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <button 
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ height: '42px', fontWeight: 900, justifyContent: 'center', marginTop: 6 }}
+                        onClick={() => setShowMobileFilters(false)}
+                      >
+                        ✓ Done & View {filteredProducts.length} Laptops
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              /* DESKTOP 1-ROW MINIMALISTIC BAR */
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'nowrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+                  <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                  <input 
+                    type="text" 
+                    className="field-input" 
+                    placeholder="🔍 Type customer specs (e.g. Precision, i7, 16GB RAM, 4GB GPU, 512GB SSD)..." 
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    style={{ paddingLeft: 46, paddingRight: 40, fontSize: '0.94rem', height: '44px', width: '100%' }}
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '1rem' }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ position: 'relative', width: '150px' }}>
+                  <select value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)} style={dropdownStyle(selectedBrand !== 'ALL', 'var(--purple)', '#ffffff')}>
+                    <option value="ALL">🏷️ All Brands</option>
                     <option value="DELL">DELL</option>
                     <option value="HP">HP</option>
                     <option value="LENOVO">LENOVO</option>
-                    <option value="SURFACE">MICROSOFT SURFACE</option>
-                    <option value="MACBOOK">APPLE MACBOOK</option>
+                    <option value="SURFACE">MICROSOFT</option>
+                    <option value="MACBOOK">APPLE MAC</option>
                   </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBrand !== 'ALL' ? '#ffffff' : '#000000' }} />
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBrand !== 'ALL' ? '#ffffff' : '#000000' }} />
                 </div>
-              </div>
 
-              {/* 3. Series / Model Line */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  💻 Model Series
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedSeries}
-                    onChange={e => setSelectedSeries(e.target.value)}
-                    style={dropdownStyle(selectedSeries !== 'ALL', 'var(--cyan)', '#000000')}
-                  >
-                    <option value="ALL">All Series</option>
-                    <option value="Latitude">Dell Latitude</option>
-                    <option value="Precision">Dell Precision Workstation</option>
-                    <option value="Vostro">Dell Vostro</option>
-                    <option value="Elite">HP EliteBook</option>
-                    <option value="Spectre">HP Spectre 2-in-1</option>
-                    <option value="ThinkPad">Lenovo ThinkPad</option>
-                    <option value="IdeaPad">Lenovo Chromebook / IdeaPad</option>
-                    <option value="Surface">Microsoft Surface</option>
-                    <option value="MacBook">Apple MacBook</option>
-                  </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
-                </div>
-              </div>
-
-              {/* 4. Customer Budget */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  💰 Customer Budget
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedBudget}
-                    onChange={e => setSelectedBudget(e.target.value)}
-                    style={dropdownStyle(selectedBudget !== 'ALL', 'var(--citrus)', '#000000')}
-                  >
-                    <option value="ALL">All Prices</option>
-                    <option value="500">Under 500 AED (199-399 AED)</option>
+                <div style={{ position: 'relative', width: '150px' }}>
+                  <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)} style={dropdownStyle(selectedBudget !== 'ALL', 'var(--citrus)', '#000000')}>
+                    <option value="ALL">💰 All Prices</option>
+                    <option value="500">Under 500 AED</option>
                     <option value="1000">Under 1000 AED</option>
                     <option value="1500">Under 1500 AED</option>
                     <option value="2000">Under 2000 AED</option>
                     <option value="2000+">2000+ AED</option>
                   </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
                 </div>
-              </div>
 
-              {/* 5. Processor */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  ⚡ Processor (CPU)
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedCpu}
-                    onChange={e => setSelectedCpu(e.target.value)}
-                    style={dropdownStyle(selectedCpu !== 'ALL', 'var(--cyan)', '#000000')}
-                  >
-                    <option value="ALL">All Processors</option>
-                    <option value="i5">Intel Core i5</option>
-                    <option value="i7">Intel Core i7</option>
-                    <option value="Ultra 7">Intel Ultra 7</option>
+                <div style={{ position: 'relative', width: '160px' }}>
+                  <select value={selectedSeries} onChange={e => setSelectedSeries(e.target.value)} style={dropdownStyle(selectedSeries !== 'ALL', 'var(--cyan)', '#000000')}>
+                    <option value="ALL">💻 All Series</option>
+                    <option value="Latitude">Dell Latitude</option>
+                    <option value="Precision">Dell Precision</option>
+                    <option value="Vostro">Dell Vostro</option>
+                    <option value="Elite">HP EliteBook</option>
+                    <option value="Spectre">HP Spectre</option>
+                    <option value="ThinkPad">Lenovo ThinkPad</option>
+                    <option value="IdeaPad">Lenovo IdeaPad</option>
+                    <option value="Surface">Surface</option>
+                    <option value="MacBook">MacBook</option>
                   </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
                 </div>
-              </div>
 
-              {/* 6. Exact Generation */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  🎓 Exact Generation
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedGen}
-                    onChange={e => setSelectedGen(e.target.value)}
-                    style={dropdownStyle(selectedGen !== 'ALL', 'var(--green)', '#000000')}
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{
+                    height: '44px',
+                    padding: '0 14px',
+                    fontWeight: 900,
+                    fontSize: '0.82rem',
+                    border: showMoreFilters ? '2px solid var(--purple)' : '2px solid var(--border-color)',
+                    background: showMoreFilters ? 'var(--purple-soft)' : 'var(--bg-card)',
+                    color: showMoreFilters ? 'var(--purple)' : 'var(--text-primary)',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                  onClick={() => setShowMoreFilters(!showMoreFilters)}
+                >
+                  <Filter size={15} />
+                  <span>+ More Specs</span>
+                  {activeMoreFiltersCount > 0 && (
+                    <span style={{ background: 'var(--purple)', color: '#fff', fontSize: '0.68rem', fontWeight: 900, padding: '1px 6px', borderRadius: '10px' }}>
+                      {activeMoreFiltersCount}
+                    </span>
+                  )}
+                  <ChevronDown size={14} style={{ transform: showMoreFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                </button>
+
+                {(searchQuery || selectedCategory !== 'ALL' || selectedSeries !== 'ALL' || selectedBudget !== 'ALL' || selectedBrand !== 'ALL' || selectedCpu !== 'ALL' || selectedGen !== 'ALL' || selectedRam !== 'ALL' || selectedStorage !== 'ALL' || selectedGpu !== 'ALL' || selectedFeature !== 'ALL') && (
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ padding: '0 12px', height: '44px', fontSize: '0.8rem', color: 'var(--pink)', fontWeight: 800, whiteSpace: 'nowrap' }}
+                    onClick={resetAllFilters}
                   >
-                    <option value="ALL">Exact Gen (Any)</option>
-                    <option value="4">4th Gen</option>
-                    <option value="8">8th Gen</option>
-                    <option value="9">9th Gen</option>
-                    <option value="10">10th Gen</option>
-                    <option value="11">11th Gen</option>
-                    <option value="12">12th Gen</option>
-                    <option value="13">13th Gen</option>
-                  </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
-                </div>
+                    Reset
+                  </button>
+                )}
               </div>
+            )}
 
-              {/* 7. Exact RAM */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  💾 Memory (RAM)
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedRam}
-                    onChange={e => setSelectedRam(e.target.value)}
-                    style={dropdownStyle(selectedRam !== 'ALL', 'var(--pink)', '#ffffff')}
+            {/* Extended Specs Collapsible Drawer for Desktop (+ More Specs) */}
+            {!isMobile && (
+              <AnimatePresence>
+                {showMoreFilters && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+                      gap: 14, 
+                      paddingTop: 16, 
+                      borderTop: '1px solid var(--border-light-color)' 
+                    }}
                   >
-                    <option value="ALL">Exact RAM (Any)</option>
-                    <option value="4">4 GB RAM</option>
-                    <option value="8">8 GB RAM</option>
-                    <option value="16">16 GB RAM</option>
-                    <option value="32">32 GB RAM</option>
-                  </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedRam !== 'ALL' ? '#ffffff' : '#000000' }} />
-                </div>
-              </div>
+                    {/* GPU / Graphics */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                        🎮 Graphics & GPU
+                      </label>
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <select value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)} style={dropdownStyle(selectedGpu !== 'ALL', 'var(--orange)', '#ffffff')}>
+                          <option value="ALL">Any Graphics</option>
+                          <option value="dedicated">🎮 Any Dedicated GPU</option>
+                          <option value="4gb">🔥 4GB Dedicated</option>
+                          <option value="2gb">⚡ 2GB Dedicated</option>
+                          <option value="iris">💻 Intel Iris Xe</option>
+                          <option value="integrated">💼 Integrated Only</option>
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedGpu !== 'ALL' ? '#ffffff' : '#000000' }} />
+                      </div>
+                    </div>
 
-              {/* 8. Storage SSD */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  💿 Storage SSD
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedStorage}
-                    onChange={e => setSelectedStorage(e.target.value)}
-                    style={dropdownStyle(selectedStorage !== 'ALL', 'var(--purple)', '#ffffff')}
-                  >
-                    <option value="ALL">Exact Storage (Any)</option>
-                    <option value="32">32 GB Storage</option>
-                    <option value="256">256 GB SSD</option>
-                    <option value="512">512 GB SSD</option>
-                  </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedStorage !== 'ALL' ? '#ffffff' : '#000000' }} />
-                </div>
-              </div>
+                    {/* Category / Purpose */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                        🎯 Category
+                      </label>
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} style={dropdownStyle(selectedCategory !== 'ALL', 'var(--orange)', '#ffffff')}>
+                          <option value="ALL">All Categories</option>
+                          <option value="WORKSTATION">🖥️ Workstation</option>
+                          <option value="BUSINESS">💼 Business</option>
+                          <option value="EXECUTIVE">✨ Executive</option>
+                          <option value="CONVERTIBLE">🔄 2-in-1 Touch</option>
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedCategory !== 'ALL' ? '#ffffff' : '#000000' }} />
+                      </div>
+                    </div>
 
-              {/* 9. GPU / Graphics */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  🎮 Graphics & GPU
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedGpu}
-                    onChange={e => setSelectedGpu(e.target.value)}
-                    style={dropdownStyle(selectedGpu !== 'ALL', 'var(--orange)', '#ffffff')}
-                  >
-                    <option value="ALL">Any Graphics</option>
-                    <option value="dedicated">🎮 Any Dedicated GPU (Includes 2GB & 4GB Hardware - No Integrated)</option>
-                    <option value="4gb">🔥 4GB Dedicated Graphics (Vostro 5599, Precision 3571, P14s)</option>
-                    <option value="2gb">⚡ 2GB Dedicated Graphics (ThinkPad P14s)</option>
-                    <option value="iris">💻 Intel Iris Xe Graphics</option>
-                    <option value="integrated">💼 Integrated Graphics Only</option>
-                  </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedGpu !== 'ALL' ? '#ffffff' : '#000000' }} />
-                </div>
-              </div>
+                    {/* Processor */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                        ⚡ CPU Processor
+                      </label>
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <select value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)} style={dropdownStyle(selectedCpu !== 'ALL', 'var(--cyan)', '#000000')}>
+                          <option value="ALL">All CPUs</option>
+                          <option value="i5">Intel Core i5</option>
+                          <option value="i7">Intel Core i7</option>
+                          <option value="Ultra 7">Intel Ultra 7</option>
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                      </div>
+                    </div>
 
-              {/* 10. Feature & Screen Size */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  ✨ Feature & Display
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedFeature}
-                    onChange={e => setSelectedFeature(e.target.value)}
-                    style={dropdownStyle(selectedFeature !== 'ALL', 'var(--citrus)', '#000000')}
-                  >
-                    <option value="ALL">All Features & Displays</option>
-                    <option value="touch">👉 Touchscreen Display</option>
-                    <option value="2in1">🔄 2-in-1 Convertible (X360)</option>
-                    <option value="13">📐 12" / 13.3" Compact Screen</option>
-                    <option value="14">📐 14" Standard Screen</option>
-                    <option value="15">📐 15.6" Large Screen</option>
-                  </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
-                </div>
-              </div>
+                    {/* Generation */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                        🎓 Exact Gen
+                      </label>
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <select value={selectedGen} onChange={e => setSelectedGen(e.target.value)} style={dropdownStyle(selectedGen !== 'ALL', 'var(--green)', '#000000')}>
+                          <option value="ALL">Exact Gen (Any)</option>
+                          <option value="4">4th Gen</option>
+                          <option value="8">8th Gen</option>
+                          <option value="9">9th Gen</option>
+                          <option value="10">10th Gen</option>
+                          <option value="11">11th Gen</option>
+                          <option value="12">12th Gen</option>
+                          <option value="13">13th Gen</option>
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                      </div>
+                    </div>
 
-            </div>
+                    {/* RAM */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                        💾 RAM Memory
+                      </label>
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <select value={selectedRam} onChange={e => setSelectedRam(e.target.value)} style={dropdownStyle(selectedRam !== 'ALL', 'var(--pink)', '#ffffff')}>
+                          <option value="ALL">Exact RAM (Any)</option>
+                          <option value="4">4 GB RAM</option>
+                          <option value="8">8 GB RAM</option>
+                          <option value="16">16 GB RAM</option>
+                          <option value="32">32 GB RAM</option>
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedRam !== 'ALL' ? '#ffffff' : '#000000' }} />
+                      </div>
+                    </div>
+
+                    {/* Storage SSD */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                        💿 Storage SSD
+                      </label>
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <select value={selectedStorage} onChange={e => setSelectedStorage(e.target.value)} style={dropdownStyle(selectedStorage !== 'ALL', 'var(--purple)', '#ffffff')}>
+                          <option value="ALL">Exact SSD (Any)</option>
+                          <option value="32">32 GB Storage</option>
+                          <option value="256">256 GB SSD</option>
+                          <option value="512">512 GB SSD</option>
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedStorage !== 'ALL' ? '#ffffff' : '#000000' }} />
+                      </div>
+                    </div>
+
+                    {/* Feature & Display */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                        ✨ Feature & Screen
+                      </label>
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <select value={selectedFeature} onChange={e => setSelectedFeature(e.target.value)} style={dropdownStyle(selectedFeature !== 'ALL', 'var(--citrus)', '#000000')}>
+                          <option value="ALL">All Displays</option>
+                          <option value="touch">👉 Touchscreen</option>
+                          <option value="2in1">🔄 2-in-1 Touch</option>
+                          <option value="13">📐 13.3" Screen</option>
+                          <option value="14">📐 14" Screen</option>
+                          <option value="15">📐 15.6" Screen</option>
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                      </div>
+                    </div>
+
+                  </motion.div>
+                )}
+              </AnimatePresence>
             )}
           </div>
 

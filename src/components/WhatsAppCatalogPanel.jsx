@@ -722,15 +722,12 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     let baseList = products;
 
     if (aiResult && aiResult.recommendations && aiResult.recommendations.length > 0) {
-      const recTitles = aiResult.recommendations.map(r => (r.title || '').toLowerCase().trim());
+      const recTitles = aiResult.recommendations.map(r => (r.title || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
       const aiMatches = products.filter(p => {
-        const titleLower = p.title.toLowerCase().trim();
+        const titleClean = p.title.toLowerCase().replace(/[^a-z0-9]/g, '');
         return recTitles.some(t => {
           if (!t || t.length < 3) return false;
-          return t.includes(titleLower) || titleLower.includes(t) ||
-            (t.includes('precision') && titleLower.includes('precision')) ||
-            (t.includes('spectre') && titleLower.includes('spectre')) ||
-            (t.includes('latitude 5310') && titleLower.includes('5310'));
+          return t.includes(titleClean) || titleClean.includes(t);
         });
       });
       if (aiMatches.length > 0) {

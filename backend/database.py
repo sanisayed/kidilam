@@ -2928,11 +2928,14 @@ def set_catalog_setting(key, value):
         return False
 
 
+DEFAULT_MASTER_EMAIL = "mahinshanavas1@gmail.com"
+
+
 def get_admin_requests():
     import json
     approved_raw = get_catalog_setting("approved_admin_emails", "[]")
     pending_raw = get_catalog_setting("pending_admin_requests", "[]")
-    master_email = get_catalog_setting("master_admin_email", "")
+    master_email = get_catalog_setting("master_admin_email", DEFAULT_MASTER_EMAIL) or DEFAULT_MASTER_EMAIL
     try:
         approved = json.loads(approved_raw) if isinstance(approved_raw, str) else approved_raw
     except Exception:
@@ -2941,7 +2944,12 @@ def get_admin_requests():
         pending = json.loads(pending_raw) if isinstance(pending_raw, str) else pending_raw
     except Exception:
         pending = []
-    return {"master": master_email, "approved": approved, "pending": pending}
+
+    approved_set = set(e.lower() for e in approved if isinstance(e, str))
+    approved_set.add(master_email.lower())
+
+    return {"master": master_email, "approved": list(approved_set), "pending": pending}
+
 
 
 def save_admin_request(action, email):

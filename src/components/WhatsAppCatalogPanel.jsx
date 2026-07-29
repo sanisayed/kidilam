@@ -745,12 +745,15 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
   const isAdmin = Boolean(googleAccessToken);
 
-  // Allowed Admin Emails Whitelist (comma-separated list from env)
+  // Allowed Admin Emails Whitelist (comma-separated list from env, or default Master Owner)
   const allowedAdminEmails = useMemo(() => {
     const envVal = import.meta.env.VITE_ALLOWED_ADMIN_EMAILS || '';
-    if (!envVal || envVal.trim() === '' || envVal.includes('*')) return [];
-    return envVal.toLowerCase().split(',').map(e => e.trim()).filter(Boolean);
+    if (!envVal || envVal.trim() === '' || envVal.includes('*')) return ['mahinshanavas1@gmail.com'];
+    const list = envVal.toLowerCase().split(',').map(e => e.trim()).filter(Boolean);
+    if (!list.includes('mahinshanavas1@gmail.com')) list.push('mahinshanavas1@gmail.com');
+    return list;
   }, []);
+
 
 
   // Fetch admin approval requests from backend API

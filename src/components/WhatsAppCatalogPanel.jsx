@@ -207,8 +207,10 @@ function parseWhatsAppCatalog(rawText) {
     else if (titleUpper.includes('MICROSOFT') || titleUpper.includes('SURFACE')) brand = 'SURFACE';
     else if (titleUpper.includes('MACBOOK') || titleUpper.includes('APPLE')) brand = 'MACBOOK';
 
+    const stableId = 'prod_' + cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
     products.push({
-      id: 'prod_' + Math.random().toString(36).substring(2, 9),
+      id: stableId,
       rawText: fullBlockText,
       title: cleanTitle,
       brand,
@@ -500,7 +502,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return result.trim();
   }, [filteredProducts]);
 
-  // Product Photos local state
+  // Product Photos local state (stores arrays of photos per product)
   const [productPhotos, setProductPhotos] = useState(() => {
     try {
       const saved = localStorage.getItem('whatsapp_product_photos');
@@ -510,143 +512,370 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     }
   });
 
-  const saveProductPhoto = (productIdOrTitle, base64Photo) => {
-    const updated = { ...productPhotos, [productIdOrTitle]: base64Photo };
-    setProductPhotos(updated);
+  // Track active photo index per product card
+  const [activePhotoIndices, setActivePhotoIndices] = useState({});
+
+  // Helper to generate 3 distinct default multi-angle photos for a product
+  const createDefaultPhotosArrayForProduct = (title = 'Laptop', brand = 'DELL') => {
     try {
-      localStorage.setItem('whatsapp_product_photos', JSON.stringify(updated));
+      const brandColor = brand === 'DELL' ? '#0284c7' : brand === 'HP' ? '#a855f7' : brand === 'LENOVO' ? '#f97316' : '#ec4899';
+
+      // 1. Front Open Display View
+      const c1 = document.createElement('canvas'); c1.width = 800; c1.height = 600;
+      const ctx1 = c1.getContext('2d');
+      ctx1.fillStyle = '#ffffff'; ctx1.fillRect(0, 0, 800, 600);
+      ctx1.fillStyle = '#0f172a'; ctx1.fillRect(140, 50, 520, 340);
+      ctx1.fillStyle = brandColor; ctx1.fillRect(160, 70, 480, 300);
+      ctx1.fillStyle = '#ffffff'; ctx1.font = 'bold 30px sans-serif'; ctx1.textAlign = 'center'; ctx1.fillText(title, 400, 210);
+      ctx1.fillStyle = '#64748b'; ctx1.fillRect(90, 390, 620, 24);
+      ctx1.fillStyle = '#94a3b8'; ctx1.fillRect(350, 424, 100, 40);
+
+      // 2. Keyboard & Trackpad Open Angle View
+      const c2 = document.createElement('canvas'); c2.width = 800; c2.height = 600;
+      const ctx2 = c2.getContext('2d');
+      ctx2.fillStyle = '#f8fafc'; ctx2.fillRect(0, 0, 800, 600);
+      ctx2.fillStyle = '#1e293b'; ctx2.fillRect(100, 80, 600, 340);
+      ctx2.fillStyle = '#334155';
+      for (let r = 0; r < 5; r++) {
+        for (let col = 0; col < 12; col++) {
+          ctx2.fillRect(130 + (col * 44), 110 + (r * 40), 38, 32);
+        }
+      }
+      ctx2.fillStyle = '#64748b'; ctx2.fillRect(300, 330, 200, 70);
+      ctx2.fillStyle = brandColor; ctx2.font = 'bold 22px sans-serif'; ctx2.textAlign = 'center'; ctx2.fillText(`${title} • Keyboard View`, 400, 480);
+
+      // 3. Closed Lid Top Cover Profile
+      const c3 = document.createElement('canvas'); c3.width = 800; c3.height = 600;
+      const ctx3 = c3.getContext('2d');
+      ctx3.fillStyle = '#f1f5f9'; ctx3.fillRect(0, 0, 800, 600);
+      ctx3.fillStyle = '#334155'; ctx3.fillRect(120, 80, 560, 400);
+      ctx3.fillStyle = brandColor; ctx3.beginPath(); ctx3.arc(400, 280, 50, 0, Math.PI * 2); ctx3.fill();
+      ctx3.fillStyle = '#ffffff'; ctx3.font = 'bold 28px sans-serif'; ctx3.textAlign = 'center'; ctx3.fillText(brand, 400, 290);
+      ctx3.fillStyle = '#0f172a'; ctx3.font = 'bold 22px sans-serif'; ctx3.fillText(`${title} • Top Cover Profile`, 400, 520);
+
+      return [c1.toDataURL('image/jpeg', 0.88), c2.toDataURL('image/jpeg', 0.88), c3.toDataURL('image/jpeg', 0.88)];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const getProductPhotosList = (p) => {
+    if (!p) return [];
+    const key1 = p.id;
+    const key2 = p.title;
+    const key3 = p.title?.toUpperCase();
+
+    const entry = productPhotos[key1] || productPhotos[key2] || productPhotos[key3] || p.photos || p.photo || p.image_url;
+    if (Array.isArray(entry) && entry.filter(Boolean).length > 0) return entry.filter(Boolean);
+    if (typeof entry === 'string' && entry.trim().length > 0) return [entry];
+    
+    return createDefaultPhotosArrayForProduct(p.title, p.brand);
+  };
+
+  // Upload Image Resolution Size option: 1600 (Max HD), 1200 (HD Standard), 800 (Compact), 500 (Small)
+  const [uploadImageMaxDim, setUploadImageMaxDim] = useState(() => {
+    return localStorage.getItem('whatsapp_photo_upload_size') || '1200';
+  });
+
+  const handleUploadSizeChange = (newSize) => {
+    setUploadImageMaxDim(newSize);
+    try {
+      localStorage.setItem('whatsapp_photo_upload_size', newSize);
     } catch (e) {}
   };
 
-  const handleAttachCardPhoto = (productIdOrTitle, file) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 800;
-        let w = img.width, h = img.height;
-        if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-        else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        saveProductPhoto(productIdOrTitle, dataUrl);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+  // Calculate approximate file size of base64 image string
+  const getImageDataSizeInfo = (base64Str) => {
+    if (!base64Str || typeof base64Str !== 'string') return '';
+    try {
+      const stringLength = base64Str.length - (base64Str.indexOf(',') + 1);
+      const sizeInBytes = Math.ceil(stringLength * 0.75);
+      if (sizeInBytes > 1024 * 1024) {
+        return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+      }
+      return `${Math.round(sizeInBytes / 1024)} KB`;
+    } catch (e) {
+      return '';
+    }
   };
 
-  // Canvas Card PNG Generator
-  const generateProductCardBlob = async (p) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 800;
-    canvas.height = 1000;
-    const ctx = canvas.getContext('2d');
+  const addMultipleProductPhotos = (pObj, filesList) => {
+    if (!filesList || filesList.length === 0) return;
+    const fileArray = Array.from(filesList);
+    const maxDim = parseInt(uploadImageMaxDim, 10) || 1200;
 
-    // Background
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, 800, 1000);
+    const promises = fileArray.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.88));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
 
-    // Header Banner
-    ctx.fillStyle = '#8b5cf6';
-    ctx.fillRect(0, 0, 800, 100);
+    Promise.all(promises).then(newPhotos => {
+      const key1 = typeof pObj === 'object' ? pObj.id : pObj;
+      const key2 = typeof pObj === 'object' ? pObj.title : pObj;
+      const existing = getProductPhotosList(typeof pObj === 'object' ? pObj : { id: pObj, title: pObj });
+      const combined = [...existing, ...newPhotos];
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 36px sans-serif';
-    ctx.fillText('BUYOLOGY LAPTOP SPECIAL', 40, 62);
-
-    const pPhoto = productPhotos[p.id] || productPhotos[p.title] || p.photo;
-
-    // Draw Photo if available
-    if (pPhoto) {
+      const updatedMap = {
+        ...productPhotos,
+        [key1]: combined,
+        [key2]: combined
+      };
+      setProductPhotos(updatedMap);
       try {
-        const img = new Image();
-        img.src = pPhoto;
-        await new Promise((res) => { img.onload = res; img.onerror = res; });
-        ctx.drawImage(img, 40, 120, 720, 440);
-      } catch (e) {
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(40, 120, 720, 440);
-      }
-    } else {
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(40, 120, 720, 440);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '90px sans-serif';
-      ctx.fillText('💻', 350, 360);
-    }
-
-    // Title
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px sans-serif';
-    ctx.fillText(p.title || 'Laptop Offer', 40, 610);
-
-    // Specs
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '22px monospace';
-    let y = 660;
-    if (p.processor) { ctx.fillText(`• CPU: ${p.processor} ${p.gen || ''}`, 40, y); y += 34; }
-    if (p.ram) { ctx.fillText(`• RAM: ${p.ram} GB DDR4/DDR5`, 40, y); y += 34; }
-    if (p.storage) { ctx.fillText(`• Storage: ${p.storage} GB SSD`, 40, y); y += 34; }
-    if (p.display) { ctx.fillText(`• Display: ${p.display}`, 40, y); y += 34; }
-    if (p.gpu) { ctx.fillText(`• GPU: ${p.gpu}`, 40, y); y += 34; }
-
-    // Price Banner
-    ctx.fillStyle = '#a3e635';
-    ctx.fillRect(40, 880, 720, 80);
-
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 36px sans-serif';
-    ctx.fillText(`OFFER PRICE @ ${p.offerPrice}/- AED 💰`, 60, 934);
-
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), 'image/png');
+        localStorage.setItem('whatsapp_product_photos', JSON.stringify(updatedMap));
+      } catch (e) {}
     });
   };
 
-  // Copy Photo + Formatted WhatsApp Text to Clipboard
-  const handleCopyPhotoAndText = async (p) => {
+  // Download all photos attached to product (for 1-drag drop into WhatsApp Web)
+  const downloadAllPhotos = async (p) => {
+    const photoList = getProductPhotosList(p);
+    if (photoList.length === 0) {
+      alert('No photos attached to this product yet.');
+      return;
+    }
+
+    for (let i = 0; i < photoList.length; i++) {
+      const photoData = photoList[i];
+      const a = document.createElement('a');
+      a.href = photoData;
+      a.download = `${(p.title || 'laptop').replace(/[^a-zA-Z0-9_-]/g, '_')}_photo_${i + 1}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      await new Promise(res => setTimeout(res, 200));
+    }
+    setToastMessage(`⬇️ Downloaded ${photoList.length} photos to your downloads folder! Drag & drop into WhatsApp!`);
+    setTimeout(() => setToastMessage(''), 4000);
+  };
+
+  const removeProductPhoto = (pObj, indexToRemove) => {
+    const key1 = typeof pObj === 'object' ? pObj.id : pObj;
+    const key2 = typeof pObj === 'object' ? pObj.title : pObj;
+    const existing = getProductPhotosList(typeof pObj === 'object' ? pObj : { id: pObj, title: pObj });
+    const updatedList = existing.filter((_, idx) => idx !== indexToRemove);
+
+    const updatedMap = {
+      ...productPhotos,
+      [key1]: updatedList,
+      [key2]: updatedList
+    };
+    setProductPhotos(updatedMap);
     try {
-      const pngBlob = await generateProductCardBlob(p);
-      const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
+      localStorage.setItem('whatsapp_product_photos', JSON.stringify(updatedMap));
+    } catch (e) {}
+
+    // Reset active index if needed
+    setActivePhotoIndices(prev => ({
+      ...prev,
+      [key1]: Math.max(0, (prev[key1] || 0) - 1)
+    }));
+  };
+
+  // Helper: Base64 to Blob conversion
+  const base64ToPngBlob = async (base64Data) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width || 800;
+        canvas.height = img.height || 600;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => resolve(blob), 'image/png');
+      };
+      img.onerror = () => reject(new Error('Failed to load image for blob'));
+      img.src = base64Data;
+    });
+  };
+
+  // Clean Product Photo Blob Generator for specific index or default
+  const getCleanProductPhotoBlob = async (p, photoIdx = 0) => {
+    const photoList = getProductPhotosList(p);
+    const targetPhoto = photoList[photoIdx] || photoList[0];
+
+    if (targetPhoto) {
+      try {
+        const blob = await base64ToPngBlob(targetPhoto);
+        if (blob) return blob;
+      } catch (e) {
+        console.warn('Fallback to generated photo canvas:', e);
+      }
+    }
+
+    // Generate high quality product image card canvas if no photo attached yet
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 800, 600);
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(150, 60, 500, 320);
+
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(170, 80, 460, 280);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.title || 'Buyology Laptop', 400, 210);
+
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(100, 380, 600, 24);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(350, 415, 100, 50);
+
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  };
+
+  // Download ALL Photos & Copy Formatted Text Caption (for WhatsApp Web Multi-Photo Album Drag & Drop)
+  const handleDownloadAndCopyCaption = async (p) => {
+    const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
+    const photoList = getProductPhotosList(p);
+
+    if (photoList.length === 0) {
+      alert('No photos attached to this product yet.');
+      return;
+    }
+
+    for (let i = 0; i < photoList.length; i++) {
+      const a = document.createElement('a');
+      a.href = photoList[i];
+      a.download = `${(p.title || 'laptop').replace(/[^a-zA-Z0-9_-]/g, '_')}_photo_${i + 1}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      await new Promise(res => setTimeout(res, 150));
+    }
+
+    try {
+      await navigator.clipboard.writeText(postText);
+    } catch (e) {}
+
+    setCopiedId(`dl-copy-${p.id}`);
+    setToastMessage(`⬇️ Downloaded ${photoList.length} Photos & Copied Text! Drag photos into WhatsApp Web & press Ctrl+V for caption!`);
+    setTimeout(() => { setCopiedId(null); setToastMessage(''); }, 6000);
+  };
+
+  // Copy ALL Attached Photos + Formatted Text Caption in 1 Single Action (for WhatsApp Web Ctrl+V)
+  const handleCopyAllPhotosAndText = async (p) => {
+    const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
+    const photoList = getProductPhotosList(p);
+
+    try {
+      const clipboardItems = [];
       const textBlob = new Blob([postText], { type: 'text/plain' });
 
+      if (photoList.length > 0) {
+        for (let i = 0; i < photoList.length; i++) {
+          const pngBlob = await base64ToPngBlob(photoList[i]);
+          if (i === 0) {
+            // First item contains BOTH image/png and text/plain for WhatsApp caption
+            clipboardItems.push(new ClipboardItem({
+              'image/png': pngBlob,
+              'text/plain': textBlob
+            }));
+          } else {
+            clipboardItems.push(new ClipboardItem({
+              'image/png': pngBlob
+            }));
+          }
+        }
+      } else {
+        const fallbackBlob = await getCleanProductPhotoBlob(p, 0);
+        clipboardItems.push(new ClipboardItem({
+          'image/png': fallbackBlob,
+          'text/plain': textBlob
+        }));
+      }
+
       if (navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            'image/png': pngBlob,
-            'text/plain': textBlob
-          })
-        ]);
-        setCopiedId(`photo-${p.id}`);
-        setToastMessage('Copied Photo + Text! Paste (Ctrl+V) directly into WhatsApp!');
-        setTimeout(() => { setCopiedId(null); setToastMessage(''); }, 3000);
+        try {
+          await navigator.clipboard.write(clipboardItems);
+        } catch (e1) {
+          // Fallback if browser limits multi-item array
+          await navigator.clipboard.write([clipboardItems[0]]);
+        }
+
+        setCopiedId(`all-photos-${p.id}`);
+        setToastMessage(`✅ ALL ${photoList.length || 1} Photos + Text Caption Copied! Press Ctrl+V in WhatsApp!`);
+        setTimeout(() => { setCopiedId(null); setToastMessage(''); }, 4000);
       } else {
         handleCopy(postText, p.id);
       }
     } catch (err) {
-      console.error('Copy photo error:', err);
-      handleCopy(p.rawText, p.id);
+      console.error('Copy all photos error:', err);
+      handleCopy(postText, p.id);
     }
   };
 
-  // Share Photo + Text to Mobile WhatsApp
+  // Copy Pure Photo Blob to Clipboard (for WhatsApp Web Ctrl+V Image Attachment)
+  const handleCopyPhoto = async (p, photoIdx = 0) => {
+    try {
+      const pngBlob = await getCleanProductPhotoBlob(p, photoIdx);
+
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'image/png': pngBlob
+          })
+        ]);
+        setCopiedId(`photo-${p.id}`);
+        setToastMessage(`📷 Product Photo copied! Press Ctrl+V in WhatsApp chat!`);
+        setTimeout(() => { setCopiedId(null); setToastMessage(''); }, 5000);
+      } else {
+        alert('Browser does not support direct image clipboard copy. Please use Mobile Share button.');
+      }
+    } catch (err) {
+      console.error('Copy photo error:', err);
+      alert('Could not copy image blob to clipboard: ' + err.message);
+    }
+  };
+
+  // Share Native Photos + Formatted WhatsApp Text Caption (Mobile 1-Tap)
   const handleShareToWhatsApp = async (p) => {
     const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
-    try {
-      const pngBlob = await generateProductCardBlob(p);
-      const file = new File([pngBlob], `${(p.title || 'laptop').replace(/\s+/g, '_')}.png`, { type: 'image/png' });
+    const photoList = getProductPhotosList(p);
 
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      const files = [];
+      if (photoList.length > 0) {
+        for (let i = 0; i < photoList.length; i++) {
+          const blob = await base64ToPngBlob(photoList[i]);
+          files.push(new File([blob], `${(p.title || 'laptop').replace(/\s+/g, '_')}_photo_${i + 1}.png`, { type: 'image/png' }));
+        }
+      } else {
+        const fallbackBlob = await getCleanProductPhotoBlob(p, 0);
+        files.push(new File([fallbackBlob], `${(p.title || 'laptop').replace(/\s+/g, '_')}.png`, { type: 'image/png' }));
+      }
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
         await navigator.share({
           title: p.title,
           text: postText,
-          files: [file]
+          files
         });
         return;
       }
@@ -1166,64 +1395,127 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                         }}
                       >
                         <div>
-                          {/* Photo Thumbnail Preview & Attach Trigger */}
+                          {/* Multi-Photo Gallery Preview & Upload Strip */}
                           {(() => {
-                            const pPhoto = productPhotos[p.id] || productPhotos[p.title] || p.photo;
+                            const photosList = getProductPhotosList(p);
+                            const activeIdx = activePhotoIndices[p.id] || 0;
+                            const activePhoto = photosList[activeIdx] || photosList[0];
+
                             return (
-                              <div style={{ marginBottom: 10 }}>
-                                {pPhoto ? (
-                                  <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000' }}>
-                                    <img src={pPhoto} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    <label 
-                                      style={{
-                                        position: 'absolute',
-                                        bottom: 6,
-                                        right: 6,
-                                        background: 'rgba(0,0,0,0.8)',
-                                        color: '#fff',
-                                        fontSize: '0.68rem',
-                                        fontWeight: 800,
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        fontFamily: 'var(--font-mono)'
-                                      }}
-                                    >
-                                      📷 Change Photo
-                                      <input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        capture="environment"
-                                        style={{ display: 'none' }}
-                                        onChange={e => e.target.files && handleAttachCardPhoto(p.id || p.title, e.target.files[0])}
-                                      />
-                                    </label>
+                              <div style={{ marginBottom: 12 }}>
+                                {photosList.length > 0 ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                    <div style={{ position: 'relative', width: '100%', height: '160px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000' }}>
+                                      <img src={activePhoto} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                      
+                                      <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(0,0,0,0.85)', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '3px 8px', borderRadius: '4px', fontFamily: 'var(--font-mono)', display: 'flex', gap: 6, alignItems: 'center' }}>
+                                        <span>Photo {activeIdx + 1} of {photosList.length}</span>
+                                        {getImageDataSizeInfo(activePhoto) && <span style={{ opacity: 0.8, borderLeft: '1px solid rgba(255,255,255,0.4)', paddingLeft: 6 }}>{getImageDataSizeInfo(activePhoto)}</span>}
+                                      </span>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => removeProductPhoto(p, activeIdx)}
+                                        style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, cursor: 'pointer', fontWeight: 900, fontSize: '0.7rem' }}
+                                        title="Remove this photo"
+                                      >
+                                        ✕
+                                      </button>
+
+                                      <label 
+                                        style={{
+                                          position: 'absolute',
+                                          bottom: 6,
+                                          right: 6,
+                                          background: 'rgba(0,0,0,0.85)',
+                                          color: '#fff',
+                                          fontSize: '0.66rem',
+                                          fontWeight: 800,
+                                          padding: '4px 8px',
+                                          borderRadius: '4px',
+                                          cursor: 'pointer',
+                                          fontFamily: 'var(--font-mono)',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: 4
+                                        }}
+                                      >
+                                        <span>+ Add Photos</span>
+                                        <input 
+                                          type="file" 
+                                          accept="image/*" 
+                                          multiple
+                                          capture="environment"
+                                          style={{ display: 'none' }}
+                                          onChange={e => e.target.files && addMultipleProductPhotos(p, e.target.files)}
+                                        />
+                                      </label>
+                                    </div>
+
+                                    {/* Gallery Thumbnail Strip & Download All Button */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                                      {photosList.length > 1 ? (
+                                        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flex: 1, paddingBottom: 2 }}>
+                                          {photosList.map((ph, idx) => (
+                                            <div 
+                                              key={idx}
+                                              onClick={() => setActivePhotoIndices(prev => ({ ...prev, [p.id]: idx }))}
+                                              style={{
+                                                width: 44,
+                                                height: 44,
+                                                borderRadius: 4,
+                                                overflow: 'hidden',
+                                                border: idx === activeIdx ? '2px solid var(--citrus, #a3e635)' : '1px solid var(--border-light-color)',
+                                                cursor: 'pointer',
+                                                opacity: idx === activeIdx ? 1 : 0.6,
+                                                flexShrink: 0
+                                              }}
+                                            >
+                                              <img src={ph} alt={`Thumb ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : <span />}
+
+                                      <button
+                                        type="button"
+                                        className="btn btn-ghost"
+                                        style={{ fontSize: '0.68rem', padding: '3px 8px', fontWeight: 800, whiteSpace: 'nowrap' }}
+                                        onClick={() => downloadAllPhotos(p)}
+                                        title="Download all photos to drag & drop into WhatsApp Web!"
+                                      >
+                                        ⬇️ Download All ({photosList.length})
+                                      </button>
+                                    </div>
                                   </div>
                                 ) : (
                                   <label 
                                     style={{
                                       display: 'flex',
+                                      flexDirection: 'column',
                                       alignItems: 'center',
                                       justifyContent: 'center',
-                                      gap: 6,
-                                      padding: '8px 12px',
-                                      border: '1px dashed var(--border-color)',
+                                      gap: 4,
+                                      padding: '14px 10px',
+                                      border: '2px dashed var(--border-color)',
                                       borderRadius: 'var(--radius-sm)',
                                       background: 'var(--bg)',
                                       color: 'var(--text-secondary)',
-                                      fontSize: '0.74rem',
+                                      fontSize: '0.78rem',
                                       fontFamily: 'var(--font-mono)',
                                       fontWeight: 800,
                                       cursor: 'pointer'
                                     }}
                                   >
-                                    <span>📷 Attach Product Photo</span>
+                                    <span style={{ fontSize: '1.2rem' }}>📷</span>
+                                    <span>Add Multiple Photos (Gallery)</span>
                                     <input 
                                       type="file" 
                                       accept="image/*" 
+                                      multiple
                                       capture="environment"
                                       style={{ display: 'none' }}
-                                      onChange={e => e.target.files && handleAttachCardPhoto(p.id || p.title, e.target.files[0])}
+                                      onChange={e => e.target.files && addMultipleProductPhotos(p, e.target.files)}
                                     />
                                   </label>
                                 )}
@@ -1335,21 +1627,23 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                           </div>
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {/* Copy Photo + Text Button */}
+                            {/* Primary Button 1: Download All Photos & Copy Caption Text for 1-Drag WhatsApp Web Multi-Photo Album */}
                             <button 
                               className="btn btn-primary" 
                               style={{ 
                                 width: '100%', 
-                                fontSize: '0.8rem', 
+                                fontSize: '0.86rem', 
                                 fontWeight: 900,
                                 justifyContent: 'center',
-                                background: copiedId === `photo-${p.id}` ? 'var(--green)' : 'var(--citrus)',
-                                color: '#000000'
+                                background: copiedId === `dl-copy-${p.id}` ? 'var(--green)' : 'var(--citrus)',
+                                color: '#000000',
+                                padding: '11px'
                               }}
-                              onClick={() => handleCopyPhotoAndText(p)}
+                              onClick={() => handleDownloadAndCopyCaption(p)}
+                              title="Downloads all attached laptop photos & copies specs text! Drag all downloaded photos into WhatsApp Web & press Ctrl+V for caption!"
                             >
-                              {copiedId === `photo-${p.id}` ? <Check size={14} /> : <span>📷</span>}
-                              <span>{copiedId === `photo-${p.id}` ? 'Copied Photo + Text!' : 'Copy Photo + Text for WhatsApp'}</span>
+                              {copiedId === `dl-copy-${p.id}` ? <Check size={16} /> : <span>⬇️</span>}
+                              <span>{copiedId === `dl-copy-${p.id}` ? 'Downloaded Photos & Copied Text!' : `⬇️ Download All (${(productPhotos[p.id] || productPhotos[p.title] || p.photos || [1,2,3]).length || 3}) Photos & Copy Text`}</span>
                             </button>
 
                             <div style={{ display: 'flex', gap: 6 }}>
@@ -1357,21 +1651,42 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                 className="btn btn-ghost" 
                                 style={{ 
                                   flex: 1, 
-                                  fontSize: '0.74rem', 
+                                  fontSize: '0.76rem', 
                                   fontWeight: 800,
-                                  justifyContent: 'center'
+                                  justifyContent: 'center',
+                                  background: copiedId === `photo-${p.id}` ? 'var(--green)' : 'var(--bg)',
+                                  color: copiedId === `photo-${p.id}` ? '#000' : 'var(--text-primary)',
+                                  border: '1px solid var(--border-light-color)'
+                                }}
+                                onClick={() => handleCopyPhoto(p, activePhotoIndices[p.id] || 0)}
+                                title="Copy single active photo for Ctrl+V paste into WhatsApp Web"
+                              >
+                                <span>📷 Copy Photo #{(activePhotoIndices[p.id] || 0) + 1}</span>
+                              </button>
+
+                              <button 
+                                className="btn btn-ghost" 
+                                style={{ 
+                                  flex: 1, 
+                                  fontSize: '0.76rem', 
+                                  fontWeight: 800,
+                                  justifyContent: 'center',
+                                  background: copiedId === p.id ? 'var(--green)' : 'var(--bg)',
+                                  color: copiedId === p.id ? '#000' : 'var(--text-primary)',
+                                  border: '1px solid var(--border-light-color)'
                                 }}
                                 onClick={() => handleCopy(p.rawText, p.id)}
+                                title="Copy WhatsApp formatted text quote"
                               >
-                                {copiedId === p.id ? <Check size={12} /> : <Copy size={12} />}
-                                <span>{copiedId === p.id ? 'Copied Text' : 'Copy Text'}</span>
+                                {copiedId === p.id ? <Check size={13} /> : <Copy size={13} />}
+                                <span>{copiedId === p.id ? 'Text Copied' : '📋 Copy Text'}</span>
                               </button>
 
                               <button 
                                 className="btn btn-secondary"
-                                style={{ padding: '6px 12px', fontSize: '0.74rem', fontWeight: 800 }}
+                                style={{ padding: '6px 12px', fontSize: '0.76rem', fontWeight: 800 }}
                                 onClick={() => handleShareToWhatsApp(p)}
-                                title="Share to WhatsApp"
+                                title="Direct 1-Tap Share on Mobile WhatsApp with all photos & text"
                               >
                                 <Share2 size={13} /> Share
                               </button>

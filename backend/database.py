@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS products (
     model TEXT NOT NULL,
     price REAL NOT NULL DEFAULT 0,
     image_url TEXT DEFAULT '',
+    photos TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -572,9 +573,14 @@ def init_db():
         conn.commit()
     except sqlite3.OperationalError:
         pass
-    # Safely alter products to add image_url if it doesn't exist
+    # Safely alter products to add image_url and photos if they don't exist
     try:
         conn.execute("ALTER TABLE products ADD COLUMN image_url TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE products ADD COLUMN photos TEXT DEFAULT ''")
         conn.commit()
     except sqlite3.OperationalError:
         pass

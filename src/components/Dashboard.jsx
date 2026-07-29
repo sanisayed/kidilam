@@ -643,29 +643,43 @@ function AddProductModal({ isOpen, onClose, onSave }) {
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [price, setPrice] = useState('');
-  const [photo, setPhoto] = useState('');
+  const [photos, setPhotos] = useState([]);
   const [error, setError] = useState('');
 
-  const handlePhotoSelect = (file) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 800;
-        let w = img.width, h = img.height;
-        if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-        else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        setPhoto(canvas.toDataURL('image/jpeg', 0.8));
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+  const handlePhotosSelect = (filesList) => {
+    if (!filesList || filesList.length === 0) return;
+    const fileArray = Array.from(filesList);
+
+    const promises = fileArray.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxDim = 800;
+            let w = img.width, h = img.height;
+            if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(promises).then(newPhotos => {
+      setPhotos(prev => [...prev, ...newPhotos]);
+    });
+  };
+
+  const handleRemovePhoto = (idxToRemove) => {
+    setPhotos(prev => prev.filter((_, idx) => idx !== idxToRemove));
   };
 
   const handleSave = (e) => {
@@ -680,13 +694,14 @@ function AddProductModal({ isOpen, onClose, onSave }) {
       name: model.trim(),
       qty: 15,
       price: parseFloat(price),
-      image_url: photo
+      image_url: photos[0] || '',
+      photos: photos
     });
     setDta('');
     setBrand('');
     setModel('');
     setPrice('');
-    setPhoto('');
+    setPhotos([]);
     setError('');
     onClose();
   };
@@ -712,57 +727,88 @@ function AddProductModal({ isOpen, onClose, onSave }) {
         style={{ width: '100%', maxWidth: '460px', background: 'var(--bg-card)', maxHeight: '90vh', overflowY: 'auto' }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-          <h3 className="font-heading" style={{ fontSize: '1.3rem' }}>📷 Add Product with Photo</h3>
+          <h3 className="font-heading" style={{ fontSize: '1.3rem' }}>📷 Add Product with Multiple Photos</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontWeight: 800, cursor: 'pointer', color: 'var(--text-primary)' }}>✕</button>
         </div>
 
         {error && <div className="alert alert-error" style={{ marginBottom: 14 }}>{error}</div>}
 
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Photo Upload / Camera Capture Field */}
+          {/* Multiple Photo Upload / Camera Field */}
           <div className="field">
-            <label className="field-label">PRODUCT PHOTO (UPLOAD OR CAMERA)</label>
-            {photo ? (
-              <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)' }}>
-                <img src={photo} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <button 
-                  type="button" 
-                  onClick={() => setPhoto('')}
-                  style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.75)', color: '#fff', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontWeight: 800 }}
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 8 }}>
+            <label className="field-label">PRODUCT PHOTOS (UPLOAD MULTIPLE / CAMERA)</label>
+            {photos.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                  {photos.map((ph, idx) => (
+                    <div key={idx} style={{ position: 'relative', width: 70, height: 70, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)', flexShrink: 0 }}>
+                      <img src={ph} alt={`Preview ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemovePhoto(idx)}
+                        style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(239,68,68,0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, fontSize: '0.6rem', fontWeight: 900, cursor: 'pointer' }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
                 <label 
                   style={{
-                    flex: 1,
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '16px 10px',
-                    border: '2px dashed var(--border-color)',
+                    gap: 6,
+                    padding: '8px',
+                    border: '1px dashed var(--border-color)',
                     borderRadius: 'var(--radius-sm)',
-                    cursor: 'pointer',
                     background: 'var(--bg)',
-                    fontSize: '0.8rem',
-                    fontFamily: 'var(--font-mono)',
-                    fontWeight: 700
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
                   }}
                 >
-                  <span style={{ fontSize: '1.4rem', marginBottom: 4 }}>📷</span>
-                  <span>Take Photo / Upload Image</span>
+                  <span>📷 + Add More Photos</span>
                   <input 
                     type="file" 
                     accept="image/*" 
+                    multiple
                     capture="environment"
                     style={{ display: 'none' }}
-                    onChange={e => e.target.files && handlePhotoSelect(e.target.files[0])}
+                    onChange={e => e.target.files && handlePhotosSelect(e.target.files)}
                   />
                 </label>
               </div>
+            ) : (
+              <label 
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                  padding: '20px 12px',
+                  border: '2px dashed var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--bg)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                <span style={{ fontSize: '1.4rem' }}>📷</span>
+                <span>Upload Multiple Photos or Open Camera</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  multiple
+                  capture="environment"
+                  style={{ display: 'none' }}
+                  onChange={e => e.target.files && handlePhotosSelect(e.target.files)}
+                />
+              </label>
             )}
           </div>
 

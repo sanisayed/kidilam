@@ -806,6 +806,13 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const isAdmin = Boolean(googleAccessToken);
 
 
+  // Allowed Admin Emails Whitelist (comma-separated list from env, or allow all authenticated Google users)
+  const allowedAdminEmails = useMemo(() => {
+    const envVal = import.meta.env.VITE_ALLOWED_ADMIN_EMAILS || '';
+    if (!envVal || envVal.trim() === '' || envVal.includes('*')) return null;
+    return envVal.toLowerCase().split(',').map(e => e.trim()).filter(Boolean);
+  }, []);
+
   const handleGoogleDriveLogin = useCallback(() => {
     if (typeof window === 'undefined') return;
 
@@ -821,20 +828,30 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
           callback: async (tokenResponse) => {
 
             if (tokenResponse.access_token) {
-              setGoogleAccessToken(tokenResponse.access_token);
-              try { sessionStorage.setItem('google_drive_token', tokenResponse.access_token); } catch {}
-
+              let userEmail = '';
               try {
                 const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
                   headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
                 });
                 if (userRes.ok) {
                   const userData = await userRes.json();
-                  if (userData.email) {
-                    setGoogleUserEmail(userData.email);
-                    try { sessionStorage.setItem('google_drive_email', userData.email); } catch {}
-                  }
+                  userEmail = (userData.email || '').toLowerCase().trim();
                 }
+              } catch {}
+
+              if (allowedAdminEmails && allowedAdminEmails.length > 0 && userEmail) {
+                if (!allowedAdminEmails.includes(userEmail)) {
+                  alert(`⛔ Access Denied: "${userEmail}" is not authorized as an Admin.`);
+                  return;
+                }
+              }
+
+              setGoogleAccessToken(tokenResponse.access_token);
+              if (userEmail) setGoogleUserEmail(userEmail);
+
+              try {
+                sessionStorage.setItem('google_drive_token', tokenResponse.access_token);
+                if (userEmail) sessionStorage.setItem('google_drive_email', userEmail);
               } catch {}
 
               setToastMessage('🟢 Connected to Google Drive Admin!');
@@ -847,6 +864,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         alert('Google Identity Services script loading. Please click login again.');
       }
     };
+
 
     if (!script) {
       script = document.createElement('script');

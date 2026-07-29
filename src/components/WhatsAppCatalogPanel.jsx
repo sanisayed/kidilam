@@ -402,8 +402,10 @@ function parseWhatsAppCatalog(rawText) {
     let os = '';
     let originalPrice = '';
     let offerPrice = 0;
+    let embeddedPhotos = [];
 
     blockLines.forEach(l => {
+
       const lower = l.toLowerCase();
 
       // Processor
@@ -489,9 +491,20 @@ function parseWhatsAppCatalog(rawText) {
           if (val > 50) offerPrice = val;
         }
       }
+
+      // Photo link parsing (Google Drive / CDN image URLs embedded in text)
+      const photoUrlMatch = l.match(/(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|webp)|https?:\/\/lh3\.googleusercontent\.com\/[^\s]+|https?:\/\/drive\.google\.com\/[^\s]+)/i);
+      if (photoUrlMatch) {
+        const directUrl = getDriveDirectImageUrl(photoUrlMatch[1]);
+        if (directUrl && !embeddedPhotos.some(ph => ph.url === directUrl)) {
+          embeddedPhotos.push({ url: directUrl, label: `Photo ${embeddedPhotos.length + 1}` });
+        }
+      }
     });
 
+
     const fullGpuText = gpuParts.join(' / ');
+
     const fullGpuLower = fullGpuText.toLowerCase();
     const rawLowerText = fullBlockText.toLowerCase();
 
@@ -547,8 +560,10 @@ function parseWhatsAppCatalog(rawText) {
       hasAnyGpu: gpuParts.length > 0,
       os: os || 'Windows 11 Pro',
       originalPrice,
-      offerPrice: offerPrice || 999
+      offerPrice: offerPrice || 999,
+      embeddedPhotos
     });
+
   };
 
   const isNewProductStartLine = (l) => {
@@ -710,7 +725,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     try { localStorage.setItem('product_photos_v2', JSON.stringify(updated)); } catch {}
   }, []);
 
-  const getPhotos = useCallback((stableId) => productPhotos[stableId] || [], [productPhotos]);
+  const getPhotos = useCallback((stableId, p = null) => {
+    const local = productPhotos[stableId] || [];
+    const embedded = p?.embeddedPhotos || [];
+    const combined = [...local];
+    embedded.forEach(ph => {
+      if (!combined.some(item => item.url === ph.url)) combined.push(ph);
+    });
+    return combined;
+  }, [productPhotos]);
+
 
 
 
@@ -861,7 +885,8 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   // Smart Share: Mobile = navigator.share all photos + text. PC = clipboard or download.
   const handleSmartShare = useCallback(async (p) => {
     const stableId = p.stableId || p.id;
-    const photos = getPhotos(stableId);
+    const photos = getPhotos(stableId, p);
+
     const quoteText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor} ${p.gen ? `(${p.gen})` : ''}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n  Charger.\n*Offer Price @${p.offerPrice}/- AED💰*`;
 
     setSharingId(stableId);
@@ -1988,7 +2013,8 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                         {/* ── MULTI-ANGLE PHOTO GALLERY ── */}
                         {(() => {
                           const stableId = p.stableId || p.id;
-                          const photos = getPhotos(stableId);
+                          const photos = getPhotos(stableId, p);
+
                           const activeIdx = activePhotoIdx[stableId] || 0;
                           const activePhoto = photos[activeIdx] || null;
                           const isUploading = photoUploading[stableId] || false;

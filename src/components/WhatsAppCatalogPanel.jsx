@@ -854,10 +854,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const isAdmin = Boolean(googleAccessToken);
 
 
-  // Allowed Admin Emails Whitelist (comma-separated list from env, or allow all authenticated Google users)
+  // Allowed Admin Emails Whitelist (comma-separated list from env)
   const allowedAdminEmails = useMemo(() => {
     const envVal = import.meta.env.VITE_ALLOWED_ADMIN_EMAILS || '';
-    if (!envVal || envVal.trim() === '' || envVal.includes('*')) return null;
+    if (!envVal || envVal.trim() === '' || envVal.includes('*')) return [];
     return envVal.toLowerCase().split(',').map(e => e.trim()).filter(Boolean);
   }, []);
 
@@ -887,21 +887,34 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 }
               } catch {}
 
-              const isMaster = allowedAdminEmails ? allowedAdminEmails.includes(userEmail) : true;
-              const isDbApproved = (adminRequests.approved || []).map(e => String(e).toLowerCase()).includes(userEmail);
-              const isFirstUser = (adminRequests.approved || []).length === 0 && (!allowedAdminEmails || allowedAdminEmails.length === 0);
-
-              if (!isMaster && !isDbApproved && !isFirstUser && userEmail) {
-                // Submit request to Master Admin
-                await handleAdminAction('request', userEmail);
-                alert(`⏳ Access Pending Master Approval!\n\nYour request for "${userEmail}" has been sent to the Master Admin.\nPlease ask the Master Admin to approve your request.`);
+              if (!userEmail) {
+                alert('Could not retrieve user email from Google login.');
                 return;
               }
 
-              // Auto-approve first user as Master Admin if approved list is empty
-              if (isFirstUser && userEmail) {
-                await handleAdminAction('approve', userEmail);
+              const dbMasterEmail = (adminRequests.master || '').toLowerCase().trim();
+              const approvedList = (adminRequests.approved || []).map(e => String(e).toLowerCase().trim());
+              const envList = allowedAdminEmails;
+
+              // Is Master Owner? Matches env list OR matches dbMasterEmail OR if dbMasterEmail is empty
+              const isMaster = (envList.length > 0 && envList.includes(userEmail)) ||
+                               (dbMasterEmail && dbMasterEmail === userEmail) ||
+                               (!dbMasterEmail && approvedList.length === 0);
+
+              const isApproved = isMaster || approvedList.includes(userEmail);
+
+              if (!isApproved) {
+                // Submit pending request to Master Admin
+                await handleAdminAction('request', userEmail);
+                alert(`⏳ Access Pending Master Approval!\n\nYour account "${userEmail}" is not authorized as Admin yet.\nA request has been sent to the Master Admin.\nPlease ask the Master Admin to approve your request.`);
+                return;
               }
+
+              // Register first user as Master Admin if database master email is empty
+              if (!dbMasterEmail && isMaster) {
+                await handleAdminAction('set_master', userEmail);
+              }
+
 
 
               setGoogleAccessToken(tokenResponse.access_token);

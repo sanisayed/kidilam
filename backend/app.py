@@ -101,6 +101,23 @@ def api_save_catalog():
     return jsonify({"ok": True})
 
 
+@app.route("/api/admin-requests", methods=["GET"])
+def api_get_admin_requests():
+    return jsonify(db.get_admin_requests())
+
+
+@app.route("/api/admin-requests", methods=["POST"])
+def api_save_admin_request():
+    data = request.get_json() or {}
+    action = data.get("action")
+    email = data.get("email")
+    if not action or not email:
+        return jsonify({"error": "action and email are required"}), 400
+    db.save_admin_request(action, email)
+    return jsonify({"ok": True, "data": db.get_admin_requests()})
+
+
+
 
 # ── Helpers & Auth Decorators ─────────────────────────────────────────────────
 

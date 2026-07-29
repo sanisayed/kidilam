@@ -730,6 +730,52 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [sharingId, setSharingId] = useState(null); // stableId currently being shared
   const [showVaultModal, setShowVaultModal] = useState(false);
   const [vaultSearch, setVaultSearch] = useState('');
+  const [adminRequests, setAdminRequests] = useState({ approved: [], pending: [] });
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+
+  // Fetch admin approval requests from backend API
+  const refreshAdminRequests = useCallback(async () => {
+    try {
+      const res = await fetch(getApiUrl('/api/admin-requests'));
+      if (res.ok) {
+        const data = await res.json();
+        setAdminRequests({
+          approved: data.approved || [],
+          pending: data.pending || []
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to fetch admin requests:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshAdminRequests();
+  }, [refreshAdminRequests]);
+
+  const handleAdminAction = async (action, email) => {
+    try {
+      const res = await fetch(getApiUrl('/api/admin-requests'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, email })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data) {
+          setAdminRequests({
+            approved: data.data.approved || [],
+            pending: data.data.pending || []
+          });
+        }
+        setToastMessage(`Action "${action}" completed for ${email}`);
+        setTimeout(() => setToastMessage(''), 3000);
+      }
+    } catch (e) {
+      alert(`Failed to execute admin action: ${e.message}`);
+    }
+  };
+
 
 
   const isMobileShareSupported = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
@@ -839,12 +885,22 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 }
               } catch {}
 
-              if (allowedAdminEmails && allowedAdminEmails.length > 0 && userEmail) {
-                if (!allowedAdminEmails.includes(userEmail)) {
-                  alert(`⛔ Access Denied: "${userEmail}" is not authorized as an Admin.`);
-                  return;
-                }
+              const isMaster = allowedAdminEmails ? allowedAdminEmails.includes(userEmail) : true;
+              const isDbApproved = (adminRequests.approved || []).map(e => String(e).toLowerCase()).includes(userEmail);
+              const isFirstUser = (adminRequests.approved || []).length === 0 && (!allowedAdminEmails || allowedAdminEmails.length === 0);
+
+              if (!isMaster && !isDbApproved && !isFirstUser && userEmail) {
+                // Submit request to Master Admin
+                await handleAdminAction('request', userEmail);
+                alert(`⏳ Access Pending Master Approval!\n\nYour request for "${userEmail}" has been sent to the Master Admin.\nPlease ask the Master Admin to approve your request.`);
+                return;
               }
+
+              // Auto-approve first user as Master Admin if approved list is empty
+              if (isFirstUser && userEmail) {
+                await handleAdminAction('approve', userEmail);
+              }
+
 
               setGoogleAccessToken(tokenResponse.access_token);
               if (userEmail) setGoogleUserEmail(userEmail);
@@ -1379,11 +1435,26 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
                   <button 
                     className="btn btn-ghost" 
+                    style={{ 
+                      padding: '10px 14px', fontWeight: 800, 
+                      color: (adminRequests.pending || []).length > 0 ? 'var(--orange)' : 'var(--cyan)', 
+                      border: '1px solid var(--border-light-color)', 
+                      background: (adminRequests.pending || []).length > 0 ? 'rgba(249, 115, 22, 0.1)' : 'rgba(6, 182, 212, 0.05)', 
+                      width: isMobile ? '100%' : 'auto', justifyContent: 'center' 
+                    }}
+                    onClick={() => setShowApprovalModal(true)}
+                  >
+                    👥 Staff Approvals {(adminRequests.pending || []).length > 0 && <span style={{ background: 'var(--orange)', color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: '0.7rem' }}>{(adminRequests.pending || []).length}</span>}
+                  </button>
+
+                  <button 
+                    className="btn btn-ghost" 
                     style={{ padding: '10px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
                     onClick={() => setShowVaultModal(true)}
                   >
                     <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
                   </button>
+
 
                   <button 
                     className="btn btn-ghost" 
@@ -2582,7 +2653,121 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         )}
       </AnimatePresence>
 
+      {/* ── LIVE MASTER STAFF APPROVAL MODAL ── */}
+      <AnimatePresence>
+        {showApprovalModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)',
+              zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+            }}
+            onClick={() => setShowApprovalModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.94 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.94 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)', width: '100%', maxWidth: 640, maxHeight: '85vh',
+                borderRadius: 14, border: '2px solid var(--border-color)', display: 'flex',
+                flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.5)'
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>👥</span> Staff Access Approval Console
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.76rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                    Approve staff members to grant them Admin photo upload permissions into your Master Drive!
+                  </p>
+                </div>
+                <button onClick={() => setShowApprovalModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div style={{ padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
+                
+                {/* 1. Pending Access Requests */}
+                <div>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.86rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--orange)', textTransform: 'uppercase' }}>
+                    ⏳ Pending Access Requests ({(adminRequests.pending || []).length})
+                  </h4>
+                  {(adminRequests.pending || []).length === 0 ? (
+                    <div style={{ padding: '12px 14px', background: 'var(--bg)', borderRadius: 8, fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                      No pending staff requests right now.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {(adminRequests.pending || []).map((req, idx) => (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border-light-color)' }}>
+                          <div>
+                            <strong style={{ fontSize: '0.88rem', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{req.email}</strong>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Requested: {req.requestedAt}</div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              onClick={() => handleAdminAction('approve', req.email)}
+                              style={{ background: 'var(--green)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 900, fontSize: '0.76rem', cursor: 'pointer' }}
+                            >
+                              ✅ Approve
+                            </button>
+                            <button
+                              onClick={() => handleAdminAction('reject', req.email)}
+                              style={{ background: 'var(--pink)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 900, fontSize: '0.76rem', cursor: 'pointer' }}
+                            >
+                              ❌ Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Approved Staff Emails */}
+                <div>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.86rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--green)', textTransform: 'uppercase' }}>
+                    🟢 Approved Master & Staff Admins ({(adminRequests.approved || []).length})
+                  </h4>
+                  {(adminRequests.approved || []).length === 0 ? (
+                    <div style={{ padding: '12px 14px', background: 'var(--bg)', borderRadius: 8, fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                      No approved staff yet.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {(adminRequests.approved || []).map((email, idx) => (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border-light-color)' }}>
+                          <span style={{ fontSize: '0.88rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                            👑 {email}
+                          </span>
+                          <button
+                            onClick={() => handleAdminAction('revoke', email)}
+                            style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--pink)', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer' }}
+                          >
+                            Revoke Access
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── TOAST NOTIFICATION ── */}
+
 
       <AnimatePresence>
         {toastMessage && (

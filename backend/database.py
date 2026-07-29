@@ -2928,3 +2928,44 @@ def set_catalog_setting(key, value):
         return False
 
 
+def get_admin_requests():
+    import json
+    approved_raw = get_catalog_setting("approved_admin_emails", "[]")
+    pending_raw = get_catalog_setting("pending_admin_requests", "[]")
+    try:
+        approved = json.loads(approved_raw) if isinstance(approved_raw, str) else approved_raw
+    except Exception:
+        approved = []
+    try:
+        pending = json.loads(pending_raw) if isinstance(pending_raw, str) else pending_raw
+    except Exception:
+        pending = []
+    return {"approved": approved, "pending": pending}
+
+
+def save_admin_request(action, email):
+    import json
+    if not email or not isinstance(email, str):
+        return False
+    clean_email = email.lower().strip()
+    data = get_admin_requests()
+    approved = set(data.get("approved", []))
+    pending_list = data.get("pending", [])
+    pending = [p for p in pending_list if isinstance(p, dict) and p.get("email") != clean_email]
+
+    if action == "request":
+        if clean_email not in approved and not any(p.get("email") == clean_email for p in pending):
+            pending.append({"email": clean_email, "requestedAt": _date.today().strftime("%Y-%m-%d %H:%M:%S")})
+    elif action == "approve":
+        approved.add(clean_email)
+    elif action == "reject":
+        approved.discard(clean_email)
+    elif action == "revoke":
+        approved.discard(clean_email)
+
+    set_catalog_setting("approved_admin_emails", json.dumps(list(approved)))
+    set_catalog_setting("pending_admin_requests", json.dumps(pending))
+    return True
+
+
+

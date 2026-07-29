@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown
+  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Camera, ImagePlus, ZoomIn, ChevronLeft, ChevronRight
 } from 'lucide-react';
+import { uploadProductPhoto, deleteProductPhoto, urlToBlob } from '../services/supabaseClient';
+
 
 /* =========================================================
    LIVE OFFICIAL CATALOG TEMPLATE (27-07-2026 UPDATED)
@@ -687,6 +689,163 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [editorInput, setEditorInput] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
+  // ── PHOTO MANAGEMENT ────────────────────────────────────────────────────────
+  // productPhotos: { [stableId]: [{ url, label }] }
+  const [productPhotos, setProductPhotos] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('product_photos_v2') || '{}'); }
+    catch { return {}; }
+  });
+  const [photoUploading, setPhotoUploading] = useState({}); // { [stableId]: bool }
+  const [activePhotoIdx, setActivePhotoIdx] = useState({}); // { [stableId]: number }
+  const [lightbox, setLightbox] = useState(null); // { stableId, idx }
+  const [sharingId, setSharingId] = useState(null); // stableId currently being shared
+
+  const isMobileShareSupported = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+  const saveProductPhotos = useCallback((updated) => {
+    setProductPhotos(updated);
+    try { localStorage.setItem('product_photos_v2', JSON.stringify(updated)); } catch {}
+  }, []);
+
+  const getPhotos = useCallback((stableId) => productPhotos[stableId] || [], [productPhotos]);
+
+  const handleAddPhotos = useCallback(async (p, files) => {
+    if (!files || files.length === 0) return;
+    const stableId = p.stableId || p.id;
+    setPhotoUploading(prev => ({ ...prev, [stableId]: true }));
+
+    const existing = productPhotos[stableId] || [];
+    const newPhotos = [...existing];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const angleIdx = existing.length + i;
+      try {
+        const url = await uploadProductPhoto(file, stableId, angleIdx);
+        const label = `Photo ${angleIdx + 1}`;
+        newPhotos.push({ url, label });
+      } catch (e) {
+        console.warn('Photo upload failed:', e);
+      }
+    }
+
+    const updated = { ...productPhotos, [stableId]: newPhotos };
+    saveProductPhotos(updated);
+    setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
+    setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
+  }, [productPhotos, saveProductPhotos]);
+
+  const handleDeletePhoto = useCallback(async (p, idx) => {
+    const stableId = p.stableId || p.id;
+    const photos = productPhotos[stableId] || [];
+    const photo = photos[idx];
+    if (!photo) return;
+    await deleteProductPhoto(photo.url).catch(() => {});
+    const updated = { ...productPhotos, [stableId]: photos.filter((_, i) => i !== idx) };
+    saveProductPhotos(updated);
+    setActivePhotoIdx(prev => ({
+      ...prev,
+      [stableId]: Math.max(0, (prev[stableId] || 0) - 1)
+    }));
+  }, [productPhotos, saveProductPhotos]);
+
+  // Smart Share: Mobile = navigator.share all photos + text. PC = clipboard or download.
+  const handleSmartShare = useCallback(async (p) => {
+    const stableId = p.stableId || p.id;
+    const photos = getPhotos(stableId);
+    const quoteText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor} ${p.gen ? `(${p.gen})` : ''}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n  Charger.\n*Offer Price @${p.offerPrice}/- AED💰*`;
+
+    setSharingId(stableId);
+
+    try {
+      // ── MOBILE: native Share Sheet with ALL photos ──
+      if (isMobileShareSupported && photos.length > 0) {
+        const files = await Promise.all(
+          photos.map(async (ph, i) => {
+            const blob = await urlToBlob(ph.url);
+            return new File([blob], `${(p.title || 'laptop').replace(/[^a-z0-9]/gi, '_')}_photo_${i + 1}.jpg`, { type: 'image/jpeg' });
+          })
+        );
+        await navigator.share({ title: p.title, text: quoteText, files });
+        setToastMessage(`✅ Shared ${photos.length} photo(s) to WhatsApp!`);
+        setTimeout(() => setToastMessage(''), 3000);
+        return;
+      }
+
+      // ── MOBILE: no photos, just share text ──
+      if (isMobileShareSupported && photos.length === 0) {
+        await navigator.share({ title: p.title, text: quoteText });
+        setToastMessage('✅ Text quote shared!');
+        setTimeout(() => setToastMessage(''), 3000);
+        return;
+      }
+
+      // ── PC: 1 photo → copy image + text to clipboard ──
+      if (photos.length === 1) {
+        const blob = await urlToBlob(photos[0].url);
+        const pngBlob = blob.type === 'image/png' ? blob : await convertToPng(blob);
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'image/png': pngBlob,
+            'text/plain': new Blob([quoteText], { type: 'text/plain' })
+          })
+        ]);
+        setToastMessage('✅ Photo + Text copied! Press Ctrl+V in WhatsApp Web to paste.');
+        setTimeout(() => setToastMessage(''), 4000);
+        return;
+      }
+
+      // ── PC: 2+ photos → copy text + download all photos ──
+      if (photos.length > 1) {
+        await navigator.clipboard.writeText(quoteText);
+        for (let i = 0; i < photos.length; i++) {
+          const blob = await urlToBlob(photos[i].url);
+          const objUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = objUrl;
+          a.download = `${(p.title || 'laptop').replace(/[^a-z0-9]/gi, '_')}_photo_${i + 1}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(objUrl);
+          await new Promise(r => setTimeout(r, 150));
+        }
+        setToastMessage(`✅ Text copied! ${photos.length} photos downloaded — paste text in WhatsApp Web, then drag & drop photos.`);
+        setTimeout(() => setToastMessage(''), 6000);
+        return;
+      }
+
+      // ── PC: no photos, just copy text ──
+      await navigator.clipboard.writeText(quoteText);
+      setToastMessage('✅ Text quote copied! Paste in WhatsApp chat.');
+      setTimeout(() => setToastMessage(''), 3000);
+
+    } catch (err) {
+      console.warn('Share error:', err);
+      // Last resort: copy text
+      try { await navigator.clipboard.writeText(quoteText); } catch {}
+      setToastMessage('✅ Text quote copied! Paste in WhatsApp chat.');
+      setTimeout(() => setToastMessage(''), 3000);
+    } finally {
+      setSharingId(null);
+    }
+  }, [getPhotos, isMobileShareSupported]);
+
+  // Convert image blob to PNG blob
+  const convertToPng = (blob) => new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(resolve, 'image/png');
+    };
+    img.src = url;
+  });
+
   // Filter products cleanly with 100% exact spec matching
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
@@ -821,348 +980,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return result.trim();
   }, [filteredProducts]);
 
-  // Product Photos local state (stores arrays of photos per product)
-  const [productPhotos, setProductPhotos] = useState(() => {
-    try {
-      const saved = localStorage.getItem('whatsapp_product_photos');
-      return saved ? JSON.parse(saved) : {};
-    } catch (e) {
-      return {};
-    }
-  });
-
-  // Track active photo index per product card
-  const [activePhotoIndices, setActivePhotoIndices] = useState({});
-
-  const getProductPhotosList = (p) => {
-    if (!p) return [];
-    const key1 = p.id;
-    const key2 = p.title;
-    const key3 = p.title?.toUpperCase();
-
-    const entry = productPhotos[key1] || productPhotos[key2] || productPhotos[key3] || p.photos || p.photo || p.image_url;
-    if (Array.isArray(entry) && entry.filter(Boolean).length > 0) return entry.filter(Boolean);
-    if (typeof entry === 'string' && entry.trim().length > 0) return [entry];
-    
-    return [];
-  };
-
-  // Upload Image Resolution Size option: 1600 (Max HD), 1200 (HD Standard), 800 (Compact), 500 (Small)
-  const [uploadImageMaxDim, setUploadImageMaxDim] = useState(() => {
-    return localStorage.getItem('whatsapp_photo_upload_size') || '1200';
-  });
-
-  const handleUploadSizeChange = (newSize) => {
-    setUploadImageMaxDim(newSize);
-    try {
-      localStorage.setItem('whatsapp_photo_upload_size', newSize);
-    } catch (e) {}
-  };
-
-  // Calculate approximate file size of base64 image string
-  const getImageDataSizeInfo = (base64Str) => {
-    if (!base64Str || typeof base64Str !== 'string') return '';
-    try {
-      const stringLength = base64Str.length - (base64Str.indexOf(',') + 1);
-      const sizeInBytes = Math.ceil(stringLength * 0.75);
-      if (sizeInBytes > 1024 * 1024) {
-        return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
-      }
-      return `${Math.round(sizeInBytes / 1024)} KB`;
-    } catch (e) {
-      return '';
-    }
-  };
-
-  const addMultipleProductPhotos = (pObj, filesList) => {
-    if (!filesList || filesList.length === 0) return;
-    const fileArray = Array.from(filesList);
-    const maxDim = parseInt(uploadImageMaxDim, 10) || 1200;
-
-    const promises = fileArray.map(file => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height;
-            if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-            else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.88));
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    Promise.all(promises).then(newPhotos => {
-      const key1 = typeof pObj === 'object' ? pObj.id : pObj;
-      const key2 = typeof pObj === 'object' ? pObj.title : pObj;
-      const existing = getProductPhotosList(typeof pObj === 'object' ? pObj : { id: pObj, title: pObj });
-      const combined = [...existing, ...newPhotos];
-
-      const updatedMap = {
-        ...productPhotos,
-        [key1]: combined,
-        [key2]: combined
-      };
-      setProductPhotos(updatedMap);
-      try {
-        localStorage.setItem('whatsapp_product_photos', JSON.stringify(updatedMap));
-      } catch (e) {}
-    });
-  };
-
-  // Download all photos attached to product (for 1-drag drop into WhatsApp Web)
-  const downloadAllPhotos = async (p) => {
-    const photoList = getProductPhotosList(p);
-    if (photoList.length === 0) {
-      alert('No photos attached to this product yet.');
-      return;
-    }
-
-    for (let i = 0; i < photoList.length; i++) {
-      const photoData = photoList[i];
-      const a = document.createElement('a');
-      a.href = photoData;
-      a.download = `${(p.title || 'laptop').replace(/[^a-zA-Z0-9_-]/g, '_')}_photo_${i + 1}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      await new Promise(res => setTimeout(res, 200));
-    }
-    setToastMessage(`⬇️ Downloaded ${photoList.length} photos to your downloads folder! Drag & drop into WhatsApp!`);
-    setTimeout(() => setToastMessage(''), 4000);
-  };
-
-  const removeProductPhoto = (pObj, indexToRemove) => {
-    const key1 = typeof pObj === 'object' ? pObj.id : pObj;
-    const key2 = typeof pObj === 'object' ? pObj.title : pObj;
-    const existing = getProductPhotosList(typeof pObj === 'object' ? pObj : { id: pObj, title: pObj });
-    const updatedList = existing.filter((_, idx) => idx !== indexToRemove);
-
-    const updatedMap = {
-      ...productPhotos,
-      [key1]: updatedList,
-      [key2]: updatedList
-    };
-    setProductPhotos(updatedMap);
-    try {
-      localStorage.setItem('whatsapp_product_photos', JSON.stringify(updatedMap));
-    } catch (e) {}
-
-    // Reset active index if needed
-    setActivePhotoIndices(prev => ({
-      ...prev,
-      [key1]: Math.max(0, (prev[key1] || 0) - 1)
-    }));
-  };
-
-  // Helper: Base64 to Blob conversion
-  const base64ToPngBlob = async (base64Data) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width || 800;
-        canvas.height = img.height || 600;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        canvas.toBlob((blob) => resolve(blob), 'image/png');
-      };
-      img.onerror = () => reject(new Error('Failed to load image for blob'));
-      img.src = base64Data;
-    });
-  };
-
-  // Clean Product Photo Blob Generator for specific index or default
-  const getCleanProductPhotoBlob = async (p, photoIdx = 0) => {
-    const photoList = getProductPhotosList(p);
-    const targetPhoto = photoList[photoIdx] || photoList[0];
-
-    if (targetPhoto) {
-      try {
-        const blob = await base64ToPngBlob(targetPhoto);
-        if (blob) return blob;
-      } catch (e) {
-        console.warn('Fallback to generated photo canvas:', e);
-      }
-    }
-
-    // Generate high quality product image card canvas if no photo attached yet
-    const canvas = document.createElement('canvas');
-    canvas.width = 800;
-    canvas.height = 600;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 800, 600);
-
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(150, 60, 500, 320);
-
-    ctx.fillStyle = '#0284c7';
-    ctx.fillRect(170, 80, 460, 280);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 28px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(p.title || 'Buyology Laptop', 400, 210);
-
-    ctx.fillStyle = '#64748b';
-    ctx.fillRect(100, 380, 600, 24);
-
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillRect(350, 415, 100, 50);
-
-    return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-  };
-
-  // Download ALL Photos & Copy Formatted Text Caption (for WhatsApp Web Multi-Photo Album Drag & Drop)
-  const handleDownloadAndCopyCaption = async (p) => {
-    const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
-    const photoList = getProductPhotosList(p);
-
-    if (photoList.length === 0) {
-      alert('No photos attached to this product yet.');
-      return;
-    }
-
-    for (let i = 0; i < photoList.length; i++) {
-      const a = document.createElement('a');
-      a.href = photoList[i];
-      a.download = `${(p.title || 'laptop').replace(/[^a-zA-Z0-9_-]/g, '_')}_photo_${i + 1}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      await new Promise(res => setTimeout(res, 150));
-    }
-
-    try {
-      await navigator.clipboard.writeText(postText);
-    } catch (e) {}
-
-    setCopiedId(`dl-copy-${p.id}`);
-    setToastMessage(`⬇️ Downloaded ${photoList.length} Photos & Copied Text! Drag photos into WhatsApp Web & press Ctrl+V for caption!`);
-    setTimeout(() => { setCopiedId(null); setToastMessage(''); }, 6000);
-  };
-
-  // Copy ALL Attached Photos + Formatted Text Caption in 1 Single Action (for WhatsApp Web Ctrl+V)
-  const handleCopyAllPhotosAndText = async (p) => {
-    const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
-    const photoList = getProductPhotosList(p);
-
-    try {
-      const clipboardItems = [];
-      const textBlob = new Blob([postText], { type: 'text/plain' });
-
-      if (photoList.length > 0) {
-        for (let i = 0; i < photoList.length; i++) {
-          const pngBlob = await base64ToPngBlob(photoList[i]);
-          if (i === 0) {
-            // First item contains BOTH image/png and text/plain for WhatsApp caption
-            clipboardItems.push(new ClipboardItem({
-              'image/png': pngBlob,
-              'text/plain': textBlob
-            }));
-          } else {
-            clipboardItems.push(new ClipboardItem({
-              'image/png': pngBlob
-            }));
-          }
-        }
-      } else {
-        const fallbackBlob = await getCleanProductPhotoBlob(p, 0);
-        clipboardItems.push(new ClipboardItem({
-          'image/png': fallbackBlob,
-          'text/plain': textBlob
-        }));
-      }
-
-      if (navigator.clipboard && window.ClipboardItem) {
-        try {
-          await navigator.clipboard.write(clipboardItems);
-        } catch (e1) {
-          // Fallback if browser limits multi-item array
-          await navigator.clipboard.write([clipboardItems[0]]);
-        }
-
-        setCopiedId(`all-photos-${p.id}`);
-        setToastMessage(`✅ ALL ${photoList.length || 1} Photos + Text Caption Copied! Press Ctrl+V in WhatsApp!`);
-        setTimeout(() => { setCopiedId(null); setToastMessage(''); }, 4000);
-      } else {
-        handleCopy(postText, p.id);
-      }
-    } catch (err) {
-      console.error('Copy all photos error:', err);
-      handleCopy(postText, p.id);
-    }
-  };
-
-  // Copy Pure Photo Blob to Clipboard (for WhatsApp Web Ctrl+V Image Attachment)
-  const handleCopyPhoto = async (p, photoIdx = 0) => {
-    try {
-      const pngBlob = await getCleanProductPhotoBlob(p, photoIdx);
-
-      if (navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            'image/png': pngBlob
-          })
-        ]);
-        setCopiedId(`photo-${p.id}`);
-        setToastMessage(`📷 Product Photo copied! Press Ctrl+V in WhatsApp chat!`);
-        setTimeout(() => { setCopiedId(null); setToastMessage(''); }, 5000);
-      } else {
-        alert('Browser does not support direct image clipboard copy. Please use Mobile Share button.');
-      }
-    } catch (err) {
-      console.error('Copy photo error:', err);
-      alert('Could not copy image blob to clipboard: ' + err.message);
-    }
-  };
-
-  // Share Native Photos + Formatted WhatsApp Text Caption (Mobile 1-Tap)
-  const handleShareToWhatsApp = async (p) => {
-    const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
-    const photoList = getProductPhotosList(p);
-
-    try {
-      const files = [];
-      if (photoList.length > 0) {
-        for (let i = 0; i < photoList.length; i++) {
-          const blob = await base64ToPngBlob(photoList[i]);
-          files.push(new File([blob], `${(p.title || 'laptop').replace(/\s+/g, '_')}_photo_${i + 1}.png`, { type: 'image/png' }));
-        }
-      } else {
-        const fallbackBlob = await getCleanProductPhotoBlob(p, 0);
-        files.push(new File([fallbackBlob], `${(p.title || 'laptop').replace(/\s+/g, '_')}.png`, { type: 'image/png' }));
-      }
-
-      if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
-        await navigator.share({
-          title: p.title,
-          text: postText,
-          files
-        });
-        return;
-      }
-    } catch (err) {
-      console.log('Mobile share fallback:', err);
-    }
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(postText)}`;
-    window.open(waUrl, '_blank');
-  };
 
   // Copy Helper
   const handleCopy = (textToCopy, identifier = 'all') => {
+
     navigator.clipboard.writeText(textToCopy).then(() => {
       setCopiedId(identifier);
       setToastMessage('Copied formatted WhatsApp text to clipboard!');
@@ -1962,64 +1783,188 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                           </div>
                         </div>
 
-                        {/* Price Tag & Responsive Action Buttons */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 10, borderTop: '1px solid var(--border-light-color)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
-                            {p.originalPrice ? (
-                              <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-                                AED {p.originalPrice}
-                              </span>
-                            ) : <span />}
+                        {/* Price Tag */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, paddingTop: 10, borderTop: '1px solid var(--border-light-color)' }}>
+                          {p.originalPrice ? (
+                            <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                              AED {p.originalPrice}
+                            </span>
+                          ) : <span />}
 
-                            <div style={{ 
-                              fontSize: isMobile ? '0.86rem' : '0.96rem', 
-                              fontWeight: 900, 
-                              background: 'var(--citrus)',
-                              color: '#000000',
-                              padding: '5px 10px',
-                              borderRadius: 'var(--radius-sm)',
-                              border: '2px solid #000'
-                            }}>
-                              Offer Price @{p.offerPrice}/- AED 💰
-                            </div>
-                          </div>
-
-                          {/* 100% Mobile Responsive Clean Buttons */}
-                          <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                            <button 
-                              className="btn btn-primary" 
-                              style={{ 
-                                flex: 1, 
-                                fontSize: '0.84rem', 
-                                fontWeight: 900,
-                                justifyContent: 'center',
-                                background: copiedId === p.id ? 'var(--green)' : 'var(--citrus)',
-                                color: '#000000',
-                                padding: '10px 8px',
-                                whiteSpace: 'nowrap'
-                              }}
-                              onClick={() => handleCopy(p.rawText, p.id)}
-                              title="Copy WhatsApp formatted text quote"
-                            >
-                              {copiedId === p.id ? <Check size={15} /> : <Copy size={15} />}
-                              <span>{copiedId === p.id ? 'Copied!' : '📋 Copy Text Quote'}</span>
-                            </button>
-
-                            <button 
-                              className="btn btn-secondary"
-                              style={{ 
-                                padding: '10px 14px', 
-                                fontSize: '0.84rem', 
-                                fontWeight: 900,
-                                whiteSpace: 'nowrap'
-                              }}
-                              onClick={() => handleShareToWhatsApp(p)}
-                              title="Direct Share on Mobile WhatsApp"
-                            >
-                              <Share2 size={15} /> Share
-                            </button>
+                          <div style={{ 
+                            fontSize: isMobile ? '0.86rem' : '0.96rem', 
+                            fontWeight: 900, 
+                            background: 'var(--citrus)',
+                            color: '#000000',
+                            padding: '5px 10px',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '2px solid #000'
+                          }}>
+                            Offer Price @{p.offerPrice}/- AED 💰
                           </div>
                         </div>
+
+                        {/* ── MULTI-ANGLE PHOTO GALLERY ── */}
+                        {(() => {
+                          const stableId = p.stableId || p.id;
+                          const photos = getPhotos(stableId);
+                          const activeIdx = activePhotoIdx[stableId] || 0;
+                          const activePhoto = photos[activeIdx] || null;
+                          const isUploading = photoUploading[stableId] || false;
+
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {/* Main Photo Preview */}
+                              {activePhoto ? (
+                                <div
+                                  style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000', cursor: 'zoom-in', aspectRatio: '16/9' }}
+                                  onClick={() => setLightbox({ stableId, idx: activeIdx })}
+                                >
+                                  <img
+                                    src={activePhoto.url}
+                                    alt={activePhoto.label}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                  />
+                                  <span style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>
+                                    {activeIdx + 1} / {photos.length}
+                                  </span>
+                                  <span style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: '50%', padding: '4px', display: 'flex' }}>
+                                    <ZoomIn size={12} />
+                                  </span>
+                                  {/* Prev/Next arrows */}
+                                  {photos.length > 1 && (
+                                    <>
+                                      <button
+                                        onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx - 1 + photos.length) % photos.length })); }}
+                                        style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                      ><ChevronLeft size={14} /></button>
+                                      <button
+                                        onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx + 1) % photos.length })); }}
+                                        style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                      ><ChevronRight size={14} /></button>
+                                    </>
+                                  )}
+                                </div>
+                              ) : (
+                                <div style={{ width: '100%', aspectRatio: '16/9', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-sm)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.02)', gap: 6, color: 'var(--text-muted)' }}>
+                                  <Camera size={28} strokeWidth={1.5} />
+                                  <span style={{ fontSize: '0.73rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>No photos yet</span>
+                                </div>
+                              )}
+
+                              {/* Thumbnail Strip */}
+                              {photos.length > 0 && (
+                                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+                                  {photos.map((ph, i) => (
+                                    <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
+                                      <img
+                                        src={ph.url}
+                                        alt={ph.label}
+                                        onClick={() => setActivePhotoIdx(prev => ({ ...prev, [stableId]: i }))}
+                                        style={{
+                                          width: 54, height: 40, objectFit: 'cover', borderRadius: 4, cursor: 'pointer',
+                                          border: activeIdx === i ? '2px solid var(--purple)' : '2px solid var(--border-light-color)',
+                                          opacity: activeIdx === i ? 1 : 0.65,
+                                          transition: 'all 0.15s'
+                                        }}
+                                      />
+                                      <button
+                                        onClick={() => handleDeletePhoto(p, i)}
+                                        style={{ position: 'absolute', top: -5, right: -5, background: 'var(--pink)', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '0.6rem', fontWeight: 900 }}
+                                        title="Delete this photo"
+                                      >✕</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Add Photo Button */}
+                              <label style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                padding: '7px 0', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-sm)',
+                                cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.78rem', fontWeight: 800,
+                                color: 'var(--text-muted)', background: 'rgba(0,0,0,0.01)',
+                                opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s'
+                              }}>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  style={{ display: 'none' }}
+                                  disabled={isUploading}
+                                  onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
+                                />
+                                <ImagePlus size={14} />
+                                {isUploading ? 'Uploading...' : photos.length === 0 ? '📷 Add Photos' : `📷 Add More (${photos.length} attached)`}
+                              </label>
+
+                              {/* Action Buttons */}
+                              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                                {/* Copy Text Quote (always available) */}
+                                <button 
+                                  className="btn btn-primary" 
+                                  style={{ 
+                                    flex: 1, 
+                                    fontSize: '0.82rem', 
+                                    fontWeight: 900,
+                                    justifyContent: 'center',
+                                    background: copiedId === p.id ? 'var(--green)' : 'var(--citrus)',
+                                    color: '#000000',
+                                    padding: '9px 8px',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                  onClick={() => handleCopy(p.rawText, p.id)}
+                                  title="Copy WhatsApp text quote only"
+                                >
+                                  {copiedId === p.id ? <Check size={14} /> : <Copy size={14} />}
+                                  <span>{copiedId === p.id ? 'Copied!' : '📋 Copy Text'}</span>
+                                </button>
+
+                                {/* Smart Share Button */}
+                                <button
+                                  className="btn btn-secondary"
+                                  style={{
+                                    flex: photos.length > 0 ? 1 : 'none',
+                                    padding: '9px 12px',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 900,
+                                    justifyContent: 'center',
+                                    whiteSpace: 'nowrap',
+                                    opacity: sharingId === (p.stableId || p.id) ? 0.7 : 1
+                                  }}
+                                  disabled={sharingId === (p.stableId || p.id)}
+                                  onClick={() => handleSmartShare(p)}
+                                  title={isMobileShareSupported
+                                    ? `Share ${photos.length} photo(s) + text to WhatsApp`
+                                    : photos.length === 1
+                                      ? 'Copy photo + text to clipboard (Ctrl+V in WhatsApp Web)'
+                                      : photos.length > 1
+                                        ? 'Copy text + download all photos for WhatsApp Web'
+                                        : 'Copy text to clipboard'}
+                                >
+                                  {sharingId === (p.stableId || p.id) ? (
+                                    <span>⏳</span>
+                                  ) : isMobileShareSupported ? (
+                                    <Share2 size={14} />
+                                  ) : (
+                                    <Copy size={14} />
+                                  )}
+                                  <span>
+                                    {sharingId === (p.stableId || p.id)
+                                      ? 'Sharing...'
+                                      : isMobileShareSupported
+                                        ? photos.length > 0 ? `📲 Share ${photos.length} Photo${photos.length > 1 ? 's' : ''}` : '📲 Share'
+                                        : photos.length === 1
+                                          ? '📋 Copy Photo + Text'
+                                          : photos.length > 1
+                                            ? `📋 Copy + ${photos.length} Photos`
+                                            : '📋 Copy'}
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </motion.div>
                     ))
                   )}
@@ -2137,6 +2082,104 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── LIGHTBOX OVERLAY ── */}
+      <AnimatePresence>
+        {lightbox && (() => {
+          const photos = getPhotos(lightbox.stableId);
+          const photo = photos[lightbox.idx];
+          if (!photo) return null;
+          return (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'fixed', inset: 0,
+                background: 'rgba(0,0,0,0.92)',
+                backdropFilter: 'blur(8px)',
+                zIndex: 99999,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexDirection: 'column', gap: 12, padding: 16
+              }}
+              onClick={() => setLightbox(null)}
+            >
+              {/* Close */}
+              <button
+                onClick={() => setLightbox(null)}
+                style={{ position: 'absolute', top: 16, right: 20, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >✕</button>
+
+              {/* Image */}
+              <motion.img
+                key={lightbox.idx}
+                initial={{ scale: 0.93, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.93, opacity: 0 }}
+                src={photo.url}
+                alt={photo.label}
+                onClick={e => e.stopPropagation()}
+                style={{ maxWidth: '95vw', maxHeight: '78vh', objectFit: 'contain', borderRadius: 8, boxShadow: '0 8px 60px rgba(0,0,0,0.8)' }}
+              />
+
+              {/* Label + Counter */}
+              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: 1 }}>
+                {photo.label} — {lightbox.idx + 1} / {photos.length}
+              </div>
+
+              {/* Prev/Next */}
+              {photos.length > 1 && (
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button
+                    onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, idx: (prev.idx - 1 + photos.length) % photos.length })); }}
+                    style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontWeight: 900, fontSize: '1rem' }}
+                  >← Prev</button>
+                  <button
+                    onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, idx: (prev.idx + 1) % photos.length })); }}
+                    style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontWeight: 900, fontSize: '1rem' }}
+                  >Next →</button>
+                </div>
+              )}
+
+              {/* Thumbnail row */}
+              {photos.length > 1 && (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {photos.map((ph, i) => (
+                    <img
+                      key={i}
+                      src={ph.url}
+                      alt={ph.label}
+                      onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, idx: i })); }}
+                      style={{ width: 52, height: 38, objectFit: 'cover', borderRadius: 4, cursor: 'pointer', border: lightbox.idx === i ? '2px solid #fff' : '2px solid rgba(255,255,255,0.2)', opacity: lightbox.idx === i ? 1 : 0.55, transition: 'all 0.15s' }}
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* ── TOAST NOTIFICATION ── */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            style={{
+              position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+              background: 'var(--bg-card)', color: 'var(--text-primary)',
+              padding: '12px 22px', borderRadius: 10,
+              border: '2px solid var(--green)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+              fontWeight: 800, fontSize: '0.86rem', zIndex: 100000,
+              maxWidth: '90vw', textAlign: 'center', whiteSpace: 'pre-wrap'
+            }}
+          >
+            {toastMessage}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

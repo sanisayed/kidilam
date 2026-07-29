@@ -839,6 +839,47 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return combined;
   }, [productPhotos]);
 
+  const handleVaultDelete = useCallback(async (key, idx) => {
+    const photos = productPhotos[key] || [];
+    const photo = photos[idx];
+    if (!photo) return;
+    if (window.confirm(`Delete this photo from Vault?`)) {
+      await deleteProductPhoto(photo.url).catch(() => {});
+      const updated = { ...productPhotos, [key]: photos.filter((_, i) => i !== idx) };
+      saveProductPhotos(updated);
+    }
+  }, [productPhotos, saveProductPhotos]);
+
+  const handleVaultUpload = useCallback(async (key, modelTitle, files) => {
+    if (!files || files.length === 0) return;
+    const existing = productPhotos[key] || [];
+    const newPhotos = [...existing];
+
+    setToastMessage(`Uploading ${files.length} photos to Vault...`);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const angleIdx = existing.length + i;
+      try {
+        let url;
+        if (googleAccessToken) {
+          url = await uploadPhotoToGoogleDriveApi(file, modelTitle, googleAccessToken);
+        } else {
+          url = await uploadProductPhoto(file, key, angleIdx);
+        }
+        newPhotos.push({ url, label: `Photo ${angleIdx + 1}` });
+      } catch (e) {
+        console.warn('Vault upload fallback:', e);
+      }
+    }
+
+    const updated = { ...productPhotos, [key]: newPhotos };
+    saveProductPhotos(updated);
+    setToastMessage(`✅ Added ${files.length} photos to Vault!`);
+    setTimeout(() => setToastMessage(''), 3000);
+  }, [productPhotos, saveProductPhotos, googleAccessToken]);
+
+
 
 
 
@@ -1383,10 +1424,11 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', padding: '0 8px' }}>
       
       {/* 1. Header Banner & Executive KPI Metrics Bar */}
-      <div className="card static card-p-lg" style={{ border: 'var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-flat)' }}>
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16 }}>
+      <div className="card static card-p-lg" style={{ border: 'var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-flat)', overflow: 'hidden' }}>
+        {/* Top Title & Metrics Row */}
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border-light-color)' }}>
           <div>
-            <h2 className="font-display" style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 900, margin: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h2 className="font-display" style={{ fontSize: isMobile ? '1.2rem' : '1.45rem', fontWeight: 900, margin: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 10 }}>
               <span>💻</span> WhatsApp Stock Matcher Console
             </h2>
             <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
@@ -1396,112 +1438,110 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
           {/* Quick Metrics Badges */}
           {products.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, alignItems: isMobile ? 'stretch' : 'center', width: isMobile ? '100%' : 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: isMobile ? 'space-between' : 'flex-start', gap: 12, padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border-light-color)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem', width: isMobile ? '100%' : 'auto' }}>
-                <div>Total Stock: <strong style={{ color: 'var(--purple)', fontSize: '0.95rem' }}>{stats.total}</strong></div>
-                <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
-                  Matched: <strong style={{ color: 'var(--citrus-dark)', fontSize: '0.95rem' }}>{stats.matched}</strong>
-                </div>
-                <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
-                  Workstations: <strong style={{ color: 'var(--orange)', fontSize: '0.95rem' }}>{stats.workstationCount}</strong>
-                </div>
+            <div style={{ display: 'flex', gap: 12, padding: '8px 14px', background: 'var(--bg)', border: '1px solid var(--border-light-color)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem', width: isMobile ? '100%' : 'auto', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div>Total Stock: <strong style={{ color: 'var(--purple)', fontSize: '0.95rem' }}>{stats.total}</strong></div>
+              <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
+                Matched: <strong style={{ color: 'var(--citrus-dark)', fontSize: '0.95rem' }}>{stats.matched}</strong>
               </div>
-
-              {/* Google Drive Admin Auth Status / Login Button */}
-              {googleAccessToken ? (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '8px 12px', background: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid var(--green)', borderRadius: 'var(--radius-sm)',
-                  fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 800,
-                  color: 'var(--green)', width: isMobile ? '100%' : 'auto', justifyContent: 'space-between'
-                }}>
-                  <span>🟢 Drive: {googleUserEmail || 'Connected'}</span>
-                  <button
-                    onClick={handleGoogleDriveLogout}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
-                    title="Logout of Google Drive"
-                  >✕</button>
-                </div>
-              ) : (
-                <button
-                  className="btn btn-ghost"
-                  style={{
-                    padding: '8px 12px', fontWeight: 800, fontSize: '0.78rem',
-                    color: 'var(--purple)', border: '1px solid var(--purple-soft)',
-                    background: 'rgba(124, 58, 237, 0.04)', width: isMobile ? '100%' : 'auto', justifyContent: 'center'
-                  }}
-                  onClick={handleGoogleDriveLogin}
-                  title="Connect your Google Drive account for 1-tap automated photo uploads"
-                >
-                  🔐 Google Drive Login
-                </button>
-              )}
-
-              {isAdmin && (
-                <>
-                  <button 
-                    className="btn btn-ghost" 
-                    style={{ padding: '10px 14px', fontWeight: 800, width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
-                    onClick={() => { setEditorInput(rawText); setShowModal(true); }}
-                  >
-                    <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
-                  </button>
-
-                  <button 
-                    className="btn btn-ghost" 
-                    style={{ 
-                      padding: '10px 14px', fontWeight: 800, 
-                      color: (adminRequests.pending || []).length > 0 ? 'var(--orange)' : 'var(--cyan)', 
-                      border: '1px solid var(--border-light-color)', 
-                      background: (adminRequests.pending || []).length > 0 ? 'rgba(249, 115, 22, 0.1)' : 'rgba(6, 182, 212, 0.05)', 
-                      width: isMobile ? '100%' : 'auto', justifyContent: 'center' 
-                    }}
-                    onClick={() => setShowApprovalModal(true)}
-                  >
-                    👥 Staff Approvals {(adminRequests.pending || []).length > 0 && <span style={{ background: 'var(--orange)', color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: '0.7rem' }}>{(adminRequests.pending || []).length}</span>}
-                  </button>
-
-                  <button 
-                    className="btn btn-ghost" 
-                    style={{ padding: '10px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
-                    onClick={() => setShowVaultModal(true)}
-                  >
-                    <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
-                  </button>
-
-
-                  <button 
-                    className="btn btn-ghost" 
-                    style={{ padding: '10px 12px', fontWeight: 800, color: 'var(--pink)', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
-                    onClick={() => {
-                      if (window.confirm('Clear current stock list?')) {
-                        updateAndSaveRawText('');
-                        setEditorInput('');
-                      }
-                    }}
-                  >
-                    <Trash2 size={15} /> Clear
-                  </button>
-                </>
-              )}
-
-
-
-              <button 
-                className="btn btn-primary" 
-                style={{ padding: '10px 18px', fontWeight: 900, width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
-                onClick={() => handleCopy(formattedOutputText, 'top-all')}
-              >
-                {copiedId === 'top-all' ? <Check size={15} /> : <Copy size={15} />}
-                <span>{copiedId === 'top-all' ? 'Copied!' : 'Copy Filtered Quotes'}</span>
-              </button>
+              <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
+                Workstations: <strong style={{ color: 'var(--orange)', fontSize: '0.95rem' }}>{stats.workstationCount}</strong>
+              </div>
             </div>
           )}
+        </div>
+
+        {/* Action Toolbar Row */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', width: '100%' }}>
+          {/* Google Drive Admin Auth Status / Login Button */}
+          {googleAccessToken ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 12px', background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid var(--green)', borderRadius: 'var(--radius-sm)',
+              fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 800,
+              color: 'var(--green)'
+            }}>
+              <span>🟢 Drive: {googleUserEmail || 'Connected'}</span>
+              <button
+                onClick={handleGoogleDriveLogout}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
+                title="Logout of Google Drive"
+              >✕</button>
+            </div>
+          ) : (
+            <button
+              className="btn btn-ghost"
+              style={{
+                padding: '8px 12px', fontWeight: 800, fontSize: '0.78rem',
+                color: 'var(--purple)', border: '1px solid var(--purple-soft)',
+                background: 'rgba(124, 58, 237, 0.04)'
+              }}
+              onClick={handleGoogleDriveLogin}
+              title="Connect your Google Drive account for 1-tap automated photo uploads"
+            >
+              🔐 Google Drive Login
+            </button>
+          )}
+
+          {isAdmin && (
+            <>
+              <button 
+                className="btn btn-ghost" 
+                style={{ padding: '8px 14px', fontWeight: 800 }}
+                onClick={() => { setEditorInput(rawText); setShowModal(true); }}
+              >
+                <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
+              </button>
+
+              <button 
+                className="btn btn-ghost" 
+                style={{ 
+                  padding: '8px 14px', fontWeight: 800, 
+                  color: (adminRequests.pending || []).length > 0 ? 'var(--orange)' : 'var(--cyan)', 
+                  border: '1px solid var(--border-light-color)', 
+                  background: (adminRequests.pending || []).length > 0 ? 'rgba(249, 115, 22, 0.1)' : 'rgba(6, 182, 212, 0.05)'
+                }}
+                onClick={() => setShowApprovalModal(true)}
+              >
+                👥 Staff Approvals {(adminRequests.pending || []).length > 0 && <span style={{ background: 'var(--orange)', color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: '0.7rem' }}>{(adminRequests.pending || []).length}</span>}
+              </button>
+
+              <button 
+                className="btn btn-ghost" 
+                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)' }}
+                onClick={() => setShowVaultModal(true)}
+              >
+                <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
+              </button>
+
+              <button 
+                className="btn btn-ghost" 
+                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--pink)' }}
+                onClick={() => {
+                  if (window.confirm('Clear current stock list?')) {
+                    updateAndSaveRawText('');
+                    setEditorInput('');
+                  }
+                }}
+              >
+                <Trash2 size={15} /> Clear
+              </button>
+            </>
+          )}
+
+          <button 
+            className="btn btn-primary" 
+            style={{ padding: '8px 18px', fontWeight: 900, marginLeft: isMobile ? 0 : 'auto', width: isMobile ? '100%' : 'auto' }}
+            onClick={() => handleCopy(formattedOutputText, 'top-all')}
+          >
+            {copiedId === 'top-all' ? <Check size={15} /> : <Copy size={15} />}
+            <span>{copiedId === 'top-all' ? 'Copied!' : 'Copy Filtered Quotes'}</span>
+          </button>
         </div>
       </div>
 
       {/* Copy Toast Alert */}
+
       <AnimatePresence>
         {toastMessage && (
           <motion.div 
@@ -2638,27 +2678,63 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
                     return (
                       <div key={k} style={{ padding: 14, borderRadius: 10, border: '1px solid var(--border-light-color)', background: 'var(--bg)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
                           <span style={{ fontWeight: 900, fontSize: '0.88rem', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
                             💻 {modelName}
                           </span>
-                          <span style={{ fontSize: '0.72rem', background: 'var(--purple-soft)', color: 'var(--purple)', padding: '2px 8px', borderRadius: 4, fontWeight: 800 }}>
-                            {photos.length} Drive Photos
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: '0.72rem', background: 'var(--purple-soft)', color: 'var(--purple)', padding: '2px 8px', borderRadius: 4, fontWeight: 800 }}>
+                              {photos.length} Drive Photos
+                            </span>
+                            {isAdmin && (
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'rgba(124, 58, 237, 0.1)', color: 'var(--purple)', border: '1px solid var(--purple-soft)', borderRadius: 6, fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}>
+                                <ImagePlus size={13} /> Add Photos
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  style={{ display: 'none' }}
+                                  onChange={e => {
+                                    if (e.target.files && e.target.files.length > 0) {
+                                      handleVaultUpload(k, modelName, Array.from(e.target.files));
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Thumbnails */}
-                        <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+                        {/* Thumbnails with 1-click Delete button */}
+                        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
                           {photos.map((ph, i) => (
-                            <img
-                              key={i}
-                              src={ph.url}
-                              alt={ph.label}
-                              style={{ width: 68, height: 50, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-color)' }}
-                            />
+                            <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
+                              <img
+                                src={ph.url}
+                                alt={ph.label}
+                                style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-color)', display: 'block' }}
+                              />
+                              {isAdmin && (
+                                <button
+                                  onClick={() => handleVaultDelete(k, i)}
+                                  style={{
+                                    position: 'absolute', top: -6, right: -6,
+                                    background: 'var(--pink)', color: '#fff', border: 'none',
+                                    borderRadius: '50%', width: 20, height: 20,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                                  }}
+                                  title="Delete photo from Vault"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </div>
+
                     );
                   });
                 })()}

@@ -942,28 +942,20 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 return;
               }
 
-              const dbMasterEmail = (adminRequests.master || '').toLowerCase().trim();
+              const MASTER_EMAIL = 'mahinshanavas1@gmail.com';
               const approvedList = (adminRequests.approved || []).map(e => String(e).toLowerCase().trim());
-              const envList = allowedAdminEmails;
 
-              // Is Master Owner? Matches env list OR matches dbMasterEmail OR if dbMasterEmail is empty
-              const isMaster = (envList.length > 0 && envList.includes(userEmail)) ||
-                               (dbMasterEmail && dbMasterEmail === userEmail) ||
-                               (!dbMasterEmail && approvedList.length === 0);
-
+              // Strictly 1 Master Owner: mahinshanavas1@gmail.com
+              const isMaster = (userEmail === MASTER_EMAIL);
               const isApproved = isMaster || approvedList.includes(userEmail);
 
               if (!isApproved) {
                 // Submit pending request to Master Admin
                 await handleAdminAction('request', userEmail);
-                alert(`⏳ Access Pending Master Approval!\n\nYour account "${userEmail}" is not authorized as Admin yet.\nA request has been sent to the Master Admin.\nPlease ask the Master Admin to approve your request.`);
+                alert(`⏳ Access Pending Master Approval!\n\nYour account "${userEmail}" is not authorized as Admin yet.\nA request has been sent to Master Admin (${MASTER_EMAIL}).\nPlease ask the Master Admin to approve your request.`);
                 return;
               }
 
-              // Register first user as Master Admin if database master email is empty
-              if (!dbMasterEmail && isMaster) {
-                await handleAdminAction('set_master', userEmail);
-              }
 
 
 

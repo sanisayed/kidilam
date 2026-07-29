@@ -6,6 +6,8 @@ import {
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos } from '../services/supabaseClient';
 import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi } from '../services/googleDriveService';
 import { saveCatalogToCloud, fetchCatalogFromCloud } from '../services/catalogSyncService';
+import { getApiUrl } from '../config';
+
 
 
 

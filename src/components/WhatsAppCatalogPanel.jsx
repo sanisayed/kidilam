@@ -730,10 +730,12 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
     const initLogin = () => {
       if (window.google?.accounts?.oauth2) {
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '791691537428-5llvrcum0p7qf5uq0913c06opqrvnt4d.apps.googleusercontent.com';
         const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '1052601736181-sample.apps.googleusercontent.com',
+          client_id: clientId,
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
           callback: async (tokenResponse) => {
+
             if (tokenResponse.access_token) {
               setGoogleAccessToken(tokenResponse.access_token);
               try { sessionStorage.setItem('google_drive_token', tokenResponse.access_token); } catch {}

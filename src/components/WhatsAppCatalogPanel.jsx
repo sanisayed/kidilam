@@ -735,6 +735,24 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [adminRequests, setAdminRequests] = useState({ approved: [], pending: [] });
   const [showApprovalModal, setShowApprovalModal] = useState(false);
 
+  // ── GOOGLE ADMIN DRIVE OAUTH STATE ──
+  const [googleAccessToken, setGoogleAccessToken] = useState(() => {
+    try { return sessionStorage.getItem('google_drive_token') || ''; } catch { return ''; }
+  });
+  const [googleUserEmail, setGoogleUserEmail] = useState(() => {
+    try { return sessionStorage.getItem('google_drive_email') || ''; } catch { return ''; }
+  });
+
+  const isAdmin = Boolean(googleAccessToken);
+
+  // Allowed Admin Emails Whitelist (comma-separated list from env)
+  const allowedAdminEmails = useMemo(() => {
+    const envVal = import.meta.env.VITE_ALLOWED_ADMIN_EMAILS || '';
+    if (!envVal || envVal.trim() === '' || envVal.includes('*')) return [];
+    return envVal.toLowerCase().split(',').map(e => e.trim()).filter(Boolean);
+  }, []);
+
+
   // Fetch admin approval requests from backend API
   const refreshAdminRequests = useCallback(async () => {
     try {
@@ -888,22 +906,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
 
   // ── GOOGLE ADMIN DRIVE OAUTH ────────────────────────────────────────────────
-  const [googleAccessToken, setGoogleAccessToken] = useState(() => {
-    try { return sessionStorage.getItem('google_drive_token') || ''; } catch { return ''; }
-  });
-  const [googleUserEmail, setGoogleUserEmail] = useState(() => {
-    try { return sessionStorage.getItem('google_drive_email') || ''; } catch { return ''; }
-  });
 
-  const isAdmin = Boolean(googleAccessToken);
-
-
-  // Allowed Admin Emails Whitelist (comma-separated list from env)
-  const allowedAdminEmails = useMemo(() => {
-    const envVal = import.meta.env.VITE_ALLOWED_ADMIN_EMAILS || '';
-    if (!envVal || envVal.trim() === '' || envVal.includes('*')) return [];
-    return envVal.toLowerCase().split(',').map(e => e.trim()).filter(Boolean);
-  }, []);
 
   const handleGoogleDriveLogin = useCallback(() => {
     if (typeof window === 'undefined') return;

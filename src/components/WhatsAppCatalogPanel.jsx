@@ -767,6 +767,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     try { return sessionStorage.getItem('google_drive_email') || ''; } catch { return ''; }
   });
 
+  const isAdmin = Boolean(googleAccessToken);
+
+
   const handleGoogleDriveLogin = useCallback(() => {
     if (typeof window === 'undefined') return;
 
@@ -1310,27 +1313,31 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 </button>
               )}
 
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '10px 14px', fontWeight: 800, width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
-                onClick={() => { setEditorInput(rawText); setShowModal(true); }}
-              >
-                <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
-              </button>
+              {isAdmin && (
+                <>
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ padding: '10px 14px', fontWeight: 800, width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
+                    onClick={() => { setEditorInput(rawText); setShowModal(true); }}
+                  >
+                    <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
+                  </button>
 
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ padding: '10px 12px', fontWeight: 800, color: 'var(--pink)', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
+                    onClick={() => {
+                      if (window.confirm('Clear current stock list?')) {
+                        updateAndSaveRawText('');
+                        setEditorInput('');
+                      }
+                    }}
+                  >
+                    <Trash2 size={15} /> Clear
+                  </button>
+                </>
+              )}
 
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '10px 12px', fontWeight: 800, color: 'var(--pink)', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
-                onClick={() => {
-                  if (window.confirm('Clear current stock list?')) {
-                    updateAndSaveRawText('');
-                    setEditorInput('');
-                  }
-                }}
-              >
-                <Trash2 size={15} /> Clear
-              </button>
 
               <button 
                 className="btn btn-primary" 
@@ -2096,25 +2103,26 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                           transition: 'all 0.15s'
                                         }}
                                       />
-                                      <button
-                                        onClick={() => handleDeletePhoto(p, i)}
-                                        style={{ position: 'absolute', top: -5, right: -5, background: 'var(--pink)', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '0.6rem', fontWeight: 900 }}
-                                        title="Delete this photo"
-                                      >✕</button>
+                                      {isAdmin && (
+                                        <button
+                                          onClick={() => handleDeletePhoto(p, i)}
+                                          style={{ position: 'absolute', top: -5, right: -5, background: 'var(--pink)', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '0.6rem', fontWeight: 900 }}
+                                          title="Delete this photo"
+                                        >✕</button>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
                               )}
 
-                              {/* Photo Upload & Drive Link Buttons */}
-                              <div style={{ display: 'flex', gap: 6, width: '100%' }}>
+                              {/* Photo Upload (Admin Only) */}
+                              {isAdmin && (
                                 <label style={{
-                                  flex: 1,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                  padding: '7px 0', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-sm)',
-                                  cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.78rem', fontWeight: 800,
-                                  color: 'var(--text-muted)', background: 'rgba(0,0,0,0.01)',
-                                  opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s'
+                                  padding: '8px 0', border: '1.5px dashed var(--purple-soft)', borderRadius: 'var(--radius-sm)',
+                                  cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 800,
+                                  color: 'var(--purple)', background: 'rgba(124, 58, 237, 0.04)',
+                                  opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s', width: '100%'
                                 }}>
                                   <input
                                     type="file"
@@ -2124,32 +2132,11 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                     disabled={isUploading}
                                     onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
                                   />
-                                  <ImagePlus size={14} />
-                                  {isUploading ? 'Uploading...' : photos.length === 0 ? '📷 Add Photos' : `📷 Add More (${photos.length})`}
+                                  <ImagePlus size={15} />
+                                  {isUploading ? 'Uploading to Drive...' : photos.length === 0 ? '📷 Add Photos' : `📷 Add More (${photos.length})`}
                                 </label>
+                              )}
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddDriveLink(p)}
-                                  style={{
-                                    padding: '7px 10px',
-                                    border: '1px dashed var(--border-color)',
-                                    borderRadius: 'var(--radius-sm)',
-                                    fontSize: '0.76rem',
-                                    fontWeight: 800,
-                                    color: 'var(--purple)',
-                                    background: 'rgba(124, 58, 237, 0.05)',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 4,
-                                    whiteSpace: 'nowrap'
-                                  }}
-                                  title="Paste a Google Drive or photo URL"
-                                >
-                                  🔗 Drive Link
-                                </button>
-                              </div>
 
 
                               {/* Action Buttons */}

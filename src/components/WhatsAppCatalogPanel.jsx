@@ -372,7 +372,19 @@ Charger.
    TEXT PARSER UTILITIES
    ========================================================= */
 
+function normalizeModelKey(title) {
+  if (!title) return 'prod_unknown';
+  const clean = title.toLowerCase()
+    .replace(/\b\d+\s*(gb|tb|ssd|ram|aed|ghz)\b/gi, '')
+    .replace(/\b(i3|i5|i7|i9|ryzen\s*\d*|core\s*ultra)\b/gi, '')
+    .replace(/\b\d+(th|st|nd|rd)\s*gen\b/gi, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return 'prod_' + (clean || 'laptop');
+}
+
 function parseWhatsAppCatalog(rawText) {
+
   if (!rawText || !rawText.trim()) return [];
 
   const lines = rawText.split(/\r?\n/);
@@ -539,7 +551,8 @@ function parseWhatsAppCatalog(rawText) {
     else if (titleUpper.includes('MICROSOFT') || titleUpper.includes('SURFACE')) brand = 'SURFACE';
     else if (titleUpper.includes('MACBOOK') || titleUpper.includes('APPLE')) brand = 'MACBOOK';
 
-    const stableId = 'prod_' + cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    const stableId = normalizeModelKey(cleanTitle);
+
 
 
     products.push({
@@ -751,7 +764,25 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
 
   const getPhotos = useCallback((stableId, p = null) => {
-    const local = productPhotos[stableId] || [];
+    let local = productPhotos[stableId] || [];
+
+    // Fallback: If no direct match, search normalized model key & fuzzy model match
+    if (local.length === 0 && (p?.title || stableId)) {
+      const baseKey = p?.title ? normalizeModelKey(p.title) : stableId;
+      if (productPhotos[baseKey]) {
+        local = productPhotos[baseKey];
+      } else {
+        const targetClean = baseKey.replace(/^prod_/, '').replace(/_/g, '');
+        const foundKey = Object.keys(productPhotos).find(k => {
+          const kClean = k.replace(/^prod_/, '').replace(/_/g, '');
+          return kClean.length > 3 && (kClean.includes(targetClean) || targetClean.includes(kClean));
+        });
+        if (foundKey && productPhotos[foundKey]) {
+          local = productPhotos[foundKey];
+        }
+      }
+    }
+
     const embedded = p?.embeddedPhotos || [];
     const combined = [...local];
     embedded.forEach(ph => {
@@ -759,6 +790,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     });
     return combined;
   }, [productPhotos]);
+
 
 
 
@@ -2071,8 +2103,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                   <img
                                     src={activePhoto.url}
                                     alt={activePhoto.label}
+                                    onError={(e) => {
+                                      const src = e?.target?.src;
+                                      if (src && src.includes('lh3.googleusercontent.com/d/')) {
+                                        const fileId = src.split('/d/')[1]?.split('=')[0];
+                                        if (fileId) e.target.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                                      }
+                                    }}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                   />
+
                                   <span style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>
                                     {activeIdx + 1} / {photos.length}
                                   </span>

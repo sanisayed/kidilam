@@ -709,46 +709,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
   const getPhotos = useCallback((stableId) => productPhotos[stableId] || [], [productPhotos]);
 
-  // ── CROSS-DEVICE SYNC from Supabase Storage ──────────────────────────────
-  // When the app loads (or filtered products change), fetch photo lists from
-  // Supabase Storage so that ANY device sees photos uploaded from ANY other device.
-  useEffect(() => {
-    if (!filteredProducts || filteredProducts.length === 0) return;
-
-    let cancelled = false;
-    const syncAll = async () => {
-      const updates = {};
-      await Promise.all(
-        filteredProducts.map(async (p) => {
-          const stableId = p.stableId || p.id;
-          try {
-            const remotePhotos = await listProductPhotos(stableId);
-            if (!cancelled && remotePhotos.length > 0) {
-              updates[stableId] = remotePhotos;
-            }
-          } catch {}
-        })
-      );
-      if (!cancelled && Object.keys(updates).length > 0) {
-        setProductPhotos(prev => {
-          const merged = { ...prev };
-          Object.entries(updates).forEach(([id, photos]) => {
-            // Only update if remote has more/different photos than local
-            const local = prev[id] || [];
-            if (photos.length !== local.length) {
-              merged[id] = photos;
-            }
-          });
-          try { localStorage.setItem('product_photos_v2', JSON.stringify(merged)); } catch {}
-          return merged;
-        });
-      }
-    };
-
-    syncAll();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredProducts]);
 
 
   const handleAddPhotos = useCallback(async (p, files) => {
@@ -999,6 +959,39 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       return true;
     });
   }, [products, searchQuery, selectedCategory, selectedSeries, selectedBudget, selectedBrand, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedGpu, selectedFeature]);
+
+  // ── CROSS-DEVICE SYNC from Supabase Storage ──────────────────────────────
+  // Placed AFTER filteredProducts is declared so it's defined when useEffect runs.
+  useEffect(() => {
+    if (!filteredProducts || filteredProducts.length === 0) return;
+    let cancelled = false;
+    const syncAll = async () => {
+      const updates = {};
+      await Promise.all(
+        filteredProducts.map(async (p) => {
+          const stableId = p.stableId || p.id;
+          try {
+            const remotePhotos = await listProductPhotos(stableId);
+            if (!cancelled && remotePhotos.length > 0) updates[stableId] = remotePhotos;
+          } catch {}
+        })
+      );
+      if (!cancelled && Object.keys(updates).length > 0) {
+        setProductPhotos(prev => {
+          const merged = { ...prev };
+          Object.entries(updates).forEach(([id, photos]) => {
+            const local = prev[id] || [];
+            if (photos.length !== local.length) merged[id] = photos;
+          });
+          try { localStorage.setItem('product_photos_v2', JSON.stringify(merged)); } catch {}
+          return merged;
+        });
+      }
+    };
+    syncAll();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredProducts]);
 
   // Key KPI Metrics
   const stats = useMemo(() => {

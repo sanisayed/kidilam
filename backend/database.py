@@ -24,9 +24,16 @@ except Exception as e:
 
 
 
-
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS catalog_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
 CREATE TABLE IF NOT EXISTS products (
+
     dta TEXT PRIMARY KEY,
     brand TEXT NOT NULL,
     model TEXT NOT NULL,
@@ -2891,4 +2898,33 @@ def seed_admin_user():
         print(f"Seed admin note: {e}")
     finally:
         conn.close()
+
+
+def get_catalog_setting(key, default=None):
+    try:
+        conn = get_connection()
+        row = conn.execute("SELECT value FROM catalog_settings WHERE key = ?", (key,)).fetchone()
+        conn.close()
+        if row:
+            return row[0] if isinstance(row, (tuple, list)) else row["value"]
+    except Exception as e:
+        print(f"get_catalog_setting error: {e}")
+    return default
+
+
+def set_catalog_setting(key, value):
+    try:
+        conn = get_connection()
+        conn.execute(
+            "INSERT INTO catalog_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP",
+            (key, value)
+        )
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"set_catalog_setting error: {e}")
+        return False
+
 

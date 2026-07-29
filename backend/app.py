@@ -79,6 +79,28 @@ def health_check():
     })
 
 
+# ── Catalog & Photo Cloud Sync API ───────────────────────────────────────────
+@app.route("/api/catalog", methods=["GET"])
+def api_get_catalog():
+    raw_text = db.get_catalog_setting("raw_text", "")
+    photos_str = db.get_catalog_setting("product_photos", "{}")
+    try:
+        photos = json.loads(photos_str)
+    except Exception:
+        photos = {}
+    return jsonify({"rawText": raw_text, "productPhotos": photos})
+
+
+@app.route("/api/catalog", methods=["POST"])
+def api_save_catalog():
+    data = request.get_json() or {}
+    if "rawText" in data and isinstance(data["rawText"], str):
+        db.set_catalog_setting("raw_text", data["rawText"])
+    if "productPhotos" in data:
+        db.set_catalog_setting("product_photos", json.dumps(data["productPhotos"]))
+    return jsonify({"ok": True})
+
+
 
 # ── Helpers & Auth Decorators ─────────────────────────────────────────────────
 

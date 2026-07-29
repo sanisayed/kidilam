@@ -846,9 +846,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     if (window.confirm(`Delete this photo from Vault?`)) {
       await deleteProductPhoto(photo.url).catch(() => {});
       const updated = { ...productPhotos, [key]: photos.filter((_, i) => i !== idx) };
-      saveProductPhotos(updated);
+      setProductPhotos(updated);
+      saveCatalogToCloud(rawText, updated);
     }
-  }, [productPhotos, saveProductPhotos]);
+  }, [productPhotos, rawText]);
 
   const handleVaultUpload = useCallback(async (key, modelTitle, files) => {
     if (!files || files.length === 0) return;
@@ -874,10 +875,12 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     }
 
     const updated = { ...productPhotos, [key]: newPhotos };
-    saveProductPhotos(updated);
+    setProductPhotos(updated);
+    saveCatalogToCloud(rawText, updated);
     setToastMessage(`✅ Added ${files.length} photos to Vault!`);
     setTimeout(() => setToastMessage(''), 3000);
-  }, [productPhotos, saveProductPhotos, googleAccessToken]);
+  }, [productPhotos, rawText, googleAccessToken]);
+
 
 
 

@@ -539,7 +539,8 @@ function parseWhatsAppCatalog(rawText) {
     else if (titleUpper.includes('MICROSOFT') || titleUpper.includes('SURFACE')) brand = 'SURFACE';
     else if (titleUpper.includes('MACBOOK') || titleUpper.includes('APPLE')) brand = 'MACBOOK';
 
-    const stableId = 'prod_' + cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + products.length;
+    const stableId = 'prod_' + cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
 
     products.push({
       id: stableId,
@@ -714,6 +715,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [activePhotoIdx, setActivePhotoIdx] = useState({}); // { [stableId]: number }
   const [lightbox, setLightbox] = useState(null); // { stableId, idx }
   const [sharingId, setSharingId] = useState(null); // stableId currently being shared
+  const [showVaultModal, setShowVaultModal] = useState(false);
+  const [vaultSearch, setVaultSearch] = useState('');
+
 
   const isMobileShareSupported = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
@@ -1325,6 +1329,14 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
                   <button 
                     className="btn btn-ghost" 
+                    style={{ padding: '10px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
+                    onClick={() => setShowVaultModal(true)}
+                  >
+                    <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
+                  </button>
+
+                  <button 
+                    className="btn btn-ghost" 
                     style={{ padding: '10px 12px', fontWeight: 800, color: 'var(--pink)', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
                     onClick={() => {
                       if (window.confirm('Clear current stock list?')) {
@@ -1337,6 +1349,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                   </button>
                 </>
               )}
+
 
 
               <button 
@@ -2403,7 +2416,116 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         })()}
       </AnimatePresence>
 
+      {/* ── PHOTO VAULT LIBRARY MODAL ── */}
+      <AnimatePresence>
+        {showVaultModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)',
+              zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+            }}
+            onClick={() => setShowVaultModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.94 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.94 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)', width: '100%', maxWidth: 720, maxHeight: '85vh',
+                borderRadius: 14, border: '2px solid var(--border-color)', display: 'flex',
+                flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.5)'
+              }}
+            >
+              {/* Vault Header */}
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>📸</span> Google Drive Photo Vault
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.76rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                    All product photo albums ever uploaded. Photos auto-link when you re-add laptops to your catalog list!
+                  </p>
+                </div>
+                <button onClick={() => setShowVaultModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-light-color)', background: 'var(--bg-card)' }}>
+                <input
+                  type="text"
+                  placeholder="Search vault photo albums by model name (e.g. 5310, T14, ZBook)..."
+                  value={vaultSearch}
+                  onChange={e => setVaultSearch(e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 8,
+                    border: '1px solid var(--border-color)', background: 'var(--bg)',
+                    color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '0.84rem'
+                  }}
+                />
+              </div>
+
+              {/* Album List Grid */}
+              <div style={{ padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, flex: 1 }}>
+                {(() => {
+                  const keys = Object.keys(productPhotos).filter(k => {
+                    const list = productPhotos[k] || [];
+                    if (list.length === 0) return false;
+                    if (!vaultSearch.trim()) return true;
+                    return k.toLowerCase().includes(vaultSearch.toLowerCase().replace(/[^a-z0-9]/g, ''));
+                  });
+
+                  if (keys.length === 0) {
+                    return (
+                      <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+                        No saved photo albums matching "{vaultSearch}".
+                      </div>
+                    );
+                  }
+
+                  return keys.map(k => {
+                    const photos = productPhotos[k] || [];
+                    const modelName = k.replace(/^prod_/, '').replace(/_/g, ' ').toUpperCase();
+
+                    return (
+                      <div key={k} style={{ padding: 14, borderRadius: 10, border: '1px solid var(--border-light-color)', background: 'var(--bg)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                          <span style={{ fontWeight: 900, fontSize: '0.88rem', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                            💻 {modelName}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', background: 'var(--purple-soft)', color: 'var(--purple)', padding: '2px 8px', borderRadius: 4, fontWeight: 800 }}>
+                            {photos.length} Drive Photos
+                          </span>
+                        </div>
+
+                        {/* Thumbnails */}
+                        <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+                          {photos.map((ph, i) => (
+                            <img
+                              key={i}
+                              src={ph.url}
+                              alt={ph.label}
+                              style={{ width: 68, height: 50, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-color)' }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── TOAST NOTIFICATION ── */}
+
       <AnimatePresence>
         {toastMessage && (
           <motion.div

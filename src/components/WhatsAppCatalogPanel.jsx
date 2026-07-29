@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos } from '../services/supabaseClient';
 import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi } from '../services/googleDriveService';
+import { saveCatalogToCloud, fetchCatalogFromCloud } from '../services/catalogSyncService';
+
 
 
 
@@ -666,11 +668,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return (cached && cached.trim().length > 0) ? cached : DEFAULT_STOCK_CATALOG;
   });
 
-  const updateAndSaveRawText = (newText) => {
-    setRawText(newText);
-    localStorage.setItem('whatsapp_catalog_raw_text', newText);
-  };
-
   const products = useMemo(() => parseWhatsAppCatalog(rawText), [rawText]);
 
   // Clean Dropdown Filter States
@@ -720,10 +717,34 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
   const isMobileShareSupported = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
+  // ── CENTRAL CLOUD SYNC ON MOUNT ──────────────────────────────────────────────
+  // Fetch latest stock catalog text & photo mappings from central Supabase Cloud DB
+  // so Mobile immediately loads all photos uploaded from Laptop!
+  useEffect(() => {
+    let active = true;
+    fetchCatalogFromCloud().then(({ rawText: cloudText, productPhotos: cloudPhotos }) => {
+      if (!active) return;
+      if (cloudText && cloudText.trim().length > 0) {
+        setRawText(cloudText);
+      }
+      if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
+        setProductPhotos(prev => ({ ...prev, ...cloudPhotos }));
+      }
+    });
+    return () => { active = false; };
+  }, []);
+
+  const updateAndSaveRawText = (newText) => {
+    setRawText(newText);
+    saveCatalogToCloud(newText, productPhotos);
+  };
+
   const saveProductPhotos = useCallback((updated) => {
     setProductPhotos(updated);
-    try { localStorage.setItem('product_photos_v2', JSON.stringify(updated)); } catch {}
-  }, []);
+    saveCatalogToCloud(rawText, updated);
+  }, [rawText]);
+
+
 
   const getPhotos = useCallback((stableId, p = null) => {
     const local = productPhotos[stableId] || [];

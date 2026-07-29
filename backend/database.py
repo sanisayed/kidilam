@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS products (
     brand TEXT NOT NULL,
     model TEXT NOT NULL,
     price REAL NOT NULL DEFAULT 0,
+    image_url TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -571,6 +572,12 @@ def init_db():
         conn.commit()
     except sqlite3.OperationalError:
         pass
+    # Safely alter products to add image_url if it doesn't exist
+    try:
+        conn.execute("ALTER TABLE products ADD COLUMN image_url TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
     # Safely alter display_pieces to add quantity if it doesn't exist
     try:
         conn.execute("ALTER TABLE display_pieces ADD COLUMN quantity INTEGER DEFAULT 1")
@@ -684,21 +691,22 @@ def get_product(dta: str, conn=None):
     return dict(row) if row else None
 
 
-def upsert_product(dta: str, brand: str, model: str, price: float, conn=None):
+def upsert_product(dta: str, brand: str, model: str, price: float, image_url: str = "", conn=None):
     dta = dta.strip().upper()
     close_conn = False
     if conn is None:
         conn = get_connection()
         close_conn = True
     conn.execute(
-        """INSERT INTO products (dta, brand, model, price, updated_at)
-           VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """INSERT INTO products (dta, brand, model, price, image_url, updated_at)
+           VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
            ON CONFLICT(dta) DO UPDATE SET
                brand = excluded.brand,
                model = excluded.model,
                price = excluded.price,
+               image_url = CASE WHEN excluded.image_url != '' THEN excluded.image_url ELSE products.image_url END,
                updated_at = CURRENT_TIMESTAMP""",
-        (dta, brand.strip(), model.strip(), float(price)),
+        (dta, brand.strip(), model.strip(), float(price), (image_url or "").strip()),
     )
     if close_conn:
         conn.commit()

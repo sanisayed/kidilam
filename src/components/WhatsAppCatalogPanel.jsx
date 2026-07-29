@@ -500,6 +500,163 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return result.trim();
   }, [filteredProducts]);
 
+  // Product Photos local state
+  const [productPhotos, setProductPhotos] = useState(() => {
+    try {
+      const saved = localStorage.getItem('whatsapp_product_photos');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const saveProductPhoto = (productIdOrTitle, base64Photo) => {
+    const updated = { ...productPhotos, [productIdOrTitle]: base64Photo };
+    setProductPhotos(updated);
+    try {
+      localStorage.setItem('whatsapp_product_photos', JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const handleAttachCardPhoto = (productIdOrTitle, file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 800;
+        let w = img.width, h = img.height;
+        if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        saveProductPhoto(productIdOrTitle, dataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Canvas Card PNG Generator
+  const generateProductCardBlob = async (p) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 1000;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 800, 1000);
+
+    // Header Banner
+    ctx.fillStyle = '#8b5cf6';
+    ctx.fillRect(0, 0, 800, 100);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillText('BUYOLOGY LAPTOP SPECIAL', 40, 62);
+
+    const pPhoto = productPhotos[p.id] || productPhotos[p.title] || p.photo;
+
+    // Draw Photo if available
+    if (pPhoto) {
+      try {
+        const img = new Image();
+        img.src = pPhoto;
+        await new Promise((res) => { img.onload = res; img.onerror = res; });
+        ctx.drawImage(img, 40, 120, 720, 440);
+      } catch (e) {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(40, 120, 720, 440);
+      }
+    } else {
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(40, 120, 720, 440);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '90px sans-serif';
+      ctx.fillText('💻', 350, 360);
+    }
+
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 32px sans-serif';
+    ctx.fillText(p.title || 'Laptop Offer', 40, 610);
+
+    // Specs
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '22px monospace';
+    let y = 660;
+    if (p.processor) { ctx.fillText(`• CPU: ${p.processor} ${p.gen || ''}`, 40, y); y += 34; }
+    if (p.ram) { ctx.fillText(`• RAM: ${p.ram} GB DDR4/DDR5`, 40, y); y += 34; }
+    if (p.storage) { ctx.fillText(`• Storage: ${p.storage} GB SSD`, 40, y); y += 34; }
+    if (p.display) { ctx.fillText(`• Display: ${p.display}`, 40, y); y += 34; }
+    if (p.gpu) { ctx.fillText(`• GPU: ${p.gpu}`, 40, y); y += 34; }
+
+    // Price Banner
+    ctx.fillStyle = '#a3e635';
+    ctx.fillRect(40, 880, 720, 80);
+
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillText(`OFFER PRICE @ ${p.offerPrice}/- AED 💰`, 60, 934);
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/png');
+    });
+  };
+
+  // Copy Photo + Formatted WhatsApp Text to Clipboard
+  const handleCopyPhotoAndText = async (p) => {
+    try {
+      const pngBlob = await generateProductCardBlob(p);
+      const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
+      const textBlob = new Blob([postText], { type: 'text/plain' });
+
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'image/png': pngBlob,
+            'text/plain': textBlob
+          })
+        ]);
+        setCopiedId(`photo-${p.id}`);
+        setToastMessage('Copied Photo + Text! Paste (Ctrl+V) directly into WhatsApp!');
+        setTimeout(() => { setCopiedId(null); setToastMessage(''); }, 3000);
+      } else {
+        handleCopy(postText, p.id);
+      }
+    } catch (err) {
+      console.error('Copy photo error:', err);
+      handleCopy(p.rawText, p.id);
+    }
+  };
+
+  // Share Photo + Text to Mobile WhatsApp
+  const handleShareToWhatsApp = async (p) => {
+    const postText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n*Offer Price @${p.offerPrice}/- AED* 💰`;
+    try {
+      const pngBlob = await generateProductCardBlob(p);
+      const file = new File([pngBlob], `${(p.title || 'laptop').replace(/\s+/g, '_')}.png`, { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: p.title,
+          text: postText,
+          files: [file]
+        });
+        return;
+      }
+    } catch (err) {
+      console.log('Mobile share fallback:', err);
+    }
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(postText)}`;
+    window.open(waUrl, '_blank');
+  };
+
   // Copy Helper
   const handleCopy = (textToCopy, identifier = 'all') => {
     navigator.clipboard.writeText(textToCopy).then(() => {
@@ -1009,6 +1166,71 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                         }}
                       >
                         <div>
+                          {/* Photo Thumbnail Preview & Attach Trigger */}
+                          {(() => {
+                            const pPhoto = productPhotos[p.id] || productPhotos[p.title] || p.photo;
+                            return (
+                              <div style={{ marginBottom: 10 }}>
+                                {pPhoto ? (
+                                  <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000' }}>
+                                    <img src={pPhoto} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <label 
+                                      style={{
+                                        position: 'absolute',
+                                        bottom: 6,
+                                        right: 6,
+                                        background: 'rgba(0,0,0,0.8)',
+                                        color: '#fff',
+                                        fontSize: '0.68rem',
+                                        fontWeight: 800,
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontFamily: 'var(--font-mono)'
+                                      }}
+                                    >
+                                      📷 Change Photo
+                                      <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        capture="environment"
+                                        style={{ display: 'none' }}
+                                        onChange={e => e.target.files && handleAttachCardPhoto(p.id || p.title, e.target.files[0])}
+                                      />
+                                    </label>
+                                  </div>
+                                ) : (
+                                  <label 
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: 6,
+                                      padding: '8px 12px',
+                                      border: '1px dashed var(--border-color)',
+                                      borderRadius: 'var(--radius-sm)',
+                                      background: 'var(--bg)',
+                                      color: 'var(--text-secondary)',
+                                      fontSize: '0.74rem',
+                                      fontFamily: 'var(--font-mono)',
+                                      fontWeight: 800,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <span>📷 Attach Product Photo</span>
+                                    <input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      capture="environment"
+                                      style={{ display: 'none' }}
+                                      onChange={e => e.target.files && handleAttachCardPhoto(p.id || p.title, e.target.files[0])}
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                            );
+                          })()}
+
                           {/* Category & Brand Badges */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
                             <span className={`badge ${
@@ -1112,33 +1334,48 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', gap: 8 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {/* Copy Photo + Text Button */}
                             <button 
                               className="btn btn-primary" 
                               style={{ 
-                                flex: 1, 
-                                fontSize: '0.78rem', 
-                                fontWeight: 800,
+                                width: '100%', 
+                                fontSize: '0.8rem', 
+                                fontWeight: 900,
                                 justifyContent: 'center',
-                                background: copiedId === p.id ? 'var(--green)' : 'var(--bg-dark)',
-                                color: copiedId === p.id ? '#000000' : 'var(--citrus)'
+                                background: copiedId === `photo-${p.id}` ? 'var(--green)' : 'var(--citrus)',
+                                color: '#000000'
                               }}
-                              onClick={() => handleCopy(p.rawText, p.id)}
+                              onClick={() => handleCopyPhotoAndText(p)}
                             >
-                              {copiedId === p.id ? <Check size={13} /> : <Copy size={13} />}
-                              <span>{copiedId === p.id ? 'Copied Quote!' : 'Copy Laptop Quote'}</span>
+                              {copiedId === `photo-${p.id}` ? <Check size={14} /> : <span>📷</span>}
+                              <span>{copiedId === `photo-${p.id}` ? 'Copied Photo + Text!' : 'Copy Photo + Text for WhatsApp'}</span>
                             </button>
 
-                            <a 
-                              href={`https://wa.me/?text=${encodeURIComponent(p.rawText)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn btn-ghost"
-                              style={{ padding: '5px 10px', fontSize: '0.78rem' }}
-                              title="Send via WhatsApp"
-                            >
-                              <Share2 size={13} />
-                            </a>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button 
+                                className="btn btn-ghost" 
+                                style={{ 
+                                  flex: 1, 
+                                  fontSize: '0.74rem', 
+                                  fontWeight: 800,
+                                  justifyContent: 'center'
+                                }}
+                                onClick={() => handleCopy(p.rawText, p.id)}
+                              >
+                                {copiedId === p.id ? <Check size={12} /> : <Copy size={12} />}
+                                <span>{copiedId === p.id ? 'Copied Text' : 'Copy Text'}</span>
+                              </button>
+
+                              <button 
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '0.74rem', fontWeight: 800 }}
+                                onClick={() => handleShareToWhatsApp(p)}
+                                title="Share to WhatsApp"
+                              >
+                                <Share2 size={13} /> Share
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </motion.div>

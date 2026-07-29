@@ -643,7 +643,30 @@ function AddProductModal({ isOpen, onClose, onSave }) {
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [price, setPrice] = useState('');
+  const [photo, setPhoto] = useState('');
   const [error, setError] = useState('');
+
+  const handlePhotoSelect = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 800;
+        let w = img.width, h = img.height;
+        if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        setPhoto(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -656,12 +679,14 @@ function AddProductModal({ isOpen, onClose, onSave }) {
       brand: brand.trim(),
       name: model.trim(),
       qty: 15,
-      price: parseFloat(price)
+      price: parseFloat(price),
+      image_url: photo
     });
     setDta('');
     setBrand('');
     setModel('');
     setPrice('');
+    setPhoto('');
     setError('');
     onClose();
   };
@@ -677,22 +702,70 @@ function AddProductModal({ isOpen, onClose, onSave }) {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 999,
-      backdropFilter: 'blur(4px)'
+      backdropFilter: 'blur(4px)',
+      padding: '16px'
     }}>
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="card card-p-lg" 
-        style={{ width: '100%', maxWidth: '440px', background: 'var(--bg-card)' }}
+        style={{ width: '100%', maxWidth: '460px', background: 'var(--bg-card)', maxHeight: '90vh', overflowY: 'auto' }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 20 }}>
-          <h3 className="font-heading" style={{ fontSize: '1.4rem' }}>Add New Product</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+          <h3 className="font-heading" style={{ fontSize: '1.3rem' }}>📷 Add Product with Photo</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontWeight: 800, cursor: 'pointer', color: 'var(--text-primary)' }}>✕</button>
         </div>
 
         {error && <div className="alert alert-error" style={{ marginBottom: 14 }}>{error}</div>}
 
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Photo Upload / Camera Capture Field */}
+          <div className="field">
+            <label className="field-label">PRODUCT PHOTO (UPLOAD OR CAMERA)</label>
+            {photo ? (
+              <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)' }}>
+                <img src={photo} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button 
+                  type="button" 
+                  onClick={() => setPhoto('')}
+                  style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.75)', color: '#fff', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontWeight: 800 }}
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <label 
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '16px 10px',
+                    border: '2px dashed var(--border-color)',
+                    borderRadius: 'var(--radius-sm)',
+                    cursor: 'pointer',
+                    background: 'var(--bg)',
+                    fontSize: '0.8rem',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 700
+                  }}
+                >
+                  <span style={{ fontSize: '1.4rem', marginBottom: 4 }}>📷</span>
+                  <span>Take Photo / Upload Image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment"
+                    style={{ display: 'none' }}
+                    onChange={e => e.target.files && handlePhotoSelect(e.target.files[0])}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
           <div className="field">
             <label className="field-label">DTA SKU CODE</label>
             <input type="text" className="field-input" placeholder="e.g. DTA9999" value={dta} onChange={e => setDta(e.target.value.toUpperCase())} />
@@ -1800,29 +1873,22 @@ function SalesInvoiceForm({ onSave, onClose, productsList, editingBill, prefille
 
 const NAV = [
   {
-    group: 'MAIN',
+    group: 'WHATSAPP & CATALOG',
+    items: [
+      { id: 'whatsapp-catalog', label: '📲 WhatsApp Price List & Claim', icon: ShoppingBag },
+      { id: 'product-db',       label: '📦 Product Database',          icon: Database },
+    ]
+  },
+  {
+    group: 'OTHER MODULES',
     items: [
       { id: 'today-bill',       label: "Today's Bill",      icon: FileText },
       { id: 'sales-history',    label: 'Sales History',     icon: Clock },
-      { id: 'product-db',       label: 'Product Database',  icon: Database },
       { id: 'display-pieces',   label: 'Display Pieces',    icon: Monitor },
       { id: 'deliveries',       label: 'Deliveries',        icon: Truck },
       { id: 'warranty-claims',  label: 'Warranty Claims',   icon: Shield },
       { id: 'customer-crm',     label: 'Customer CRM',      icon: Users },
-    ]
-  },
-
-  {
-    group: 'WHATSAPP CATALOG',
-    items: [
-      { id: 'whatsapp-catalog', label: '💻 WhatsApp Price List', icon: ShoppingBag },
-    ]
-  },
-
-  {
-    group: 'ANALYTICS',
-    items: [
-      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'dashboard',        label: 'Dashboard',         icon: LayoutDashboard },
       {
         id: 'marketing', label: 'Marketing', icon: Megaphone,
         sub: [
@@ -1830,14 +1896,9 @@ const NAV = [
           { id: 'mkt-purchase',  label: 'Purchase Compare' },
         ]
       },
-    ]
-  },
-  {
-    group: 'ADMINISTRATION',
-    items: [
       { id: 'staff-accounts', label: 'Staff Accounts', icon: Users },
     ]
-  },
+  }
 ];
 
 /* =========================================================
@@ -1847,6 +1908,9 @@ const NAV = [
 function Sidebar({ active, onSelect, onLogout, isStrapiOnline, isOpen, onClose, pendingBills = [], isHovered, onHoverChange }) {
   const [mktHovered, setMktHovered] = useState(false);
   const [mktClickOpen, setMktClickOpen] = useState(true);
+  const [focusMode, setFocusMode] = useState(() => {
+    return localStorage.getItem('app_focus_mode') !== 'false';
+  });
 
   const [isMobileSize, setIsMobileSize] = useState(() => {
     return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
@@ -1860,7 +1924,15 @@ function Sidebar({ active, onSelect, onLogout, isStrapiOnline, isOpen, onClose, 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const activeNav = NAV;
+  const toggleFocusMode = () => {
+    const next = !focusMode;
+    setFocusMode(next);
+    localStorage.setItem('app_focus_mode', String(next));
+  };
+
+  const activeNav = focusMode 
+    ? NAV.filter(section => section.group === 'WHATSAPP & CATALOG')
+    : NAV;
 
   const isActive = (id) => active === id;
   const isSubActive = (sub) => sub?.some(s => s.id === active);
@@ -1973,7 +2045,31 @@ function Sidebar({ active, onSelect, onLogout, isStrapiOnline, isOpen, onClose, 
       </nav>
 
       <div className="sidebar-footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', marginBottom: 10 }}>
+        <button 
+          onClick={toggleFocusMode}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            marginBottom: 10,
+            background: focusMode ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+            border: focusMode ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 'var(--radius-sm)',
+            color: focusMode ? '#10b981' : '#ffffff',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            fontFamily: 'var(--font-mono)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6
+          }}
+          title="Click to toggle focus mode (hiding non-essential ERP panels)"
+        >
+          {focusMode ? '⚡ Focus Mode: ON' : '⚙️ Show All Modules'}
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px', marginBottom: 10 }}>
           <span className={`status-dot ${isStrapiOnline ? 'online' : 'offline'}`} />
           <span style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em' }}>
             {isStrapiOnline ? 'STRAPI CONNECTED' : 'MOCK SANDBOX'}
@@ -3019,10 +3115,17 @@ function ProductDbPanel({ productsList, setProductsList }) {
         </div>
         <div className="data-table-wrap">
           <table className="data-table">
-            <thead><tr><th>SKU</th><th>Product Name</th><th>Brand</th><th>In Stock</th><th>Unit Price</th><th>Status</th></tr></thead>
+            <thead><tr><th>Photo</th><th>SKU</th><th>Product Name</th><th>Brand</th><th>In Stock</th><th>Unit Price</th><th>Status</th></tr></thead>
             <tbody>
               {displayed.map((p, i) => (
-                <motion.tr key={p.code} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.4) }}>
+                <motion.tr key={p.code + i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.4) }}>
+                  <td>
+                    {p.image_url ? (
+                      <img src={p.image_url} alt={p.name} style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-light-color)' }} />
+                    ) : (
+                      <span style={{ fontSize: '1.1rem', display: 'inline-block', width: 38, height: 38, lineHeight: '38px', textAlign: 'center', background: 'var(--bg)', borderRadius: 6 }}>💻</span>
+                    )}
+                  </td>
                   <td><span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem' }}>{p.code}</span></td>
                   <td style={{ fontWeight: 600 }}>{p.name}</td>
                   <td><span className="badge badge-gray">{p.brand}</span></td>
@@ -10877,6 +10980,73 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
           />
         )}
       </AnimatePresence>
+
+      {/* Mobile Floating Bottom Bar */}
+      <div 
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '62px',
+          background: 'var(--bg-card, #111827)',
+          borderTop: '2px solid #000000',
+          display: isMobileSize ? 'flex' : 'none',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          zIndex: 98,
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.3)',
+          paddingBottom: 'env(safe-area-inset-bottom)'
+        }}
+      >
+        <button
+          onClick={() => handleSelectPanel('whatsapp-catalog')}
+          style={{
+            flex: 1,
+            height: '100%',
+            background: active === 'whatsapp-catalog' ? 'var(--citrus, #a3e635)' : 'transparent',
+            color: active === 'whatsapp-catalog' ? '#000000' : 'var(--text-secondary)',
+            border: 'none',
+            fontWeight: 900,
+            fontSize: '0.82rem',
+            fontFamily: 'var(--font-mono)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            cursor: 'pointer'
+          }}
+        >
+          <ShoppingBag size={18} />
+          <span>WhatsApp Claim</span>
+        </button>
+
+        <div style={{ width: '1px', height: '60%', background: 'var(--border-light-color)' }} />
+
+        <button
+          onClick={() => handleSelectPanel('product-db')}
+          style={{
+            flex: 1,
+            height: '100%',
+            background: active === 'product-db' ? 'var(--citrus, #a3e635)' : 'transparent',
+            color: active === 'product-db' ? '#000000' : 'var(--text-secondary)',
+            border: 'none',
+            fontWeight: 900,
+            fontSize: '0.82rem',
+            fontFamily: 'var(--font-mono)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            cursor: 'pointer'
+          }}
+        >
+          <Database size={18} />
+          <span>Product DB</span>
+        </button>
+      </div>
     </div>
   );
 }

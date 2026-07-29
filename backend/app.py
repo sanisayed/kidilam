@@ -382,13 +382,27 @@ def api_product_get(dta):
 @permission_required("products")
 def api_product_create():
     data = request.get_json()
-    if not data or not data.get("dta"):
+    if not data:
+        return jsonify({"error": "No payload"}), 400
+    if isinstance(data, list):
+        for item in data:
+            if item.get("dta"):
+                db.upsert_product(
+                    dta=item["dta"],
+                    brand=item.get("brand", ""),
+                    model=item.get("model", ""),
+                    price=item.get("price", 0),
+                    image_url=item.get("image_url", item.get("photo", ""))
+                )
+        return jsonify({"ok": True, "count": len(data)})
+    if not data.get("dta"):
         return jsonify({"error": "dta is required"}), 400
     db.upsert_product(
         dta=data["dta"],
         brand=data.get("brand", ""),
         model=data.get("model", ""),
         price=data.get("price", 0),
+        image_url=data.get("image_url", data.get("photo", ""))
     )
     return jsonify({"ok": True, "dta": data["dta"].upper()})
 
@@ -404,6 +418,7 @@ def api_product_update(dta):
         brand=data.get("brand", ""),
         model=data.get("model", ""),
         price=data.get("price", 0),
+        image_url=data.get("image_url", data.get("photo", ""))
     )
     return jsonify({"ok": True})
 

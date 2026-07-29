@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Bot
+  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown
 } from 'lucide-react';
-import { getAiLaptopRecommendations } from '../services/aiRecommender';
 
 /* =========================================================
    LIVE OFFICIAL CATALOG TEMPLATE (27-07-2026 UPDATED)
@@ -681,35 +680,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [selectedFeature, setSelectedFeature] = useState('ALL'); // 'ALL' | 'touch' | '2in1' | 'large'
   const [showLivePreview, setShowLivePreview] = useState(true);
 
-  // Google AI Smart Recommender & Filter State
-  const [aiQuery, setAiQuery] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState(null);
-
-  const handleRunAiRecommendation = async (queryToRun) => {
-    const prompt = queryToRun || aiQuery || searchQuery;
-    if (!prompt || !prompt.trim()) return;
-
-    setAiLoading(true);
-    setToastMessage('🤖 Google AI is analyzing stock catalog...');
-
-    try {
-      const result = await getAiLaptopRecommendations(prompt, rawText);
-      setAiLoading(false);
-
-      if (result && result.recommendations && result.recommendations.length > 0) {
-        setAiResult(result);
-        setToastMessage(`✨ Google AI found ${result.recommendations.length} matching laptop(s)!`);
-      } else {
-        setAiResult(null);
-        setToastMessage('Showing matching laptop stock below.');
-      }
-    } catch (e) {
-      setAiLoading(false);
-    }
-    setTimeout(() => setToastMessage(''), 4000);
-  };
-
   // Copy Feedback State
   const [copiedId, setCopiedId] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
@@ -717,25 +687,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [editorInput, setEditorInput] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
-  // Filter products cleanly (strictly filters to AI matches when aiResult is active)
+  // Filter products cleanly
   const filteredProducts = useMemo(() => {
-    let baseList = products;
-
-    if (aiResult && aiResult.recommendations && aiResult.recommendations.length > 0) {
-      const recTitles = aiResult.recommendations.map(r => (r.title || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
-      const aiMatches = products.filter(p => {
-        const titleClean = p.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return recTitles.some(t => {
-          if (!t || t.length < 3) return false;
-          return t.includes(titleClean) || titleClean.includes(t);
-        });
-      });
-      if (aiMatches.length > 0) {
-        baseList = aiMatches;
-      }
-    }
-
-    return baseList.filter(p => {
+    return products.filter(p => {
       const fullText = `${p.title} ${p.processor} ${p.gen} ${p.ram}GB ${p.storage}GB ${p.brand} ${p.gpu} ${p.offerPrice}`.toLowerCase();
 
       // 1. Search Query
@@ -830,7 +784,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
       return true;
     });
-  }, [products, aiResult, searchQuery, selectedCategory, selectedBudget, selectedBrand, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedGpu, selectedFeature]);
+  }, [products, searchQuery, selectedCategory, selectedBudget, selectedBrand, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedGpu, selectedFeature]);
 
   // Key KPI Metrics
   const stats = useMemo(() => {
@@ -1409,115 +1363,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         /* FULL-WIDTH FILTER & CATALOG CONSOLE */
         <>
           <div className="card static card-p-lg" style={{ border: 'var(--border)', display: 'flex', flexDirection: 'column', gap: 18, width: '100%' }}>
-            {/* GOOGLE GEMINI AI SMART SEARCH & RECOMMENDER BAR */}
-            <div style={{
-              background: 'var(--bg-dark, #0f172a)',
-              color: '#ffffff',
-              padding: '14px 18px',
-              borderRadius: 'var(--radius)',
-              border: '2px solid #000',
-              boxShadow: 'var(--shadow-flat-sm)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 900, fontFamily: 'var(--font-mono)', fontSize: '0.92rem', color: 'var(--citrus)' }}>
-                  <Bot size={18} />
-                  <span>GOOGLE AI LAPTOP RECOMMENDER & SMART FILTER</span>
-                </div>
-
-                <span style={{ fontSize: '0.68rem', opacity: 0.8, fontFamily: 'var(--font-mono)' }}>
-                  ⚡ Powered by Google Gemini AI
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <input 
-                  type="text" 
-                  className="field-input" 
-                  placeholder="🤖 Ask Google AI: 'Customer needs laptop under 1500 AED for video editing and heavy coding'..." 
-                  value={aiQuery}
-                  onChange={e => setAiQuery(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleRunAiRecommendation()}
-                  style={{ flex: 1, height: '44px', background: '#1e293b', color: '#fff', border: '1px solid #334155', fontSize: '0.88rem', paddingLeft: 14 }}
-                />
-
-                <button 
-                  className="btn btn-primary"
-                  style={{ height: '44px', padding: '0 18px', fontWeight: 900, background: 'var(--citrus)', color: '#000', whiteSpace: 'nowrap' }}
-                  onClick={() => handleRunAiRecommendation()}
-                  disabled={aiLoading}
-                >
-                  {aiLoading ? <Sparkles size={16} className="spin" /> : <Bot size={16} />}
-                  <span>{aiLoading ? 'Analyzing...' : 'Ask Google AI'}</span>
-                </button>
-              </div>
-
-              {/* AI Quick Filter Chips */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.7rem', opacity: 0.7, fontFamily: 'var(--font-mono)' }}>Quick AI Prompts:</span>
-                {[
-                  '💰 Best Under 1000 AED',
-                  '🎮 4GB / Dedicated GPU Workstations',
-                  '✨ 2-in-1 Touchscreen Executive',
-                  '📚 Student Laptops Under 1500'
-                ].map((chip, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      fontFamily: 'var(--font-mono)',
-                      background: 'rgba(255,255,255,0.08)',
-                      color: '#a3e635',
-                      border: '1px solid rgba(163, 230, 53, 0.3)',
-                      borderRadius: '4px',
-                      padding: '3px 10px',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => {
-                      setAiQuery(chip);
-                      handleRunAiRecommendation(chip);
-                    }}
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
-
-              {/* AI Recommendation Result Banner */}
-              {aiResult && (
-                <div style={{ background: 'rgba(163, 230, 53, 0.15)', border: '1px solid #a3e635', borderRadius: 'var(--radius-sm)', padding: '12px 14px', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontWeight: 900, color: '#a3e635', fontSize: '0.88rem' }}>
-                      ✨ AI Recommendation Results ({aiResult.recommendations?.length || 0} Laptops Filtered):
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAiResult(null)}
-                      style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      ✕ Clear AI Filter
-                    </button>
-                  </div>
-
-                  <div style={{ fontFamily: 'var(--font-mono)', opacity: 0.9 }}>{aiResult.summary}</div>
-
-                  {aiResult.recommendations && aiResult.recommendations.map((rec, rIdx) => (
-                    <div key={rIdx} style={{ background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderRadius: '4px', borderLeft: '3px solid #a3e635', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                      <div>
-                        <strong style={{ color: '#fff' }}>💻 {rec.title}</strong>
-                        <div style={{ fontSize: '0.74rem', color: '#a3e635', opacity: 0.9 }}>💡 {rec.reason}</div>
-                      </div>
-                      <span style={{ fontWeight: 900, color: '#a3e635', fontSize: '0.82rem', fontFamily: 'var(--font-mono)' }}>@{rec.offerPrice}/- AED</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
+            
             {/* Search Input Bar */}
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div style={{ position: 'relative', flex: 1 }}>

@@ -457,7 +457,7 @@ function parseWhatsAppCatalog(rawText) {
         const vramMatch = l.match(/(\d+)\s*gb/i);
         if (vramMatch) {
           const vVal = parseInt(vramMatch[1], 10);
-          if (vVal > gpuVram && vVal <= 24) {
+          if (vVal >= 2 && vVal <= 24) {
             gpuVram = vVal;
           }
         }
@@ -490,9 +490,13 @@ function parseWhatsAppCatalog(rawText) {
     const fullGpuLower = fullGpuText.toLowerCase();
     const rawLowerText = fullBlockText.toLowerCase();
 
-    // Dedicated GPU hardware flag (vram >= 2GB or RTX/NVIDIA/Radeon/GTX/A3000/Dedicated 2GB/4GB)
-    const isDedicatedGpu = gpuVram >= 2 || /rtx|gtx|nvidia|radeon|geforce|a3000|a2000|t500|t600|\b\d+\s*gb\s*(graphics|gpu|vram)\b/i.test(fullGpuLower) || /graphics\s*-\s*\d+\s*gb/i.test(rawLowerText) || /gpu\s*-\s*[2481216]+\s*gb\s*graphics/i.test(rawLowerText) || /graphics\s*-\s*[2481216]+\s*gb/i.test(rawLowerText);
-    const isIrisXe = fullGpuLower.includes('iris') || rawLowerText.includes('intel iris');
+    // Dedicated GPU hardware flag (vram >= 2GB or RTX/NVIDIA/Radeon/GTX/A3000/2GB/4GB)
+    const isDedicatedGpu = gpuVram >= 2 || 
+      /rtx|gtx|nvidia|radeon|geforce|a3000|a2000|t500|t600/i.test(fullGpuLower) || 
+      /graphics\s*-\s*\d+\s*gb/i.test(rawLowerText) || 
+      /gpu\s*-\s*\d+\s*gb/i.test(rawLowerText) ||
+      /\b[2481216]+\s*gb\s*(graphics|gpu|vram)\b/i.test(rawLowerText);
+    const isIrisXe = (fullGpuLower.includes('iris') || rawLowerText.includes('intel iris')) && !isDedicatedGpu;
 
     // Laptop Category Classification (Workstation, Business, Executive, Convertible)
     let category = 'BUSINESS';
@@ -782,6 +786,8 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
           if (!p.isDedicatedGpu && !is4GbGpu && !is2GbGpu) return false;
         } else if (selectedGpu === 'iris') {
           if (!p.isIrisXe && !gpuText.includes('iris') && !rawLower.includes('iris xe')) return false;
+        } else if (selectedGpu === 'integrated') {
+          if (p.isDedicatedGpu || is4GbGpu || is2GbGpu) return false;
         }
       }
 

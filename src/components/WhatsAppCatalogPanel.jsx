@@ -515,50 +515,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   // Track active photo index per product card
   const [activePhotoIndices, setActivePhotoIndices] = useState({});
 
-  // Helper to generate 3 distinct default multi-angle photos for a product
-  const createDefaultPhotosArrayForProduct = (title = 'Laptop', brand = 'DELL') => {
-    try {
-      const brandColor = brand === 'DELL' ? '#0284c7' : brand === 'HP' ? '#a855f7' : brand === 'LENOVO' ? '#f97316' : '#ec4899';
-
-      // 1. Front Open Display View
-      const c1 = document.createElement('canvas'); c1.width = 800; c1.height = 600;
-      const ctx1 = c1.getContext('2d');
-      ctx1.fillStyle = '#ffffff'; ctx1.fillRect(0, 0, 800, 600);
-      ctx1.fillStyle = '#0f172a'; ctx1.fillRect(140, 50, 520, 340);
-      ctx1.fillStyle = brandColor; ctx1.fillRect(160, 70, 480, 300);
-      ctx1.fillStyle = '#ffffff'; ctx1.font = 'bold 30px sans-serif'; ctx1.textAlign = 'center'; ctx1.fillText(title, 400, 210);
-      ctx1.fillStyle = '#64748b'; ctx1.fillRect(90, 390, 620, 24);
-      ctx1.fillStyle = '#94a3b8'; ctx1.fillRect(350, 424, 100, 40);
-
-      // 2. Keyboard & Trackpad Open Angle View
-      const c2 = document.createElement('canvas'); c2.width = 800; c2.height = 600;
-      const ctx2 = c2.getContext('2d');
-      ctx2.fillStyle = '#f8fafc'; ctx2.fillRect(0, 0, 800, 600);
-      ctx2.fillStyle = '#1e293b'; ctx2.fillRect(100, 80, 600, 340);
-      ctx2.fillStyle = '#334155';
-      for (let r = 0; r < 5; r++) {
-        for (let col = 0; col < 12; col++) {
-          ctx2.fillRect(130 + (col * 44), 110 + (r * 40), 38, 32);
-        }
-      }
-      ctx2.fillStyle = '#64748b'; ctx2.fillRect(300, 330, 200, 70);
-      ctx2.fillStyle = brandColor; ctx2.font = 'bold 22px sans-serif'; ctx2.textAlign = 'center'; ctx2.fillText(`${title} • Keyboard View`, 400, 480);
-
-      // 3. Closed Lid Top Cover Profile
-      const c3 = document.createElement('canvas'); c3.width = 800; c3.height = 600;
-      const ctx3 = c3.getContext('2d');
-      ctx3.fillStyle = '#f1f5f9'; ctx3.fillRect(0, 0, 800, 600);
-      ctx3.fillStyle = '#334155'; ctx3.fillRect(120, 80, 560, 400);
-      ctx3.fillStyle = brandColor; ctx3.beginPath(); ctx3.arc(400, 280, 50, 0, Math.PI * 2); ctx3.fill();
-      ctx3.fillStyle = '#ffffff'; ctx3.font = 'bold 28px sans-serif'; ctx3.textAlign = 'center'; ctx3.fillText(brand, 400, 290);
-      ctx3.fillStyle = '#0f172a'; ctx3.font = 'bold 22px sans-serif'; ctx3.fillText(`${title} • Top Cover Profile`, 400, 520);
-
-      return [c1.toDataURL('image/jpeg', 0.88), c2.toDataURL('image/jpeg', 0.88), c3.toDataURL('image/jpeg', 0.88)];
-    } catch (e) {
-      return [];
-    }
-  };
-
   const getProductPhotosList = (p) => {
     if (!p) return [];
     const key1 = p.id;
@@ -569,7 +525,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     if (Array.isArray(entry) && entry.filter(Boolean).length > 0) return entry.filter(Boolean);
     if (typeof entry === 'string' && entry.trim().length > 0) return [entry];
     
-    return createDefaultPhotosArrayForProduct(p.title, p.brand);
+    return [];
   };
 
   // Upload Image Resolution Size option: 1600 (Max HD), 1200 (HD Standard), 800 (Compact), 500 (Small)

@@ -4,6 +4,7 @@ import {
   Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Camera, ImagePlus, ZoomIn, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos } from '../services/supabaseClient';
+import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToDrive } from '../services/googleDriveService';
 
 
 /* =========================================================
@@ -752,6 +753,24 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     }));
   }, [productPhotos, saveProductPhotos]);
 
+  const handleAddDriveLink = useCallback((p) => {
+    const inputUrl = prompt('Paste Google Drive (or direct photo) link:');
+    if (!inputUrl || !inputUrl.trim()) return;
+    const directUrl = getDriveDirectImageUrl(inputUrl.trim());
+    if (!directUrl) {
+      alert('Invalid URL. Please paste a valid Google Drive or image link.');
+      return;
+    }
+    const stableId = p.stableId || p.id;
+    const existing = productPhotos[stableId] || [];
+    const newPhotos = [...existing, { url: directUrl, label: `Drive Angle ${existing.length + 1}` }];
+    const updated = { ...productPhotos, [stableId]: newPhotos };
+    saveProductPhotos(updated);
+    setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
+    setToastMessage('✅ Google Drive photo attached to laptop!');
+    setTimeout(() => setToastMessage(''), 3000);
+  }, [productPhotos, saveProductPhotos]);
+
   // Smart Share: Mobile = navigator.share all photos + text. PC = clipboard or download.
   const handleSmartShare = useCallback(async (p) => {
     const stableId = p.stableId || p.id;
@@ -783,22 +802,28 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         return;
       }
 
-      // ── PC: 1 photo → copy image + text to clipboard ──
+      // ── PC: 1 photo → copy ACTUAL IMAGE FILE + text quote to clipboard ──
       if (photos.length === 1) {
-        const blob = await urlToBlob(photos[0].url);
-        const pngBlob = blob.type === 'image/png' ? blob : await convertToPng(blob);
+        let pngBlob;
+        try {
+          pngBlob = await fetchDriveImageBlob(photos[0].url);
+        } catch {
+          const blob = await urlToBlob(photos[0].url);
+          pngBlob = blob.type === 'image/png' ? blob : await convertToPng(blob);
+        }
+
         await navigator.clipboard.write([
           new ClipboardItem({
             'image/png': pngBlob,
             'text/plain': new Blob([quoteText], { type: 'text/plain' })
           })
         ]);
-        setToastMessage('✅ Photo + Text copied! Press Ctrl+V in WhatsApp Web to paste.');
-        setTimeout(() => setToastMessage(''), 4000);
+        setToastMessage('✅ Real Photo + Text Quote copied! Press Ctrl+V in WhatsApp Web to paste.');
+        setTimeout(() => setToastMessage(''), 4500);
         return;
       }
 
-      // ── PC: 2+ photos → copy text + download all photos ──
+      // ── PC: 2+ photos → copy text + download all photo files for drag & drop ──
       if (photos.length > 1) {
         await navigator.clipboard.writeText(quoteText);
         for (let i = 0; i < photos.length; i++) {
@@ -833,6 +858,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       setSharingId(null);
     }
   }, [getPhotos, isMobileShareSupported]);
+
 
   // Convert image blob to PNG blob
   const convertToPng = (blob) => new Promise((resolve) => {
@@ -1914,25 +1940,51 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                 </div>
                               )}
 
-                              {/* Add Photo Button */}
-                              <label style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                padding: '7px 0', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-sm)',
-                                cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.78rem', fontWeight: 800,
-                                color: 'var(--text-muted)', background: 'rgba(0,0,0,0.01)',
-                                opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s'
-                              }}>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  multiple
-                                  style={{ display: 'none' }}
-                                  disabled={isUploading}
-                                  onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
-                                />
-                                <ImagePlus size={14} />
-                                {isUploading ? 'Uploading...' : photos.length === 0 ? '📷 Add Photos' : `📷 Add More (${photos.length} attached)`}
-                              </label>
+                              {/* Photo Upload & Drive Link Buttons */}
+                              <div style={{ display: 'flex', gap: 6, width: '100%' }}>
+                                <label style={{
+                                  flex: 1,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                  padding: '7px 0', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-sm)',
+                                  cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.78rem', fontWeight: 800,
+                                  color: 'var(--text-muted)', background: 'rgba(0,0,0,0.01)',
+                                  opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s'
+                                }}>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    style={{ display: 'none' }}
+                                    disabled={isUploading}
+                                    onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
+                                  />
+                                  <ImagePlus size={14} />
+                                  {isUploading ? 'Uploading...' : photos.length === 0 ? '📷 Add Photos' : `📷 Add More (${photos.length})`}
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddDriveLink(p)}
+                                  style={{
+                                    padding: '7px 10px',
+                                    border: '1px dashed var(--border-color)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 800,
+                                    color: 'var(--purple)',
+                                    background: 'rgba(124, 58, 237, 0.05)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                  title="Paste a Google Drive or photo URL"
+                                >
+                                  🔗 Drive Link
+                                </button>
+                              </div>
+
 
                               {/* Action Buttons */}
                               <div style={{ display: 'flex', gap: 8, width: '100%' }}>

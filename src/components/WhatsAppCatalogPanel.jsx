@@ -793,7 +793,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
   useEffect(() => {
     refreshAdminRequests();
+    const interval = setInterval(refreshAdminRequests, 5000);
+    return () => clearInterval(interval);
   }, [refreshAdminRequests]);
+
 
   const handleAdminAction = async (action, email) => {
     try {

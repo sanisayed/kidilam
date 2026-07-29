@@ -717,9 +717,28 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [editorInput, setEditorInput] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
-  // Filter products cleanly
+  // Filter products cleanly (strictly filters to AI matches when aiResult is active)
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
+    let baseList = products;
+
+    if (aiResult && aiResult.recommendations && aiResult.recommendations.length > 0) {
+      const recTitles = aiResult.recommendations.map(r => (r.title || '').toLowerCase().trim());
+      const aiMatches = products.filter(p => {
+        const titleLower = p.title.toLowerCase().trim();
+        return recTitles.some(t => {
+          if (!t || t.length < 3) return false;
+          return t.includes(titleLower) || titleLower.includes(t) ||
+            (t.includes('precision') && titleLower.includes('precision')) ||
+            (t.includes('spectre') && titleLower.includes('spectre')) ||
+            (t.includes('latitude 5310') && titleLower.includes('5310'));
+        });
+      });
+      if (aiMatches.length > 0) {
+        baseList = aiMatches;
+      }
+    }
+
+    return baseList.filter(p => {
       const fullText = `${p.title} ${p.processor} ${p.gen} ${p.ram}GB ${p.storage}GB ${p.brand} ${p.gpu} ${p.offerPrice}`.toLowerCase();
 
       // 1. Search Query
@@ -814,7 +833,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
       return true;
     });
-  }, [products, searchQuery, selectedCategory, selectedBudget, selectedBrand, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedGpu, selectedFeature]);
+  }, [products, aiResult, searchQuery, selectedCategory, selectedBudget, selectedBrand, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedGpu, selectedFeature]);
 
   // Key KPI Metrics
   const stats = useMemo(() => {
@@ -1473,11 +1492,31 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
               {/* AI Recommendation Result Banner */}
               {aiResult && (
-                <div style={{ background: 'rgba(163, 230, 53, 0.12)', border: '1px solid #a3e635', borderRadius: 'var(--radius-sm)', padding: '10px 14px', fontSize: '0.82rem' }}>
-                  <div style={{ fontWeight: 900, color: '#a3e635', marginBottom: 4 }}>
-                    ✨ AI Recommendation Result:
+                <div style={{ background: 'rgba(163, 230, 53, 0.15)', border: '1px solid #a3e635', borderRadius: 'var(--radius-sm)', padding: '12px 14px', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 900, color: '#a3e635', fontSize: '0.88rem' }}>
+                      ✨ AI Recommendation Results ({aiResult.recommendations?.length || 0} Laptops Filtered):
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAiResult(null)}
+                      style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      ✕ Clear AI Filter
+                    </button>
                   </div>
-                  <div style={{ fontFamily: 'var(--font-mono)' }}>{aiResult.summary}</div>
+
+                  <div style={{ fontFamily: 'var(--font-mono)', opacity: 0.9 }}>{aiResult.summary}</div>
+
+                  {aiResult.recommendations && aiResult.recommendations.map((rec, rIdx) => (
+                    <div key={rIdx} style={{ background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderRadius: '4px', borderLeft: '3px solid #a3e635', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                      <div>
+                        <strong style={{ color: '#fff' }}>💻 {rec.title}</strong>
+                        <div style={{ fontSize: '0.74rem', color: '#a3e635', opacity: 0.9 }}>💡 {rec.reason}</div>
+                      </div>
+                      <span style={{ fontWeight: 900, color: '#a3e635', fontSize: '0.82rem', fontFamily: 'var(--font-mono)' }}>@{rec.offerPrice}/- AED</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

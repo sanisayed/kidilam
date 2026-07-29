@@ -1,60 +1,366 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown
+  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Bot
 } from 'lucide-react';
+import { getAiLaptopRecommendations } from '../services/aiRecommender';
 
 /* =========================================================
-   OPTIONAL SAMPLE TEMPLATE FOR REFERENCE
+   LIVE OFFICIAL CATALOG TEMPLATE (27-07-2026 UPDATED)
    ========================================================= */
 
 const EXAMPLE_TEMPLATE = `*PRODUCT LIST*
-*21- 07- 2026 - Updated*
+*27- 07- 2026 - Updated*
 
 *DELL SERIES*
 
-*💻 Dell Latitude 5310*
-  Processor – Intel core i5 10 th Generation
+*1. Latitude  Series*
+
+*💻 Dell Latitude E5440*
+  Processor – Intel core  i5 , 4th
   RAM – 8 GB 
   Storage – 256 GB SSD
-  Display – 14 Inch 
-  OS – Windows 11 pro
+  Display –  13 Inch 
+  OS –  Windows 11 pro
+  
+  Charger.
+*Offer Price @399/- AED💰*
+
+
+*💻 Dell Latitude 5310*
+  Processor – Intel core  i5 
+ 10 th Generation
+  RAM – 8 GB 
+  Storage – 256 GB SSD
+  Display –  14 Inch 
+  OS –  Windows 11 pro
+  
   Charger.
 Price@~999/-AED~
 *Offer Price @699/- AED* 💰
+
+
+*💻 Dell Latitude 5410*
+  Processor – Intel core  i5 
+ 10 th Generation
+  RAM – 8 GB 
+  Storage – 256 GB SSD
+  Display –  14 Inch 
+  OS –  Windows 11 pro
+  
+  Charger.
+Price@~1099/-AED~
+*Offer Price @799/- AED💰*
+
+
+*💻 Dell Latitude 5411 [ H Series ]*
+  Processor – Intel core  i5 
+ 10 th Generation
+  RAM – 8 GB 
+  Storage – 256 GB SSD
+  Display –  14 Inch 
+  OS –  Windows 11 pro
+  
+  Charger.
+Price@~1199/-AED~
+*Offer Price @899/- AED💰*
+
 
 *💻 Dell Latitude 5310 2 IN 1*
   Processor – Intel Core i7-10th
   RAM – 16GB
   Storage – 512 GB SSD
-  Display – 13.3 Inch , Touch
-  OS – Windows 11 pro
+  Display –  13.3 Inch , Touch
+  OS –  Windows 11 pro
+  
   Charger.
-@~1499/- Aed~
+@~1599/- Aed~
 *Offer price @1299/- AED* 💰
 
-*💻 DELL PRECISION 7670* 
-Processor – Intel Core i7 12850HX 16-CORE
-RAM – 32GB RAM DDR5
-Storage – 512GB SSD
-GPU- Intel iris XE
-Graphics - 12 GB RTX A3000
-Display – 16 Inch FHD+ 8K SUPPORT
-OS – Windows 11 pro
- @~6999 AED~/- 
- *Offer Price @3999/- AED💰*
+
+*💻 Dell Latitude 5320*
+  Processor – Intel core  i5 , 11th
+  RAM – 16 GB 
+  Storage – 256 GB SSD
+  Display –  14 Inch  
+  OS –  Windows 11 pro
+  
+  Charger.
+Price@~1399/-AED~
+*Offer Price @999/- AED💰*
+
+
+*💻 Dell Latitude 7400*
+  Processor – Intel core  i7
+  8 th Generation
+  RAM – 16 GB 
+  Storage – 256 GB SSD
+  Display –  14 Inch 
+  OS –  Windows 11 pro
+  
+  Charger.
+Price@~1299/-AED~
+*Offer Price @999/- AED💰*
+
+*💻 Dell Latitude 5420*
+  Processor – Intel Core i7-11th
+  RAM – 32GB
+  Storage – 512 GB SSD
+  Display –  14 inch
+  GPU -intel iris xe
+  OS –  Windows 11 pro
+  
+  Charger.
+@~1899/- Aed~
+*Offer price @1699/- AED* 💰
+
+*💻 Dell Latitude 5540*
+  Processor – Intel Core i5-13th
+  RAM – 16 GB
+  Storage – 512 GB SSD
+  Display –  15.6 inch
+  GPU -intel iris xe
+  OS –  Windows 11 pro
+  
+  Charger.
+@~1999/- Aed~
+*Offer price @1799/- AED* 💰
+
+
+*💻 DELL  VOSTRO 5599*
+  Processor – Intel Core i7-
+  9 th Generation
+  RAM – 16 GB
+  Storage  – 512 GB SSD
+  Display –  15.6 inch
+  GPU - 4 GB Graphics
+  OS –  Windows 11 pro
+  
+  Charger.
+@~1699/- Aed~
+*Offer price @1399/- AED* 💰
+
+*2. Dell precision*
+
+
+*💻 DELL PRECISION 3571*
+Processor – Intel Core i5 , 12 th
+RAM – 16 GB RAM
+Storage – 512 GB  SSD
+Graphics - 4 GB
+Display –  15.6 Inch 
+OS –  Windows 11 pro
+Charger.
+  @~2399 AED~/- 
+ *Offer Price @1999/- AED💰*
+
 
 *HP SERIES*
 
-💻 *HP EliteBook 840 G8*
-  Processor – Intel core i5-11 th
-  RAM – 16GB
-  Storage – 512GB SSD
-  Display – 14 Inch
-  GPU- intel iris XE
-  OS – Windows 11 pro
+
+💻 *HP ELITE BOOK 1040 G9*
+  Processor – Intel core i5
+ 12 th Generation
+  RAM – 16 GB
+  Storage – 256 GB SSD
+  Display –  14 Inch 
+  OS –  Windows 11 pro
   Charger.
-Offer Price @1399/- AED💰`;
+*Offer Price @1699/- AED* 💰
+
+
+💻 *HP EliteBook 630 G11*
+  Processor – Ultra 7
+  RAM – 32GB
+  Storage – 512GB SSD
+  Display –  14 Inch 
+  OS –  Windows 11 pro
+  Charger.
+  @3299/- AED
+*Offer Price @2599/- AED* 💰
+
+
+*HP SPECTRE MODELS*
+
+
+*💻 HP SPECTRE  13 X 360 2 IN 1*
+  Processor – Intel core i7
+  10  th Generation
+  RAM – 16 GB
+  Storage – 512 GB SSD
+  Display –  13  Inch , Touch
+  OS –  Windows 11 pro
+  Charger.
+
+*Offer Price @2499/- AED💰*
+
+
+*LENOVO THINKPAD SERIES*
+
+
+💻 *LENOVO THINKPAD L14*
+Processor – Intel Core i7
+10 th Generation
+RAM – 8 GB RAM
+Storage –256 GB  SSD
+Display –  14 Inch
+OS –  Windows 11 pro
+Charger.
+ *Offer Price @999/- AED💰*
+
+
+*💻 LENOVO THINKPAD L14*
+  Processor – Intel core  i7 
+  10 th Generation
+  RAM – 16 GB 
+  Storage – 512 GB SSD
+  Display –  14 Inch 
+  OS –  Windows 11 pro
+  
+  Charger.
+*Offer Price @1299/- AED💰*
+
+
+*💻 LENOVO THINKPAD L15 GEN 1*
+  Processor – Intel core  i5
+  10 th Generation
+  RAM – 8 GB 
+  Storage – 256 GB SSD
+  Display –  15.6 Inch
+  OS –  Windows 11 pro
+  
+  Charger.
+*Offer Price @1199/- AED💰*
+
+💻 *LENOVO THINKPAD P14 S*
+Processor – Intel Core i7
+10 th Generation
+RAM – 16 GB RAM
+Storage –512 GB  SSD
+Display –  14 Inch
+Graphics - 2 GB
+OS –  Windows 11 pro
+Charger.
+ @~1999 AED~/- 
+ *Offer Price @1699/- AED💰*
+
+
+💻 *LENOVO THINKPAD P14 S*
+Processor – Intel Core i7
+11 th Generation
+RAM – 16 GB RAM
+Storage –512 GB  SSD
+Display –  14 Inch
+Graphics - 4 GB
+OS –  Windows 11 pro
+Charger.
+ @~2099 AED~/- 
+ *Offer Price @1899/- AED💰*
+
+
+💻 *LENOVO THINKPAD T14 GEN 1*
+Processor – Intel Core i7
+10 th Generation
+RAM – 16 GB RAM
+Storage –512 GB  SSD
+Display –  14 Inch
+OS –  Windows 11 pro
+Charger.
+ @~AED1699/-~ 
+ *Offer Price @1399/- AED💰*
+
+
+💻 *LENOVO THINKPAD T14 GEN 3*
+Processor – Intel Core i7
+12 th Generation
+RAM – 16 GB RAM
+Storage –512 GB  SSD
+Display –  14 Inch
+OS –  Windows 11 pro
+Charger.
+ @~AED2199/-~ 
+ *Offer Price @1899/- AED💰*
+
+
+💻 *LENOVO THINKPAD X1 CARBON*
+Processor – Intel Core i7
+8 th Generation
+RAM – 16 GB RAM
+Storage –512 GB  SSD
+Display –  14 Inch
+OS –  Windows 11 pro
+Charger.
+ @~ AED~1599/- 
+ *Offer Price @1299/- AED💰*
+
+
+💻 *LENOVO THINKPAD L13*
+Processor – i5-10th
+RAM – 16 GB RAM
+Storage –256 GB  SSD
+Display –  13.3 Inch
+OS –  Windows 11 pro
+Charger.
+ @~AED 1299/-~ 
+ *Offer Price @899/- AED💰*
+
+
+💻 *LENOVO THINKPAD X1 NANO GEN 1*
+Processor – i5-11th
+RAM – 16 GB RAM
+Storage –256 GB  SSD
+Display –  13 Inch
+OS –  Windows 11 pro
+Charger.
+ @~AED 1999/-~ 
+ *Offer Price @1699/- AED💰*
+
+*💻 Lenovo ideapad 3 chromebook* 
+* 4 GB RAM
+* 32 GB Storage
+* 12 inch Display
+ *Offer Price @199/- AED💰*
+
+
+*MICROSOFT SURFACE MODELS*
+
+
+*💻 Microsoft Surface pro 7+* 
+  Processor – Intel Core i7-11th
+  RAM – 16 GB
+  Storage – 256 GB SSD
+  Display –  12.5 Inch Touch  detachable Keyboard
+  GPU-intel iris XE
+  OS –  Windows 11 pro
+  
+  Charger.
+@~2199/- Aed~
+*Offer price @1799/- AED*
+
+
+*💻 Microsoft Surface 4* 
+  Processor – Intel Core i7-11th
+  RAM – 16 GB
+  Storage – 512 GB SSD
+  Display –  14 Inch Touch 
+  GPU-intel iris XE
+  OS –  Windows 11 pro
+  
+  Charger.
+@~2299/- Aed~
+*Offer price @1899/- AED*
+
+
+*MACBOOK SERIES*
+
+
+*💻 MacBook A1466  2017*
+  Processor –  i5
+  RAM – 8 GB
+  Storage – 256 GB SSD
+  OS: MAC OS
+  Charger.
+*Offer Price @799/- AED*`;
 
 /* =========================================================
    TEXT PARSER UTILITIES
@@ -102,10 +408,12 @@ function parseWhatsAppCatalog(rawText) {
       }
 
       // Generation extraction (e.g. 4th, 6th, 8th, 10th, 11th, 12th, 13th Gen)
-      if (lower.includes('generation') || lower.includes('th') || lower.includes('gen') || /i[3579]-\d+/.test(lower)) {
-        const m = l.match(/(\d+)\s*(th|st|nd|rd)?\s*(gen|generation)?/i) || l.match(/i[3579]-(\d+)/i);
-        if (m && parseInt(m[1]) < 20) {
-          gen = `${m[1]}th Gen`;
+      if (!lower.includes('display') && !lower.includes('inch') && !lower.includes('screen')) {
+        if (lower.includes('generation') || lower.includes('th') || lower.includes('gen') || /i[3579]-\d+/.test(lower)) {
+          const m = l.match(/(\d+)\s*(th|st|nd|rd)?\s*(gen|generation)/i) || l.match(/i[3579]-(\d+)/i) || l.match(/(\d+)\s*th\b/i);
+          if (m && parseInt(m[1], 10) < 20 && parseInt(m[1], 10) >= 4) {
+            gen = `${m[1]}th Gen`;
+          }
         }
       }
 
@@ -372,6 +680,35 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [selectedGpu, setSelectedGpu] = useState('ALL');       // 'ALL' | 'dedicated' | '2gb' | '4gb' | '12gb' | 'iris'
   const [selectedFeature, setSelectedFeature] = useState('ALL'); // 'ALL' | 'touch' | '2in1' | 'large'
   const [showLivePreview, setShowLivePreview] = useState(true);
+
+  // Google AI Smart Recommender & Filter State
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+
+  const handleRunAiRecommendation = async (queryToRun) => {
+    const prompt = queryToRun || aiQuery || searchQuery;
+    if (!prompt || !prompt.trim()) return;
+
+    setAiLoading(true);
+    setToastMessage('🤖 Google AI is analyzing stock catalog...');
+
+    try {
+      const result = await getAiLaptopRecommendations(prompt, rawText);
+      setAiLoading(false);
+
+      if (result && result.recommendations && result.recommendations.length > 0) {
+        setAiResult(result);
+        setToastMessage(`✨ Google AI found ${result.recommendations.length} matching laptop(s)!`);
+      } else {
+        setAiResult(null);
+        setToastMessage('Showing matching laptop stock below.');
+      }
+    } catch (e) {
+      setAiLoading(false);
+    }
+    setTimeout(() => setToastMessage(''), 4000);
+  };
 
   // Copy Feedback State
   const [copiedId, setCopiedId] = useState(null);
@@ -1055,9 +1392,96 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       ) : (
         /* FULL-WIDTH FILTER & CATALOG CONSOLE */
         <>
-          {/* 2. Buyology Custom Styled Dropdown Filter Matrix */}
           <div className="card static card-p-lg" style={{ border: 'var(--border)', display: 'flex', flexDirection: 'column', gap: 18, width: '100%' }}>
-            
+            {/* GOOGLE GEMINI AI SMART SEARCH & RECOMMENDER BAR */}
+            <div style={{
+              background: 'var(--bg-dark, #0f172a)',
+              color: '#ffffff',
+              padding: '14px 18px',
+              borderRadius: 'var(--radius)',
+              border: '2px solid #000',
+              boxShadow: 'var(--shadow-flat-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 900, fontFamily: 'var(--font-mono)', fontSize: '0.92rem', color: 'var(--citrus)' }}>
+                  <Bot size={18} />
+                  <span>GOOGLE AI LAPTOP RECOMMENDER & SMART FILTER</span>
+                </div>
+
+                <span style={{ fontSize: '0.68rem', opacity: 0.8, fontFamily: 'var(--font-mono)' }}>
+                  ⚡ Powered by Google Gemini AI
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <input 
+                  type="text" 
+                  className="field-input" 
+                  placeholder="🤖 Ask Google AI: 'Customer needs laptop under 1500 AED for video editing and heavy coding'..." 
+                  value={aiQuery}
+                  onChange={e => setAiQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleRunAiRecommendation()}
+                  style={{ flex: 1, height: '44px', background: '#1e293b', color: '#fff', border: '1px solid #334155', fontSize: '0.88rem', paddingLeft: 14 }}
+                />
+
+                <button 
+                  className="btn btn-primary"
+                  style={{ height: '44px', padding: '0 18px', fontWeight: 900, background: 'var(--citrus)', color: '#000', whiteSpace: 'nowrap' }}
+                  onClick={() => handleRunAiRecommendation()}
+                  disabled={aiLoading}
+                >
+                  {aiLoading ? <Sparkles size={16} className="spin" /> : <Bot size={16} />}
+                  <span>{aiLoading ? 'Analyzing...' : 'Ask Google AI'}</span>
+                </button>
+              </div>
+
+              {/* AI Quick Filter Chips */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.7rem', opacity: 0.7, fontFamily: 'var(--font-mono)' }}>Quick AI Prompts:</span>
+                {[
+                  '💰 Best Under 1000 AED',
+                  '🎮 4GB / Dedicated GPU Workstations',
+                  '✨ 2-in-1 Touchscreen Executive',
+                  '📚 Student Laptops Under 1500'
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      fontFamily: 'var(--font-mono)',
+                      background: 'rgba(255,255,255,0.08)',
+                      color: '#a3e635',
+                      border: '1px solid rgba(163, 230, 53, 0.3)',
+                      borderRadius: '4px',
+                      padding: '3px 10px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setAiQuery(chip);
+                      handleRunAiRecommendation(chip);
+                    }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
+              {/* AI Recommendation Result Banner */}
+              {aiResult && (
+                <div style={{ background: 'rgba(163, 230, 53, 0.12)', border: '1px solid #a3e635', borderRadius: 'var(--radius-sm)', padding: '10px 14px', fontSize: '0.82rem' }}>
+                  <div style={{ fontWeight: 900, color: '#a3e635', marginBottom: 4 }}>
+                    ✨ AI Recommendation Result:
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-mono)' }}>{aiResult.summary}</div>
+                </div>
+              )}
+            </div>
+
             {/* Search Input Bar */}
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div style={{ position: 'relative', flex: 1 }}>

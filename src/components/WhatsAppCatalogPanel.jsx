@@ -1351,134 +1351,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                         }}
                       >
                         <div>
-                          {/* Multi-Photo Gallery Preview & Upload Strip */}
-                          {(() => {
-                            const photosList = getProductPhotosList(p);
-                            const activeIdx = activePhotoIndices[p.id] || 0;
-                            const activePhoto = photosList[activeIdx] || photosList[0];
-
-                            return (
-                              <div style={{ marginBottom: 12 }}>
-                                {photosList.length > 0 ? (
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                    <div style={{ position: 'relative', width: '100%', height: '160px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000' }}>
-                                      <img src={activePhoto} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                      
-                                      <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(0,0,0,0.85)', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '3px 8px', borderRadius: '4px', fontFamily: 'var(--font-mono)', display: 'flex', gap: 6, alignItems: 'center' }}>
-                                        <span>Photo {activeIdx + 1} of {photosList.length}</span>
-                                        {getImageDataSizeInfo(activePhoto) && <span style={{ opacity: 0.8, borderLeft: '1px solid rgba(255,255,255,0.4)', paddingLeft: 6 }}>{getImageDataSizeInfo(activePhoto)}</span>}
-                                      </span>
-
-                                      <button
-                                        type="button"
-                                        onClick={() => removeProductPhoto(p, activeIdx)}
-                                        style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, cursor: 'pointer', fontWeight: 900, fontSize: '0.7rem' }}
-                                        title="Remove this photo"
-                                      >
-                                        ✕
-                                      </button>
-
-                                      <label 
-                                        style={{
-                                          position: 'absolute',
-                                          bottom: 6,
-                                          right: 6,
-                                          background: 'rgba(0,0,0,0.85)',
-                                          color: '#fff',
-                                          fontSize: '0.66rem',
-                                          fontWeight: 800,
-                                          padding: '4px 8px',
-                                          borderRadius: '4px',
-                                          cursor: 'pointer',
-                                          fontFamily: 'var(--font-mono)',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: 4
-                                        }}
-                                      >
-                                        <span>+ Add Photos</span>
-                                        <input 
-                                          type="file" 
-                                          accept="image/*" 
-                                          multiple
-                                          capture="environment"
-                                          style={{ display: 'none' }}
-                                          onChange={e => e.target.files && addMultipleProductPhotos(p, e.target.files)}
-                                        />
-                                      </label>
-                                    </div>
-
-                                    {/* Gallery Thumbnail Strip & Download All Button */}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                                      {photosList.length > 1 ? (
-                                        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flex: 1, paddingBottom: 2 }}>
-                                          {photosList.map((ph, idx) => (
-                                            <div 
-                                              key={idx}
-                                              onClick={() => setActivePhotoIndices(prev => ({ ...prev, [p.id]: idx }))}
-                                              style={{
-                                                width: 44,
-                                                height: 44,
-                                                borderRadius: 4,
-                                                overflow: 'hidden',
-                                                border: idx === activeIdx ? '2px solid var(--citrus, #a3e635)' : '1px solid var(--border-light-color)',
-                                                cursor: 'pointer',
-                                                opacity: idx === activeIdx ? 1 : 0.6,
-                                                flexShrink: 0
-                                              }}
-                                            >
-                                              <img src={ph} alt={`Thumb ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            </div>
-                                          ))}
-                                        </div>
-                                      ) : <span />}
-
-                                      <button
-                                        type="button"
-                                        className="btn btn-ghost"
-                                        style={{ fontSize: '0.68rem', padding: '3px 8px', fontWeight: 800, whiteSpace: 'nowrap' }}
-                                        onClick={() => downloadAllPhotos(p)}
-                                        title="Download all photos to drag & drop into WhatsApp Web!"
-                                      >
-                                        ⬇️ Download All ({photosList.length})
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <label 
-                                    style={{
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: 4,
-                                      padding: '14px 10px',
-                                      border: '2px dashed var(--border-color)',
-                                      borderRadius: 'var(--radius-sm)',
-                                      background: 'var(--bg)',
-                                      color: 'var(--text-secondary)',
-                                      fontSize: '0.78rem',
-                                      fontFamily: 'var(--font-mono)',
-                                      fontWeight: 800,
-                                      cursor: 'pointer'
-                                    }}
-                                  >
-                                    <span style={{ fontSize: '1.2rem' }}>📷</span>
-                                    <span>Add Multiple Photos (Gallery)</span>
-                                    <input 
-                                      type="file" 
-                                      accept="image/*" 
-                                      multiple
-                                      capture="environment"
-                                      style={{ display: 'none' }}
-                                      onChange={e => e.target.files && addMultipleProductPhotos(p, e.target.files)}
-                                    />
-                                  </label>
-                                )}
-                              </div>
-                            );
-                          })()}
-
                           {/* Category & Brand Badges */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
                             <span className={`badge ${
@@ -1558,9 +1430,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                           </div>
                         </div>
 
-                        {/* Price Tag & Copy Button Row */}
+                        {/* Price Tag & Responsive Action Buttons */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 10, borderTop: '1px solid var(--border-light-color)' }}>
-                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
                             {p.originalPrice ? (
                               <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                                 AED {p.originalPrice}
@@ -1568,85 +1440,52 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                             ) : <span />}
 
                             <div style={{ 
-                              fontSize: isMobile ? '0.86rem' : '1rem', 
+                              fontSize: isMobile ? '0.86rem' : '0.96rem', 
                               fontWeight: 900, 
                               background: 'var(--citrus)',
                               color: '#000000',
-                              padding: '5px 8px',
+                              padding: '5px 10px',
                               borderRadius: 'var(--radius-sm)',
-                              border: '2px solid #000',
-                              maxWidth: '100%',
-                              boxSizing: 'border-box'
+                              border: '2px solid #000'
                             }}>
                               Offer Price @{p.offerPrice}/- AED 💰
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {/* Primary Button 1: Download All Photos & Copy Caption Text for 1-Drag WhatsApp Web Multi-Photo Album */}
+                          {/* 100% Mobile Responsive Clean Buttons */}
+                          <div style={{ display: 'flex', gap: 8, width: '100%' }}>
                             <button 
                               className="btn btn-primary" 
                               style={{ 
-                                width: '100%', 
-                                fontSize: '0.86rem', 
+                                flex: 1, 
+                                fontSize: '0.84rem', 
                                 fontWeight: 900,
                                 justifyContent: 'center',
-                                background: copiedId === `dl-copy-${p.id}` ? 'var(--green)' : 'var(--citrus)',
+                                background: copiedId === p.id ? 'var(--green)' : 'var(--citrus)',
                                 color: '#000000',
-                                padding: '11px'
+                                padding: '10px 8px',
+                                whiteSpace: 'nowrap'
                               }}
-                              onClick={() => handleDownloadAndCopyCaption(p)}
-                              title="Downloads all attached laptop photos & copies specs text! Drag all downloaded photos into WhatsApp Web & press Ctrl+V for caption!"
+                              onClick={() => handleCopy(p.rawText, p.id)}
+                              title="Copy WhatsApp formatted text quote"
                             >
-                              {copiedId === `dl-copy-${p.id}` ? <Check size={16} /> : <span>⬇️</span>}
-                              <span>{copiedId === `dl-copy-${p.id}` ? 'Downloaded Photos & Copied Text!' : `⬇️ Download All (${(productPhotos[p.id] || productPhotos[p.title] || p.photos || [1,2,3]).length || 3}) Photos & Copy Text`}</span>
+                              {copiedId === p.id ? <Check size={15} /> : <Copy size={15} />}
+                              <span>{copiedId === p.id ? 'Copied!' : '📋 Copy Text Quote'}</span>
                             </button>
 
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <button 
-                                className="btn btn-ghost" 
-                                style={{ 
-                                  flex: 1, 
-                                  fontSize: '0.76rem', 
-                                  fontWeight: 800,
-                                  justifyContent: 'center',
-                                  background: copiedId === `photo-${p.id}` ? 'var(--green)' : 'var(--bg)',
-                                  color: copiedId === `photo-${p.id}` ? '#000' : 'var(--text-primary)',
-                                  border: '1px solid var(--border-light-color)'
-                                }}
-                                onClick={() => handleCopyPhoto(p, activePhotoIndices[p.id] || 0)}
-                                title="Copy single active photo for Ctrl+V paste into WhatsApp Web"
-                              >
-                                <span>📷 Copy Photo #{(activePhotoIndices[p.id] || 0) + 1}</span>
-                              </button>
-
-                              <button 
-                                className="btn btn-ghost" 
-                                style={{ 
-                                  flex: 1, 
-                                  fontSize: '0.76rem', 
-                                  fontWeight: 800,
-                                  justifyContent: 'center',
-                                  background: copiedId === p.id ? 'var(--green)' : 'var(--bg)',
-                                  color: copiedId === p.id ? '#000' : 'var(--text-primary)',
-                                  border: '1px solid var(--border-light-color)'
-                                }}
-                                onClick={() => handleCopy(p.rawText, p.id)}
-                                title="Copy WhatsApp formatted text quote"
-                              >
-                                {copiedId === p.id ? <Check size={13} /> : <Copy size={13} />}
-                                <span>{copiedId === p.id ? 'Text Copied' : '📋 Copy Text'}</span>
-                              </button>
-
-                              <button 
-                                className="btn btn-secondary"
-                                style={{ padding: '6px 12px', fontSize: '0.76rem', fontWeight: 800 }}
-                                onClick={() => handleShareToWhatsApp(p)}
-                                title="Direct 1-Tap Share on Mobile WhatsApp with all photos & text"
-                              >
-                                <Share2 size={13} /> Share
-                              </button>
-                            </div>
+                            <button 
+                              className="btn btn-secondary"
+                              style={{ 
+                                padding: '10px 14px', 
+                                fontSize: '0.84rem', 
+                                fontWeight: 900,
+                                whiteSpace: 'nowrap'
+                              }}
+                              onClick={() => handleShareToWhatsApp(p)}
+                              title="Direct Share on Mobile WhatsApp"
+                            >
+                              <Share2 size={15} /> Share
+                            </button>
                           </div>
                         </div>
                       </motion.div>

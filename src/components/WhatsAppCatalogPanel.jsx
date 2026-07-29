@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Camera, ImagePlus, ZoomIn, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { uploadProductPhoto, deleteProductPhoto, urlToBlob } from '../services/supabaseClient';
+import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos } from '../services/supabaseClient';
 
 
 /* =========================================================
@@ -709,10 +709,53 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
   const getPhotos = useCallback((stableId) => productPhotos[stableId] || [], [productPhotos]);
 
+  // ── CROSS-DEVICE SYNC from Supabase Storage ──────────────────────────────
+  // When the app loads (or filtered products change), fetch photo lists from
+  // Supabase Storage so that ANY device sees photos uploaded from ANY other device.
+  useEffect(() => {
+    if (!filteredProducts || filteredProducts.length === 0) return;
+
+    let cancelled = false;
+    const syncAll = async () => {
+      const updates = {};
+      await Promise.all(
+        filteredProducts.map(async (p) => {
+          const stableId = p.stableId || p.id;
+          try {
+            const remotePhotos = await listProductPhotos(stableId);
+            if (!cancelled && remotePhotos.length > 0) {
+              updates[stableId] = remotePhotos;
+            }
+          } catch {}
+        })
+      );
+      if (!cancelled && Object.keys(updates).length > 0) {
+        setProductPhotos(prev => {
+          const merged = { ...prev };
+          Object.entries(updates).forEach(([id, photos]) => {
+            // Only update if remote has more/different photos than local
+            const local = prev[id] || [];
+            if (photos.length !== local.length) {
+              merged[id] = photos;
+            }
+          });
+          try { localStorage.setItem('product_photos_v2', JSON.stringify(merged)); } catch {}
+          return merged;
+        });
+      }
+    };
+
+    syncAll();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredProducts]);
+
+
   const handleAddPhotos = useCallback(async (p, files) => {
     if (!files || files.length === 0) return;
     const stableId = p.stableId || p.id;
     setPhotoUploading(prev => ({ ...prev, [stableId]: true }));
+
 
     const existing = productPhotos[stableId] || [];
     const newPhotos = [...existing];

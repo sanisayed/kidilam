@@ -743,7 +743,25 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     try { return sessionStorage.getItem('google_drive_email') || ''; } catch { return ''; }
   });
 
+  const MASTER_EMAIL = 'mahinshanavas1@gmail.com';
   const isAdmin = Boolean(googleAccessToken);
+  const isMasterUser = (googleUserEmail || '').toLowerCase() === MASTER_EMAIL;
+
+  // Auto-validate session: force logout if active session is not master and not approved
+  useEffect(() => {
+    if (googleAccessToken && googleUserEmail && googleUserEmail.toLowerCase() !== MASTER_EMAIL) {
+      const approvedList = (adminRequests.approved || []).map(e => String(e).toLowerCase());
+      if (adminRequests.approved && adminRequests.approved.length > 0 && !approvedList.includes(googleUserEmail.toLowerCase())) {
+        console.warn(`Unapproved email ${googleUserEmail} logged out`);
+        setGoogleAccessToken('');
+        setGoogleUserEmail('');
+        try {
+          sessionStorage.removeItem('google_drive_token');
+          sessionStorage.removeItem('google_drive_email');
+        } catch {}
+      }
+    }
+  }, [googleAccessToken, googleUserEmail, adminRequests.approved]);
 
   // Allowed Admin Emails Whitelist (comma-separated list from env, or default Master Owner)
   const allowedAdminEmails = useMemo(() => {
@@ -753,6 +771,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     if (!list.includes('mahinshanavas1@gmail.com')) list.push('mahinshanavas1@gmail.com');
     return list;
   }, []);
+
 
 
 
@@ -1494,18 +1513,21 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
               </button>
 
-              <button 
-                className="btn btn-ghost" 
-                style={{ 
-                  padding: '8px 14px', fontWeight: 800, 
-                  color: (adminRequests.pending || []).length > 0 ? 'var(--orange)' : 'var(--cyan)', 
-                  border: '1px solid var(--border-light-color)', 
-                  background: (adminRequests.pending || []).length > 0 ? 'rgba(249, 115, 22, 0.1)' : 'rgba(6, 182, 212, 0.05)'
-                }}
-                onClick={() => setShowApprovalModal(true)}
-              >
-                👥 Staff Approvals {(adminRequests.pending || []).length > 0 && <span style={{ background: 'var(--orange)', color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: '0.7rem' }}>{(adminRequests.pending || []).length}</span>}
-              </button>
+              {isMasterUser && (
+                <button 
+                  className="btn btn-ghost" 
+                  style={{ 
+                    padding: '8px 14px', fontWeight: 800, 
+                    color: (adminRequests.pending || []).length > 0 ? 'var(--orange)' : 'var(--cyan)', 
+                    border: '1px solid var(--border-light-color)', 
+                    background: (adminRequests.pending || []).length > 0 ? 'rgba(249, 115, 22, 0.1)' : 'rgba(6, 182, 212, 0.05)'
+                  }}
+                  onClick={() => setShowApprovalModal(true)}
+                >
+                  👥 Staff Approvals {(adminRequests.pending || []).length > 0 && <span style={{ background: 'var(--orange)', color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: '0.7rem' }}>{(adminRequests.pending || []).length}</span>}
+                </button>
+              )}
+
 
               <button 
                 className="btn btn-ghost" 
@@ -2835,19 +2857,29 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {(adminRequests.approved || []).map((email, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border-light-color)' }}>
-                          <span style={{ fontSize: '0.88rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
-                            👑 {email}
-                          </span>
-                          <button
-                            onClick={() => handleAdminAction('revoke', email)}
-                            style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--pink)', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer' }}
-                          >
-                            Revoke Access
-                          </button>
-                        </div>
-                      ))}
+                      {(adminRequests.approved || []).map((email, idx) => {
+                        const isMasterAccount = email.toLowerCase() === MASTER_EMAIL;
+                        return (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border-light-color)' }}>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>👑</span> {email}
+                            </span>
+                            {isMasterAccount ? (
+                              <span style={{ fontSize: '0.72rem', background: 'rgba(34, 197, 94, 0.15)', color: 'var(--green)', border: '1px solid var(--green)', padding: '3px 10px', borderRadius: 6, fontWeight: 900 }}>
+                                Master Owner
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleAdminAction('revoke', email)}
+                                style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--pink)', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer' }}
+                              >
+                                Revoke Access
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+
                     </div>
                   )}
                 </div>

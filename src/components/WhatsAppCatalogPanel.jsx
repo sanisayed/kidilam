@@ -669,15 +669,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
   // Clean Dropdown Filter States
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ALL'); // 'ALL' | 'WORKSTATION' | 'BUSINESS' | 'EXECUTIVE' | 'CONVERTIBLE'
-  const [selectedBudget, setSelectedBudget] = useState('ALL');   // 'ALL' | '1000' | '1500' | '2000' | '2500' | '3000+'
-  const [selectedBrand, setSelectedBrand] = useState('ALL');     // 'ALL' | 'DELL' | 'HP' | 'LENOVO' | 'SURFACE' | 'MACBOOK'
-  const [selectedCpu, setSelectedCpu] = useState('ALL');       // 'ALL' | 'i5' | 'i7' | 'i9' | 'Ultra 7'
-  const [selectedGen, setSelectedGen] = useState('ALL');       // 'ALL' | '8' | '10' | '11' | '12' | '13'
-  const [selectedRam, setSelectedRam] = useState('ALL');       // 'ALL' | '8' | '16' | '32'
-  const [selectedStorage, setSelectedStorage] = useState('ALL'); // 'ALL' | '256' | '512' | '1024'
-  const [selectedGpu, setSelectedGpu] = useState('ALL');       // 'ALL' | 'dedicated' | '2gb' | '4gb' | '12gb' | 'iris'
-  const [selectedFeature, setSelectedFeature] = useState('ALL'); // 'ALL' | 'touch' | '2in1' | 'large'
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedSeries, setSelectedSeries] = useState('ALL');
+  const [selectedBudget, setSelectedBudget] = useState('ALL');
+  const [selectedBrand, setSelectedBrand] = useState('ALL');
+  const [selectedCpu, setSelectedCpu] = useState('ALL');
+  const [selectedGen, setSelectedGen] = useState('ALL');
+  const [selectedRam, setSelectedRam] = useState('ALL');
+  const [selectedStorage, setSelectedStorage] = useState('ALL');
+  const [selectedGpu, setSelectedGpu] = useState('ALL');
+  const [selectedFeature, setSelectedFeature] = useState('ALL');
   const [showLivePreview, setShowLivePreview] = useState(true);
 
   // Copy Feedback State
@@ -687,24 +688,27 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [editorInput, setEditorInput] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
-  // Filter products cleanly
+  // Filter products cleanly with 100% exact spec matching
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
+      const rawLower = (p.rawText || '').toLowerCase();
       const fullText = `${p.title} ${p.processor} ${p.gen} ${p.ram}GB ${p.storage}GB ${p.brand} ${p.gpu} ${p.offerPrice}`.toLowerCase();
 
       // 1. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         if (q === '4gb gpu' || q === '4 gb gpu' || q === '4gb graphics' || q === '4 gb graphics') {
-          if (!p.isDedicatedGpu || (p.gpuVram < 4 && !/\b4\s*gb\b/i.test(p.gpu))) return false;
+          const has4Gb = p.gpu.toLowerCase().includes('4 gb') || p.gpu.toLowerCase().includes('4gb') || rawLower.includes('4 gb graphics') || rawLower.includes('4 gb') || rawLower.includes('4gb');
+          if (!has4Gb) return false;
         } else if (q === '2gb gpu' || q === '2 gb gpu' || q === '2gb graphics' || q === '2 gb graphics') {
-          if (!p.isDedicatedGpu || (p.gpuVram !== 2 && !/\b2\s*gb\b/i.test(p.gpu))) return false;
-        } else if (!fullText.includes(q)) {
+          const has2Gb = p.gpu.toLowerCase().includes('2 gb') || p.gpu.toLowerCase().includes('2gb') || rawLower.includes('2 gb graphics') || rawLower.includes('2 gb');
+          if (!has2Gb) return false;
+        } else if (!fullText.includes(q) && !rawLower.includes(q)) {
           return false;
         }
       }
 
-      // 2. Category / Purpose Filter (Workstation, Business, Executive, Convertible)
+      // 2. Category / Purpose
       if (selectedCategory !== 'ALL') {
         if (selectedCategory === 'WORKSTATION' && p.category !== 'WORKSTATION') return false;
         if (selectedCategory === 'BUSINESS' && p.category !== 'BUSINESS') return false;
@@ -712,79 +716,84 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         if (selectedCategory === 'CONVERTIBLE' && p.category !== 'CONVERTIBLE' && !p.is2in1) return false;
       }
 
-      // 3. Quick Budget Filter
+      // 3. Brand
+      if (selectedBrand !== 'ALL' && p.brand !== selectedBrand) return false;
+
+      // 4. Series / Model Line
+      if (selectedSeries !== 'ALL') {
+        const sLower = selectedSeries.toLowerCase();
+        if (!fullText.includes(sLower) && !rawLower.includes(sLower)) return false;
+      }
+
+      // 5. Customer Budget
       if (selectedBudget !== 'ALL') {
         const b = parseInt(selectedBudget, 10);
-        if (selectedBudget === '3000+') {
-          if (p.offerPrice < 3000) return false;
+        if (selectedBudget === '2000+') {
+          if (p.offerPrice < 2000) return false;
         } else {
           if (p.offerPrice > b) return false;
         }
       }
 
-      // 4. Brand
-      if (selectedBrand !== 'ALL' && p.brand !== selectedBrand) return false;
-
-      // 5. CPU (i3, i5, i7, i9, Ultra 7)
+      // 6. Processor / CPU
       if (selectedCpu !== 'ALL') {
         const cpuLower = (p.processor || '').toLowerCase() + ' ' + (p.title || '').toLowerCase();
-        if (selectedCpu === 'i3' && !cpuLower.includes('i3')) return false;
         if (selectedCpu === 'i5' && !cpuLower.includes('i5')) return false;
         if (selectedCpu === 'i7' && !cpuLower.includes('i7')) return false;
-        if (selectedCpu === 'i9' && !cpuLower.includes('i9')) return false;
         if (selectedCpu === 'Ultra 7' && !cpuLower.includes('ultra')) return false;
       }
 
-      // 6. Gen (8th Gen+, 10th Gen+, 11th Gen+, 12th Gen+, 13th Gen+)
+      // 7. Generation (Exact Match)
       if (selectedGen !== 'ALL') {
         const targetGen = parseInt(selectedGen, 10);
         const extractedGenNum = parseInt((p.gen || '').replace(/\D/g, ''), 10);
         if (extractedGenNum) {
-          if (extractedGenNum < targetGen) return false;
+          if (extractedGenNum !== targetGen) return false;
         } else {
-          const genMatch = fullText.match(/(\d+)\s*(th|st|nd|rd)?\s*gen/);
-          if (genMatch) {
-            if (parseInt(genMatch[1], 10) < targetGen) return false;
-          }
+          const genStr = `${targetGen}th`;
+          if (!fullText.includes(genStr) && !rawLower.includes(genStr) && !rawLower.includes(`${targetGen} th`)) return false;
         }
       }
 
-      // 7. RAM Filter (8GB+, 16GB+, 32GB+)
+      // 8. RAM (Exact Match)
       if (selectedRam !== 'ALL') {
         const ramVal = parseInt(selectedRam, 10);
-        if (p.ram < ramVal) return false;
+        if (p.ram !== ramVal) return false;
       }
 
-      // 8. Storage Filter (256GB+, 512GB+, 1TB+ SSD)
+      // 9. Storage SSD (Exact Match)
       if (selectedStorage !== 'ALL') {
         const storageVal = parseInt(selectedStorage, 10);
-        if (p.storage < storageVal) return false;
+        if (p.storage !== storageVal) return false;
       }
 
-      // 9. GPU / Graphics Filter
+      // 10. GPU / Graphics (Accurate)
       if (selectedGpu !== 'ALL') {
-        if (selectedGpu === 'dedicated') {
-          if (!p.isDedicatedGpu) return false;
+        if (selectedGpu === '4gb') {
+          const has4Gb = p.gpu.toLowerCase().includes('4 gb') || p.gpu.toLowerCase().includes('4gb') || rawLower.includes('4 gb graphics') || rawLower.includes('4 gb') || rawLower.includes('4gb');
+          if (!has4Gb) return false;
         } else if (selectedGpu === '2gb') {
-          if (!p.isDedicatedGpu || (p.gpuVram !== 2 && !/\b2\s*gb\b/i.test(p.gpu))) return false;
-        } else if (selectedGpu === '4gb') {
-          if (!p.isDedicatedGpu || (p.gpuVram < 4 && !/\b4\s*gb\b/i.test(p.gpu))) return false;
-        } else if (selectedGpu === '12gb') {
-          if (!p.isDedicatedGpu || (p.gpuVram < 12 && !/\b12\s*gb\b/i.test(p.gpu))) return false;
+          const has2Gb = p.gpu.toLowerCase().includes('2 gb') || p.gpu.toLowerCase().includes('2gb') || rawLower.includes('2 gb graphics') || rawLower.includes('2 gb');
+          if (!has2Gb) return false;
+        } else if (selectedGpu === 'dedicated') {
+          if (!p.isDedicatedGpu) return false;
         } else if (selectedGpu === 'iris') {
-          if (!p.isIrisXe) return false;
+          if (!p.isIrisXe && !p.gpu.toLowerCase().includes('iris')) return false;
         }
       }
 
-      // 10. Feature Filter
+      // 11. Feature & Screen Size
       if (selectedFeature !== 'ALL') {
-        if (selectedFeature === 'touch' && !p.isTouch && !fullText.includes('touch')) return false;
-        if (selectedFeature === '2in1' && !p.is2in1 && !fullText.includes('2in1') && !fullText.includes('x360')) return false;
+        if (selectedFeature === 'touch' && !p.isTouch) return false;
+        if (selectedFeature === '2in1' && !p.is2in1) return false;
+        if (selectedFeature === '13' && !p.display.includes('13') && !p.display.includes('12')) return false;
+        if (selectedFeature === '14' && !p.display.includes('14')) return false;
+        if (selectedFeature === '15' && !p.display.includes('15')) return false;
       }
 
       return true;
     });
-  }, [products, searchQuery, selectedCategory, selectedBudget, selectedBrand, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedGpu, selectedFeature]);
+  }, [products, searchQuery, selectedCategory, selectedSeries, selectedBudget, selectedBrand, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedGpu, selectedFeature]);
 
   // Key KPI Metrics
   const stats = useMemo(() => {
@@ -1191,6 +1200,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const resetAllFilters = () => {
     setSearchQuery('');
     setSelectedCategory('ALL');
+    setSelectedSeries('ALL');
     setSelectedBudget('ALL');
     setSelectedBrand('ALL');
     setSelectedCpu('ALL');
@@ -1416,8 +1426,8 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
             {(!isMobile || showMobileFilters) && (
               <div style={{ 
                 display: 'grid', 
-                gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(220px, 1fr))', 
-                gap: 16, 
+                gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', 
+                gap: 14, 
                 paddingTop: 14, 
                 borderTop: '1px solid var(--border-light-color)' 
               }}>
@@ -1434,38 +1444,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     style={dropdownStyle(selectedCategory !== 'ALL', 'var(--orange)', '#ffffff')}
                   >
                     <option value="ALL">All Categories</option>
-                    <option value="WORKSTATION">🖥️ Workstation & Heavy Duty (Precision, ZBook, ThinkPad P)</option>
-                    <option value="BUSINESS">💼 Business & Commercial (Latitude, EliteBook, ThinkPad T/L)</option>
-                    <option value="EXECUTIVE">✨ Executive & Ultraportable (Spectre, Envy, X1, Surface)</option>
-                    <option value="CONVERTIBLE">🔄 2-in-1 Convertible Touch (X360, Yoga, Touch)</option>
+                    <option value="WORKSTATION">🖥️ Workstation (Precision, P14s)</option>
+                    <option value="BUSINESS">💼 Business (Latitude, EliteBook, ThinkPad)</option>
+                    <option value="EXECUTIVE">✨ Executive (Spectre, X1, Surface, Mac)</option>
+                    <option value="CONVERTIBLE">🔄 2-in-1 Touch (X360, Touch)</option>
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedCategory !== 'ALL' ? '#ffffff' : '#000000' }} />
                 </div>
               </div>
 
-              {/* 2. Customer Budget */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  💰 Customer Budget
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <select 
-                    value={selectedBudget}
-                    onChange={e => setSelectedBudget(e.target.value)}
-                    style={dropdownStyle(selectedBudget !== 'ALL', 'var(--citrus)', '#000000')}
-                  >
-                    <option value="ALL">All Prices</option>
-                    <option value="1000">Under 1000 AED</option>
-                    <option value="1500">Under 1500 AED</option>
-                    <option value="2000">Under 2000 AED</option>
-                    <option value="2500">Under 2500 AED</option>
-                    <option value="3000+">3000+ AED</option>
-                  </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
-                </div>
-              </div>
-
-              {/* 3. Brand */}
+              {/* 2. Brand */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                   🏷️ Brand
@@ -1487,10 +1475,58 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 </div>
               </div>
 
-              {/* 4. Processor */}
+              {/* 3. Series / Model Line */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  ⚡ Processor
+                  💻 Model Series
+                </label>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <select 
+                    value={selectedSeries}
+                    onChange={e => setSelectedSeries(e.target.value)}
+                    style={dropdownStyle(selectedSeries !== 'ALL', 'var(--cyan)', '#000000')}
+                  >
+                    <option value="ALL">All Series</option>
+                    <option value="Latitude">Dell Latitude</option>
+                    <option value="Precision">Dell Precision Workstation</option>
+                    <option value="Vostro">Dell Vostro</option>
+                    <option value="Elite">HP EliteBook</option>
+                    <option value="Spectre">HP Spectre 2-in-1</option>
+                    <option value="ThinkPad">Lenovo ThinkPad</option>
+                    <option value="IdeaPad">Lenovo Chromebook / IdeaPad</option>
+                    <option value="Surface">Microsoft Surface</option>
+                    <option value="MacBook">Apple MacBook</option>
+                  </select>
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                </div>
+              </div>
+
+              {/* 4. Customer Budget */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                  💰 Customer Budget
+                </label>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <select 
+                    value={selectedBudget}
+                    onChange={e => setSelectedBudget(e.target.value)}
+                    style={dropdownStyle(selectedBudget !== 'ALL', 'var(--citrus)', '#000000')}
+                  >
+                    <option value="ALL">All Prices</option>
+                    <option value="500">Under 500 AED (199-399 AED)</option>
+                    <option value="1000">Under 1000 AED</option>
+                    <option value="1500">Under 1500 AED</option>
+                    <option value="2000">Under 2000 AED</option>
+                    <option value="2000+">2000+ AED</option>
+                  </select>
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                </div>
+              </div>
+
+              {/* 5. Processor */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                  ⚡ Processor (CPU)
                 </label>
                 <div style={{ position: 'relative', width: '100%' }}>
                   <select 
@@ -1501,17 +1537,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     <option value="ALL">All Processors</option>
                     <option value="i5">Intel Core i5</option>
                     <option value="i7">Intel Core i7</option>
-                    <option value="i9">Intel Core i9</option>
                     <option value="Ultra 7">Intel Ultra 7</option>
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
                 </div>
               </div>
 
-              {/* 5. Generation */}
+              {/* 6. Exact Generation */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  🎓 Generation
+                  🎓 Exact Generation
                 </label>
                 <div style={{ position: 'relative', width: '100%' }}>
                   <select 
@@ -1519,18 +1554,20 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     onChange={e => setSelectedGen(e.target.value)}
                     style={dropdownStyle(selectedGen !== 'ALL', 'var(--green)', '#000000')}
                   >
-                    <option value="ALL">Any Gen</option>
-                    <option value="8">8th Gen+</option>
-                    <option value="10">10th Gen+</option>
-                    <option value="11">11th Gen+</option>
-                    <option value="12">12th Gen+</option>
-                    <option value="13">13th Gen+</option>
+                    <option value="ALL">Exact Gen (Any)</option>
+                    <option value="4">4th Gen</option>
+                    <option value="8">8th Gen</option>
+                    <option value="9">9th Gen</option>
+                    <option value="10">10th Gen</option>
+                    <option value="11">11th Gen</option>
+                    <option value="12">12th Gen</option>
+                    <option value="13">13th Gen</option>
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
                 </div>
               </div>
 
-              {/* 6. RAM (Separate Dropdown) */}
+              {/* 7. Exact RAM */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                   💾 Memory (RAM)
@@ -1541,16 +1578,17 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     onChange={e => setSelectedRam(e.target.value)}
                     style={dropdownStyle(selectedRam !== 'ALL', 'var(--pink)', '#ffffff')}
                   >
-                    <option value="ALL">Any RAM</option>
-                    <option value="8">8GB+ RAM</option>
-                    <option value="16">16GB+ RAM</option>
-                    <option value="32">32GB+ RAM</option>
+                    <option value="ALL">Exact RAM (Any)</option>
+                    <option value="4">4 GB RAM</option>
+                    <option value="8">8 GB RAM</option>
+                    <option value="16">16 GB RAM</option>
+                    <option value="32">32 GB RAM</option>
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedRam !== 'ALL' ? '#ffffff' : '#000000' }} />
                 </div>
               </div>
 
-              {/* 7. Storage SSD (Separate Dropdown) */}
+              {/* 8. Storage SSD */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                   💿 Storage SSD
@@ -1561,16 +1599,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     onChange={e => setSelectedStorage(e.target.value)}
                     style={dropdownStyle(selectedStorage !== 'ALL', 'var(--purple)', '#ffffff')}
                   >
-                    <option value="ALL">Any SSD</option>
-                    <option value="256">256GB+ SSD</option>
-                    <option value="512">512GB+ SSD</option>
-                    <option value="1024">1TB+ SSD</option>
+                    <option value="ALL">Exact Storage (Any)</option>
+                    <option value="32">32 GB Storage</option>
+                    <option value="256">256 GB SSD</option>
+                    <option value="512">512 GB SSD</option>
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedStorage !== 'ALL' ? '#ffffff' : '#000000' }} />
                 </div>
               </div>
 
-              {/* 8. GPU / Graphics */}
+              {/* 9. GPU / Graphics */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                   🎮 Graphics & GPU
@@ -1581,14 +1619,35 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     onChange={e => setSelectedGpu(e.target.value)}
                     style={dropdownStyle(selectedGpu !== 'ALL', 'var(--orange)', '#ffffff')}
                   >
-                    <option value="ALL">Any GPU</option>
-                    <option value="dedicated">Dedicated GPU</option>
-                    <option value="2gb">2GB Dedicated GPU</option>
-                    <option value="4gb">4GB Dedicated GPU</option>
-                    <option value="12gb">12GB Dedicated GPU</option>
-                    <option value="iris">Intel Iris Xe</option>
+                    <option value="ALL">Any Graphics</option>
+                    <option value="4gb">🔥 4GB Dedicated Graphics (Vostro 5599, Precision 3571, P14s)</option>
+                    <option value="2gb">⚡ 2GB Dedicated Graphics (P14s)</option>
+                    <option value="dedicated">🎮 Any Dedicated GPU</option>
+                    <option value="iris">Intel Iris Xe Graphics</option>
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedGpu !== 'ALL' ? '#ffffff' : '#000000' }} />
+                </div>
+              </div>
+
+              {/* 10. Feature & Screen Size */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                  ✨ Feature & Display
+                </label>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <select 
+                    value={selectedFeature}
+                    onChange={e => setSelectedFeature(e.target.value)}
+                    style={dropdownStyle(selectedFeature !== 'ALL', 'var(--citrus)', '#000000')}
+                  >
+                    <option value="ALL">All Features & Displays</option>
+                    <option value="touch">👉 Touchscreen Display</option>
+                    <option value="2in1">🔄 2-in-1 Convertible (X360)</option>
+                    <option value="13">📐 12" / 13.3" Compact Screen</option>
+                    <option value="14">📐 14" Standard Screen</option>
+                    <option value="15">📐 15.6" Large Screen</option>
+                  </select>
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
                 </div>
               </div>
 

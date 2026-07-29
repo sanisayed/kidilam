@@ -514,7 +514,7 @@ function parseWhatsAppCatalog(rawText) {
     else if (titleUpper.includes('MICROSOFT') || titleUpper.includes('SURFACE')) brand = 'SURFACE';
     else if (titleUpper.includes('MACBOOK') || titleUpper.includes('APPLE')) brand = 'MACBOOK';
 
-    const stableId = 'prod_' + cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const stableId = 'prod_' + cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + products.length;
 
     products.push({
       id: stableId,
@@ -1696,12 +1696,13 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                       <button className="btn btn-primary" onClick={resetAllFilters}>Reset All Filters</button>
                     </div>
                   ) : (
-                    filteredProducts.map(p => (
+                    filteredProducts.map((p, pIdx) => (
                       <motion.div 
-                        key={p.id}
+                        key={`${p.id}_${pIdx}`}
                         layout
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
                         className="card static"
                         style={{
                           backgroundColor: 'var(--bg-card)',

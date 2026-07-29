@@ -4,7 +4,9 @@ import {
   Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Camera, ImagePlus, ZoomIn, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos } from '../services/supabaseClient';
-import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToDrive } from '../services/googleDriveService';
+import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi } from '../services/googleDriveService';
+
+
 
 
 /* =========================================================
@@ -712,11 +714,82 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
 
 
+  // ── GOOGLE ADMIN DRIVE OAUTH ────────────────────────────────────────────────
+  const [googleAccessToken, setGoogleAccessToken] = useState(() => {
+    try { return sessionStorage.getItem('google_drive_token') || ''; } catch { return ''; }
+  });
+  const [googleUserEmail, setGoogleUserEmail] = useState(() => {
+    try { return sessionStorage.getItem('google_drive_email') || ''; } catch { return ''; }
+  });
+
+  const handleGoogleDriveLogin = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const scriptId = 'google-gis-script';
+    let script = document.getElementById(scriptId);
+
+    const initLogin = () => {
+      if (window.google?.accounts?.oauth2) {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '1052601736181-sample.apps.googleusercontent.com',
+          scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.access_token) {
+              setGoogleAccessToken(tokenResponse.access_token);
+              try { sessionStorage.setItem('google_drive_token', tokenResponse.access_token); } catch {}
+
+              try {
+                const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                });
+                if (userRes.ok) {
+                  const userData = await userRes.json();
+                  if (userData.email) {
+                    setGoogleUserEmail(userData.email);
+                    try { sessionStorage.setItem('google_drive_email', userData.email); } catch {}
+                  }
+                }
+              } catch {}
+
+              setToastMessage('🟢 Connected to Google Drive Admin!');
+              setTimeout(() => setToastMessage(''), 4000);
+            }
+          }
+        });
+        client.requestAccessToken();
+      } else {
+        alert('Google Identity Services script loading. Please click login again.');
+      }
+    };
+
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initLogin;
+      document.body.appendChild(script);
+    } else {
+      initLogin();
+    }
+  }, []);
+
+  const handleGoogleDriveLogout = useCallback(() => {
+    setGoogleAccessToken('');
+    setGoogleUserEmail('');
+    try {
+      sessionStorage.removeItem('google_drive_token');
+      sessionStorage.removeItem('google_drive_email');
+    } catch {}
+    setToastMessage('Logged out of Google Drive');
+    setTimeout(() => setToastMessage(''), 3000);
+  }, []);
+
   const handleAddPhotos = useCallback(async (p, files) => {
     if (!files || files.length === 0) return;
     const stableId = p.stableId || p.id;
     setPhotoUploading(prev => ({ ...prev, [stableId]: true }));
-
 
     const existing = productPhotos[stableId] || [];
     const newPhotos = [...existing];
@@ -725,11 +798,22 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       const file = files[i];
       const angleIdx = existing.length + i;
       try {
-        const url = await uploadProductPhoto(file, stableId, angleIdx);
+        let url;
+        if (googleAccessToken) {
+          // Upload directly to admin's Google Drive via API!
+          url = await uploadPhotoToGoogleDriveApi(file, p.title || p.brand, googleAccessToken);
+        } else {
+          // Compressed fallback storage
+          url = await uploadProductPhoto(file, stableId, angleIdx);
+        }
         const label = `Photo ${angleIdx + 1}`;
         newPhotos.push({ url, label });
       } catch (e) {
-        console.warn('Photo upload failed:', e);
+        console.warn('Google Drive photo upload failed, using fallback:', e);
+        try {
+          const fallbackUrl = await uploadProductPhoto(file, stableId, angleIdx);
+          newPhotos.push({ url: fallbackUrl, label: `Photo ${angleIdx + 1}` });
+        } catch {}
       }
     }
 
@@ -737,7 +821,8 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     saveProductPhotos(updated);
     setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
     setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
-  }, [productPhotos, saveProductPhotos]);
+  }, [productPhotos, saveProductPhotos, googleAccessToken]);
+
 
   const handleDeletePhoto = useCallback(async (p, idx) => {
     const stableId = p.stableId || p.id;
@@ -1146,6 +1231,37 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 </div>
               </div>
 
+              {/* Google Drive Admin Auth Status / Login Button */}
+              {googleAccessToken ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 12px', background: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid var(--green)', borderRadius: 'var(--radius-sm)',
+                  fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 800,
+                  color: 'var(--green)', width: isMobile ? '100%' : 'auto', justifyContent: 'space-between'
+                }}>
+                  <span>🟢 Drive: {googleUserEmail || 'Connected'}</span>
+                  <button
+                    onClick={handleGoogleDriveLogout}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
+                    title="Logout of Google Drive"
+                  >✕</button>
+                </div>
+              ) : (
+                <button
+                  className="btn btn-ghost"
+                  style={{
+                    padding: '8px 12px', fontWeight: 800, fontSize: '0.78rem',
+                    color: 'var(--purple)', border: '1px solid var(--purple-soft)',
+                    background: 'rgba(124, 58, 237, 0.04)', width: isMobile ? '100%' : 'auto', justifyContent: 'center'
+                  }}
+                  onClick={handleGoogleDriveLogin}
+                  title="Connect your Google Drive account for 1-tap automated photo uploads"
+                >
+                  🔐 Google Drive Login
+                </button>
+              )}
+
               <button 
                 className="btn btn-ghost" 
                 style={{ padding: '10px 14px', fontWeight: 800, width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}
@@ -1153,6 +1269,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               >
                 <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
               </button>
+
 
               <button 
                 className="btn btn-ghost" 

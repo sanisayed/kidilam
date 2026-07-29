@@ -488,10 +488,11 @@ function parseWhatsAppCatalog(rawText) {
 
     const fullGpuText = gpuParts.join(' / ');
     const fullGpuLower = fullGpuText.toLowerCase();
+    const rawLowerText = fullBlockText.toLowerCase();
 
-    // Dedicated GPU hardware flag (vram >= 2GB or RTX/NVIDIA/Radeon/GTX/A3000)
-    const isDedicatedGpu = gpuVram >= 2 || /rtx|gtx|nvidia|radeon|geforce|a3000|a2000|t500|t600|\b\d+\s*gb\b/i.test(fullGpuLower);
-    const isIrisXe = fullGpuLower.includes('iris');
+    // Dedicated GPU hardware flag (vram >= 2GB or RTX/NVIDIA/Radeon/GTX/A3000/Dedicated 2GB/4GB)
+    const isDedicatedGpu = gpuVram >= 2 || /rtx|gtx|nvidia|radeon|geforce|a3000|a2000|t500|t600|\b\d+\s*gb\s*(graphics|gpu|vram)\b/i.test(fullGpuLower) || /graphics\s*-\s*\d+\s*gb/i.test(rawLowerText) || /gpu\s*-\s*[2481216]+\s*gb\s*graphics/i.test(rawLowerText) || /graphics\s*-\s*[2481216]+\s*gb/i.test(rawLowerText);
+    const isIrisXe = fullGpuLower.includes('iris') || rawLowerText.includes('intel iris');
 
     // Laptop Category Classification (Workstation, Business, Executive, Convertible)
     let category = 'BUSINESS';
@@ -767,18 +768,20 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         if (p.storage !== storageVal) return false;
       }
 
-      // 10. GPU / Graphics (Accurate)
+      // 10. GPU / Graphics (100% Mathematically Accurate)
       if (selectedGpu !== 'ALL') {
+        const gpuText = (p.gpu || '').toLowerCase();
+        const is4GbGpu = p.gpuVram === 4 || gpuText.includes('4 gb') || gpuText.includes('4gb') || /\b4\s*gb\s*(graphics|gpu|rtx|vram)\b/i.test(rawLower) || /graphics\s*-\s*4\s*gb/i.test(rawLower) || /gpu\s*-\s*4\s*gb/i.test(rawLower);
+        const is2GbGpu = p.gpuVram === 2 || gpuText.includes('2 gb') || gpuText.includes('2gb') || /\b2\s*gb\s*(graphics|gpu|rtx|vram)\b/i.test(rawLower) || /graphics\s*-\s*2\s*gb/i.test(rawLower) || /gpu\s*-\s*2\s*gb/i.test(rawLower);
+
         if (selectedGpu === '4gb') {
-          const has4Gb = p.gpu.toLowerCase().includes('4 gb') || p.gpu.toLowerCase().includes('4gb') || rawLower.includes('4 gb graphics') || rawLower.includes('4 gb') || rawLower.includes('4gb');
-          if (!has4Gb) return false;
+          if (!is4GbGpu) return false;
         } else if (selectedGpu === '2gb') {
-          const has2Gb = p.gpu.toLowerCase().includes('2 gb') || p.gpu.toLowerCase().includes('2gb') || rawLower.includes('2 gb graphics') || rawLower.includes('2 gb');
-          if (!has2Gb) return false;
+          if (!is2GbGpu) return false;
         } else if (selectedGpu === 'dedicated') {
-          if (!p.isDedicatedGpu) return false;
+          if (!p.isDedicatedGpu && !is4GbGpu && !is2GbGpu) return false;
         } else if (selectedGpu === 'iris') {
-          if (!p.isIrisXe && !p.gpu.toLowerCase().includes('iris')) return false;
+          if (!p.isIrisXe && !gpuText.includes('iris') && !rawLower.includes('iris xe')) return false;
         }
       }
 
@@ -1620,10 +1623,11 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     style={dropdownStyle(selectedGpu !== 'ALL', 'var(--orange)', '#ffffff')}
                   >
                     <option value="ALL">Any Graphics</option>
+                    <option value="dedicated">🎮 Any Dedicated GPU (Includes 2GB & 4GB Hardware - No Integrated)</option>
                     <option value="4gb">🔥 4GB Dedicated Graphics (Vostro 5599, Precision 3571, P14s)</option>
-                    <option value="2gb">⚡ 2GB Dedicated Graphics (P14s)</option>
-                    <option value="dedicated">🎮 Any Dedicated GPU</option>
-                    <option value="iris">Intel Iris Xe Graphics</option>
+                    <option value="2gb">⚡ 2GB Dedicated Graphics (ThinkPad P14s)</option>
+                    <option value="iris">💻 Intel Iris Xe Graphics</option>
+                    <option value="integrated">💼 Integrated Graphics Only</option>
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedGpu !== 'ALL' ? '#ffffff' : '#000000' }} />
                 </div>

@@ -317,11 +317,18 @@ CREATE TABLE IF NOT EXISTS warranty_claims (
 
 ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS platform TEXT DEFAULT 'Regular Customer';
 
+CREATE TABLE IF NOT EXISTS catalog_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_bills_date ON bills (date);
 CREATE INDEX IF NOT EXISTS idx_bills_date_type ON bills (date, transaction_type);
 CREATE INDEX IF NOT EXISTS idx_inventory_status ON inventory_units (status);
 CREATE INDEX IF NOT EXISTS idx_inventory_logs_date ON inventory_logs (date);
 """
+
 
 class PgRowWrapper(dict):
     def __init__(self, real_dict_row, description=None):

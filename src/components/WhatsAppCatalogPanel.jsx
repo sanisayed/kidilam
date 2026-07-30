@@ -874,15 +874,34 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         if (!res.ok) return;
         const data = await res.json();
         const approvedList = (data.approved || []).map(e => String(e).toLowerCase().trim());
-        if (approvedList.includes(pendingVerificationEmail.toLowerCase())) {
-          // Master approved us! Clear pending state and show success
+        const targetEmail = pendingVerificationEmail.toLowerCase().trim();
+
+        if (approvedList.includes(targetEmail)) {
+          // Master approved us! Restore pending token & email to log in automatically
+          let token = '';
+          let email = pendingVerificationEmail;
+          try {
+            token = sessionStorage.getItem('pending_google_token') || sessionStorage.getItem('google_drive_token') || 'approved_staff_session';
+            const savedEmail = sessionStorage.getItem('pending_google_email');
+            if (savedEmail) email = savedEmail;
+          } catch {}
+
+          // Activate Admin Session & state
+          setGoogleAccessToken(token);
+          setGoogleUserEmail(email);
           setPendingVerificationEmail('');
-          try { sessionStorage.removeItem('pending_verification_email'); } catch {}
+
+          try {
+            sessionStorage.setItem('google_drive_token', token);
+            sessionStorage.setItem('google_drive_email', email);
+            sessionStorage.removeItem('pending_verification_email');
+            sessionStorage.removeItem('pending_google_token');
+            sessionStorage.removeItem('pending_google_email');
+          } catch {}
+
           setAdminRequests({ approved: data.approved || [], pending: data.pending || [] });
-          // Note: user still needs a fresh token to actually edit.
-          // Show a success message prompting them to click Login again.
-          setToastMessage('✅ You have been approved! Click "Login" to access the panel.');
-          setTimeout(() => setToastMessage(''), 8000);
+          setToastMessage(`🎉 Account Approved! Welcome Admin ${email}! Edit controls unlocked.`);
+          setTimeout(() => setToastMessage(''), 6000);
         }
       } catch {}
     };
@@ -1040,6 +1059,12 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               const isMaster = (userEmail === MASTER_EMAIL);
               const isApproved = isMaster || freshApproved.includes(userEmail);
 
+              // Save token/email in sessionStorage as pending OAuth session
+              try {
+                sessionStorage.setItem('pending_google_token', tokenResponse.access_token);
+                sessionStorage.setItem('pending_google_email', userEmail);
+              } catch {}
+
               if (!isApproved) {
                 // Submit pending request to backend directly (no stale state)
                 try {
@@ -1053,25 +1078,26 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 } catch (reqErr) {
                   console.warn('Request submission failed:', reqErr);
                 }
-                alert(`⏳ Access Pending Master Approval!\n\nYour account "${userEmail}" has NOT been authorized yet.\nA request has been sent to Master (${MASTER_EMAIL}).\nPlease ask the Master to approve your request in the 👥 Staff Approvals panel.`);
                 // Show the pending verification screen
                 setPendingVerificationEmail(userEmail);
                 try { sessionStorage.setItem('pending_verification_email', userEmail); } catch {}
                 return;
               }
 
-
-
-
+              // Approved! Activate admin session & storage
               setGoogleAccessToken(tokenResponse.access_token);
               if (userEmail) setGoogleUserEmail(userEmail);
+              setPendingVerificationEmail('');
 
               try {
                 sessionStorage.setItem('google_drive_token', tokenResponse.access_token);
                 if (userEmail) sessionStorage.setItem('google_drive_email', userEmail);
+                sessionStorage.removeItem('pending_verification_email');
+                sessionStorage.removeItem('pending_google_token');
+                sessionStorage.removeItem('pending_google_email');
               } catch {}
 
-              setToastMessage('🟢 Connected to Google Drive Admin!');
+              setToastMessage(`🟢 Welcome Admin ${userEmail}! Edit options unlocked.`);
               setTimeout(() => setToastMessage(''), 4000);
             }
           }

@@ -2977,7 +2977,7 @@ def save_admin_request(action, email):
         new_pending = [p for p in pending_list if isinstance(p, dict) and p.get("email") != clean_email]
         new_pending.append({
             "email": clean_email,
-            "requestedAt": _date.today().strftime("%d-%m-%Y %H:%M:%S")
+            "requestedAt": __import__("datetime").datetime.now().strftime("%d-%m-%Y %H:%M:%S")
         })
         set_catalog_setting("approved_admin_emails", json.dumps(list(approved_set)))
         set_catalog_setting("pending_admin_requests", json.dumps(new_pending))

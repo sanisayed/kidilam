@@ -1525,7 +1525,11 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     border: '1px solid var(--border-light-color)', 
                     background: (adminRequests.pending || []).length > 0 ? 'rgba(249, 115, 22, 0.1)' : 'rgba(6, 182, 212, 0.05)'
                   }}
-                  onClick={() => setShowApprovalModal(true)}
+                  onClick={() => {
+                    refreshAdminRequests();
+                    setShowApprovalModal(true);
+                  }}
+
                 >
                   👥 Staff Approvals {(adminRequests.pending || []).length > 0 && <span style={{ background: 'var(--orange)', color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: '0.7rem' }}>{(adminRequests.pending || []).length}</span>}
                 </button>

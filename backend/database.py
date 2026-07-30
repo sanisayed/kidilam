@@ -2956,40 +2956,50 @@ def save_admin_request(action, email):
     if not email or not isinstance(email, str):
         return False
     clean_email = email.lower().strip()
+    if clean_email == MASTER_EMAIL and action != "get":
+        return True  # Master is always approved, no action needed
+
     data = get_admin_requests()
-    approved = set(data.get("approved", []))
-    approved.add(MASTER_EMAIL)
+    approved_set = set(e.lower().strip() for e in data.get("approved", []))
+    approved_set.add(MASTER_EMAIL)
     pending_list = data.get("pending", [])
 
     if action == "request":
-        if clean_email != MASTER_EMAIL and clean_email not in approved:
-            # Add or update request timestamp
-            new_pending = [p for p in pending_list if isinstance(p, dict) and p.get("email") != clean_email]
-            new_pending.append({"email": clean_email, "requestedAt": _date.today().strftime("%d-%m-%Y %H:%M:%S")})
-            set_catalog_setting("pending_admin_requests", json.dumps(new_pending))
-            return True
+        # Always remove from approved if re-requesting, and add to pending
+        approved_set.discard(clean_email)
+        new_pending = [p for p in pending_list if isinstance(p, dict) and p.get("email") != clean_email]
+        new_pending.append({
+            "email": clean_email,
+            "requestedAt": _date.today().strftime("%d-%m-%Y %H:%M:%S")
+        })
+        set_catalog_setting("approved_admin_emails", json.dumps(list(approved_set)))
+        set_catalog_setting("pending_admin_requests", json.dumps(new_pending))
+        return True
 
     elif action == "approve":
-        approved.add(clean_email)
+        approved_set.add(clean_email)
         new_pending = [p for p in pending_list if isinstance(p, dict) and p.get("email") != clean_email]
-        set_catalog_setting("approved_admin_emails", json.dumps(list(approved)))
+        set_catalog_setting("approved_admin_emails", json.dumps(list(approved_set)))
         set_catalog_setting("pending_admin_requests", json.dumps(new_pending))
         return True
 
     elif action == "reject":
-        approved.discard(clean_email)
+        approved_set.discard(clean_email)
         new_pending = [p for p in pending_list if isinstance(p, dict) and p.get("email") != clean_email]
-        set_catalog_setting("approved_admin_emails", json.dumps(list(approved)))
+        set_catalog_setting("approved_admin_emails", json.dumps(list(approved_set)))
         set_catalog_setting("pending_admin_requests", json.dumps(new_pending))
         return True
 
     elif action == "revoke":
         if clean_email != MASTER_EMAIL:
-            approved.discard(clean_email)
-        set_catalog_setting("approved_admin_emails", json.dumps(list(approved)))
+            approved_set.discard(clean_email)
+        new_pending = [p for p in pending_list if isinstance(p, dict) and p.get("email") != clean_email]
+        set_catalog_setting("approved_admin_emails", json.dumps(list(approved_set)))
+        set_catalog_setting("pending_admin_requests", json.dumps(new_pending))
         return True
 
     return False
+
 
 
 

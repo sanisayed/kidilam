@@ -273,3 +273,45 @@ export function getImageSizeInfo(base64Str) {
       : `${Math.round(bytes / 1024)} KB`;
   } catch { return ''; }
 }
+
+/**
+ * Save pending & approved admin requests JSON to Supabase Storage for 100% persistent cross-device access.
+ */
+export async function uploadAdminRequestsToSupabase(data) {
+  if (!isSupabaseConfigured || !data) return false;
+  try {
+    const jsonBlob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const path = `system/admin_requests.json`;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'x-upsert': 'true'
+      },
+      body: jsonBlob
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('uploadAdminRequestsToSupabase error:', e);
+    return false;
+  }
+}
+
+/**
+ * Fetch pending & approved admin requests JSON from Supabase Storage.
+ */
+export async function downloadAdminRequestsFromSupabase() {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const path = `system/admin_requests.json?t=${Date.now()}`;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('downloadAdminRequestsFromSupabase error:', e);
+  }
+  return null;
+}
+

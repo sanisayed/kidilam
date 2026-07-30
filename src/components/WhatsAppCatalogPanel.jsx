@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Camera, ImagePlus, ZoomIn, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos } from '../services/supabaseClient';
+import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos, uploadAdminRequestsToSupabase, downloadAdminRequestsFromSupabase } from '../services/supabaseClient';
+
 import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi } from '../services/googleDriveService';
 import { saveCatalogToCloud, fetchCatalogFromCloud } from '../services/catalogSyncService';
 import { getApiUrl } from '../config';
@@ -775,51 +776,120 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
 
 
-  // Fetch admin approval requests from backend API
+  // Fetch admin approval requests from Backend API + Supabase Storage + LocalStorage
   const refreshAdminRequests = useCallback(async () => {
+    let apiApproved = [];
+    let apiPending = [];
+
+    // 1. Fetch from Backend API
     try {
       const res = await fetch(getApiUrl('/api/admin-requests'));
       if (res.ok) {
         const data = await res.json();
-        setAdminRequests({
-          approved: data.approved || [],
-          pending: data.pending || []
-        });
+        apiApproved = data.approved || [];
+        apiPending = data.pending || [];
       }
     } catch (e) {
-      console.warn('Failed to fetch admin requests:', e);
+      console.warn('Backend admin requests fetch warning:', e);
     }
+
+    // 2. Fetch from Supabase Cloud Storage
+    let supabasePending = [];
+    let supabaseApproved = [];
+    try {
+      const supaData = await downloadAdminRequestsFromSupabase();
+      if (supaData) {
+        supabaseApproved = supaData.approved || [];
+        supabasePending = supaData.pending || [];
+      }
+    } catch (e) {}
+
+    // 3. Fetch from LocalStorage fallback
+    let localPending = [];
+    try {
+      const localStr = localStorage.getItem('pending_admin_requests_v1');
+      if (localStr) localPending = JSON.parse(localStr);
+    } catch (e) {}
+
+    // Merge approved lists
+    const mergedApprovedSet = new Set(['mahinshanavas1@gmail.com', ...apiApproved, ...supabaseApproved]);
+    const mergedApproved = Array.from(mergedApprovedSet);
+
+    // Merge pending lists (exclude any already approved)
+    const pendingMap = new Map();
+    [...supabasePending, ...apiPending, ...localPending].forEach(item => {
+      if (item && item.email) {
+        const cleanE = String(item.email).toLowerCase().trim();
+        if (cleanE !== 'mahinshanavas1@gmail.com' && !mergedApprovedSet.has(cleanE)) {
+          if (!pendingMap.has(cleanE)) {
+            pendingMap.set(cleanE, { email: cleanE, requestedAt: item.requestedAt || new Date().toLocaleString() });
+          }
+        }
+      }
+    });
+
+    const mergedPending = Array.from(pendingMap.values());
+
+    setAdminRequests({
+      approved: mergedApproved,
+      pending: mergedPending
+    });
   }, []);
 
   useEffect(() => {
     refreshAdminRequests();
-    const interval = setInterval(refreshAdminRequests, 5000);
+    const interval = setInterval(refreshAdminRequests, 4000);
     return () => clearInterval(interval);
   }, [refreshAdminRequests]);
 
-
   const handleAdminAction = async (action, email) => {
+    if (!email) return;
+    const cleanEmail = String(email).toLowerCase().trim();
+
+    // Local state immediate update
+    let newApproved = [...(adminRequests.approved || [])];
+    let newPending = [...(adminRequests.pending || [])];
+
+    if (action === 'request') {
+      newApproved = newApproved.filter(e => e.toLowerCase() !== cleanEmail);
+      if (!newPending.some(p => p.email === cleanEmail)) {
+        newPending.push({ email: cleanEmail, requestedAt: new Date().toLocaleString() });
+      }
+    } else if (action === 'approve') {
+      if (!newApproved.includes(cleanEmail)) newApproved.push(cleanEmail);
+      newPending = newPending.filter(p => p.email !== cleanEmail);
+    } else if (action === 'reject' || action === 'revoke') {
+      newApproved = newApproved.filter(e => e.toLowerCase() !== cleanEmail);
+      newPending = newPending.filter(p => p.email !== cleanEmail);
+    }
+
+    const updatedState = { approved: newApproved, pending: newPending };
+    setAdminRequests(updatedState);
+
+    // Save to LocalStorage
+    try {
+      localStorage.setItem('pending_admin_requests_v1', JSON.stringify(newPending));
+    } catch (e) {}
+
+    // Save to Supabase Storage
+    uploadAdminRequestsToSupabase(updatedState).catch(console.warn);
+
+    // Save to Backend API
     try {
       const res = await fetch(getApiUrl('/api/admin-requests'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, email })
+        body: JSON.stringify({ action, email: cleanEmail })
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.data) {
-          setAdminRequests({
-            approved: data.data.approved || [],
-            pending: data.data.pending || []
-          });
-        }
-        setToastMessage(`Action "${action}" completed for ${email}`);
+        setToastMessage(`Action "${action}" recorded for ${cleanEmail}`);
         setTimeout(() => setToastMessage(''), 3000);
       }
     } catch (e) {
-      alert(`Failed to execute admin action: ${e.message}`);
+      console.warn(`Backend admin action sync error: ${e.message}`);
     }
   };
+
 
 
 

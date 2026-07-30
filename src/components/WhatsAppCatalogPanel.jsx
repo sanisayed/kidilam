@@ -776,64 +776,20 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
 
 
-  // Fetch admin approval requests from Backend API + Supabase Storage + LocalStorage
+  // Fetch admin approval requests from Backend API (Single source of truth via Supabase PostgreSQL)
   const refreshAdminRequests = useCallback(async () => {
-    let apiApproved = [];
-    let apiPending = [];
-
-    // 1. Fetch from Backend API
     try {
       const res = await fetch(getApiUrl('/api/admin-requests'));
       if (res.ok) {
         const data = await res.json();
-        apiApproved = data.approved || [];
-        apiPending = data.pending || [];
+        setAdminRequests({
+          approved: data.approved || [],
+          pending: data.pending || []
+        });
       }
     } catch (e) {
-      console.warn('Backend admin requests fetch warning:', e);
+      console.warn('Failed to fetch admin requests:', e);
     }
-
-    // 2. Fetch from Supabase Cloud Storage
-    let supabasePending = [];
-    let supabaseApproved = [];
-    try {
-      const supaData = await downloadAdminRequestsFromSupabase();
-      if (supaData) {
-        supabaseApproved = supaData.approved || [];
-        supabasePending = supaData.pending || [];
-      }
-    } catch (e) {}
-
-    // 3. Fetch from LocalStorage fallback
-    let localPending = [];
-    try {
-      const localStr = localStorage.getItem('pending_admin_requests_v1');
-      if (localStr) localPending = JSON.parse(localStr);
-    } catch (e) {}
-
-    // Merge approved lists
-    const mergedApprovedSet = new Set(['mahinshanavas1@gmail.com', ...apiApproved, ...supabaseApproved]);
-    const mergedApproved = Array.from(mergedApprovedSet);
-
-    // Merge pending lists (exclude any already approved)
-    const pendingMap = new Map();
-    [...supabasePending, ...apiPending, ...localPending].forEach(item => {
-      if (item && item.email) {
-        const cleanE = String(item.email).toLowerCase().trim();
-        if (cleanE !== 'mahinshanavas1@gmail.com' && !mergedApprovedSet.has(cleanE)) {
-          if (!pendingMap.has(cleanE)) {
-            pendingMap.set(cleanE, { email: cleanE, requestedAt: item.requestedAt || new Date().toLocaleString() });
-          }
-        }
-      }
-    });
-
-    const mergedPending = Array.from(pendingMap.values());
-
-    setAdminRequests({
-      approved: mergedApproved,
-      pending: mergedPending
-    });
   }, []);
 
   useEffect(() => {
@@ -846,7 +802,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     if (!email) return;
     const cleanEmail = String(email).toLowerCase().trim();
 
-    // Local state immediate update
+    // Optimistic local state update
     let newApproved = [...(adminRequests.approved || [])];
     let newPending = [...(adminRequests.pending || [])];
 
@@ -862,19 +818,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       newApproved = newApproved.filter(e => e.toLowerCase() !== cleanEmail);
       newPending = newPending.filter(p => p.email !== cleanEmail);
     }
+    setAdminRequests({ approved: newApproved, pending: newPending });
 
-    const updatedState = { approved: newApproved, pending: newPending };
-    setAdminRequests(updatedState);
-
-    // Save to LocalStorage
-    try {
-      localStorage.setItem('pending_admin_requests_v1', JSON.stringify(newPending));
-    } catch (e) {}
-
-    // Save to Supabase Storage
-    uploadAdminRequestsToSupabase(updatedState).catch(console.warn);
-
-    // Save to Backend API
+    // Sync to backend
     try {
       const res = await fetch(getApiUrl('/api/admin-requests'), {
         method: 'POST',
@@ -882,13 +828,26 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         body: JSON.stringify({ action, email: cleanEmail })
       });
       if (res.ok) {
-        setToastMessage(`Action "${action}" recorded for ${cleanEmail}`);
-        setTimeout(() => setToastMessage(''), 3000);
+        const data = await res.json();
+        if (data.data) {
+          setAdminRequests({
+            approved: data.data.approved || [],
+            pending: data.data.pending || []
+          });
+        }
+        if (action !== 'request') {
+          setToastMessage(`✅ "${action}" for ${cleanEmail}`);
+          setTimeout(() => setToastMessage(''), 3000);
+        }
       }
     } catch (e) {
-      console.warn(`Backend admin action sync error: ${e.message}`);
+      console.warn(`Admin action sync error: ${e.message}`);
     }
+
+    // Also sync to Supabase Storage (backup layer)
+    uploadAdminRequestsToSupabase({ approved: newApproved, pending: newPending }).catch(console.warn);
   };
+
 
 
 

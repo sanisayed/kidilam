@@ -117,6 +117,18 @@ def api_save_admin_request():
     return jsonify({"ok": True, "data": db.get_admin_requests()})
 
 
+@app.route("/api/admin-requests/reset-approved", methods=["POST"])
+def api_reset_approved_list():
+    """Reset the approved list to only the master email, clearing all old stale entries."""
+    import json
+    master = "mahinshanavas1@gmail.com"
+    db.set_catalog_setting("approved_admin_emails", json.dumps([master]))
+    db.set_catalog_setting("pending_admin_requests", json.dumps([]))
+    return jsonify({"ok": True, "message": "Approved list reset to master only", "data": db.get_admin_requests()})
+
+
+
+
 
 
 # ── Helpers & Auth Decorators ─────────────────────────────────────────────────

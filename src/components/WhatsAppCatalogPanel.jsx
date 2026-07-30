@@ -735,6 +735,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [vaultSearch, setVaultSearch] = useState('');
   const [adminRequests, setAdminRequests] = useState({ approved: [], pending: [] });
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState(() => {
+    try { return sessionStorage.getItem('pending_verification_email') || ''; } catch { return ''; }
+  });
 
   // ── GOOGLE ADMIN DRIVE OAUTH STATE ──
   const [googleAccessToken, setGoogleAccessToken] = useState(() => {
@@ -764,14 +767,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     }
   }, [googleAccessToken, googleUserEmail, adminRequests.approved]);
 
-  // Allowed Admin Emails Whitelist (comma-separated list from env, or default Master Owner)
-  const allowedAdminEmails = useMemo(() => {
-    const envVal = import.meta.env.VITE_ALLOWED_ADMIN_EMAILS || '';
-    if (!envVal || envVal.trim() === '' || envVal.includes('*')) return ['mahinshanavas1@gmail.com'];
-    const list = envVal.toLowerCase().split(',').map(e => e.trim()).filter(Boolean);
-    if (!list.includes('mahinshanavas1@gmail.com')) list.push('mahinshanavas1@gmail.com');
-    return list;
-  }, []);
+  // Master is always mahinshanavas1@gmail.com — no env var needed
 
 
 
@@ -844,8 +840,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       console.warn(`Admin action sync error: ${e.message}`);
     }
 
-    // Also sync to Supabase Storage (backup layer)
-    uploadAdminRequestsToSupabase({ approved: newApproved, pending: newPending }).catch(console.warn);
   };
 
 
@@ -870,11 +864,43 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     });
     return () => { active = false; };
   }, []);
+  // ── AUTO-POLL FOR APPROVAL WHEN PENDING ─────────────────────────────────────
+  // Every 5s: if we're showing the pending screen, check if master approved us
+  useEffect(() => {
+    if (!pendingVerificationEmail) return;
+    const checkApproval = async () => {
+      try {
+        const res = await fetch(getApiUrl('/api/admin-requests'));
+        if (!res.ok) return;
+        const data = await res.json();
+        const approvedList = (data.approved || []).map(e => String(e).toLowerCase().trim());
+        if (approvedList.includes(pendingVerificationEmail.toLowerCase())) {
+          // Master approved us! Clear pending state and show success
+          setPendingVerificationEmail('');
+          try { sessionStorage.removeItem('pending_verification_email'); } catch {}
+          setAdminRequests({ approved: data.approved || [], pending: data.pending || [] });
+          // Note: user still needs a fresh token to actually edit.
+          // Show a success message prompting them to click Login again.
+          setToastMessage('✅ You have been approved! Click "Login" to access the panel.');
+          setTimeout(() => setToastMessage(''), 8000);
+        }
+      } catch {}
+    };
+    const interval = setInterval(checkApproval, 5000);
+    return () => clearInterval(interval);
+  }, [pendingVerificationEmail]);
+
+  const handleCancelPendingVerification = () => {
+    setPendingVerificationEmail('');
+    try { sessionStorage.removeItem('pending_verification_email'); } catch {}
+  };
+
 
   const updateAndSaveRawText = (newText) => {
     setRawText(newText);
     saveCatalogToCloud(newText, productPhotos);
   };
+
 
   const saveProductPhotos = useCallback((updated) => {
     setProductPhotos(updated);
@@ -994,16 +1020,43 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               }
 
               const MASTER_EMAIL = 'mahinshanavas1@gmail.com';
-              const approvedList = (adminRequests.approved || []).map(e => String(e).toLowerCase().trim());
 
-              // Strictly 1 Master Owner: mahinshanavas1@gmail.com
+              // Always fetch FRESH data from backend — no race condition
+              let freshApproved = [MASTER_EMAIL];
+              try {
+                const freshRes = await fetch(getApiUrl('/api/admin-requests'));
+                if (freshRes.ok) {
+                  const freshData = await freshRes.json();
+                  freshApproved = (freshData.approved || []).map(e => String(e).toLowerCase().trim());
+                  if (!freshApproved.includes(MASTER_EMAIL)) freshApproved.push(MASTER_EMAIL);
+                  // Update local state too
+                  setAdminRequests({ approved: freshData.approved || [], pending: freshData.pending || [] });
+                }
+              } catch (fetchErr) {
+                console.warn('Fresh admin list fetch failed:', fetchErr);
+              }
+
+              // Master always gets in. Others must be in the approved list.
               const isMaster = (userEmail === MASTER_EMAIL);
-              const isApproved = isMaster || approvedList.includes(userEmail);
+              const isApproved = isMaster || freshApproved.includes(userEmail);
 
               if (!isApproved) {
-                // Submit pending request to Master Admin
-                await handleAdminAction('request', userEmail);
-                alert(`⏳ Access Pending Master Approval!\n\nYour account "${userEmail}" is not authorized as Admin yet.\nA request has been sent to Master Admin (${MASTER_EMAIL}).\nPlease ask the Master Admin to approve your request.`);
+                // Submit pending request to backend directly (no stale state)
+                try {
+                  await fetch(getApiUrl('/api/admin-requests'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'request', email: userEmail })
+                  });
+                  // Refresh state after submitting
+                  await refreshAdminRequests();
+                } catch (reqErr) {
+                  console.warn('Request submission failed:', reqErr);
+                }
+                alert(`⏳ Access Pending Master Approval!\n\nYour account "${userEmail}" has NOT been authorized yet.\nA request has been sent to Master (${MASTER_EMAIL}).\nPlease ask the Master to approve your request in the 👥 Staff Approvals panel.`);
+                // Show the pending verification screen
+                setPendingVerificationEmail(userEmail);
+                try { sessionStorage.setItem('pending_verification_email', userEmail); } catch {}
                 return;
               }
 
@@ -1041,7 +1094,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     } else {
       initLogin();
     }
-  }, []);
+  }, [refreshAdminRequests]);
 
   const handleGoogleDriveLogout = useCallback(() => {
     setGoogleAccessToken('');
@@ -2945,6 +2998,121 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
             }}
           >
             {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── PENDING VERIFICATION OVERLAY SCREEN ── */}
+      <AnimatePresence>
+        {pendingVerificationEmail && (
+          <motion.div
+            key="pending-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 999999,
+              background: 'linear-gradient(135deg, #0d0d0d 0%, #0a0a1a 50%, #0d0d0d 100%)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '24px'
+            }}
+          >
+            {/* Glowing ring animation */}
+            <div style={{ position: 'relative', marginBottom: 36 }}>
+              <div style={{
+                width: 100, height: 100, borderRadius: '50%',
+                border: '3px solid rgba(168, 85, 247, 0.3)',
+                borderTopColor: '#a855f7',
+                animation: 'spin 1.2s linear infinite',
+                position: 'absolute', inset: 0
+              }} />
+              <div style={{
+                width: 100, height: 100, borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 38
+              }}>
+                ⏳
+              </div>
+            </div>
+
+            <h2 style={{
+              margin: '0 0 12px 0', fontSize: '1.6rem', fontWeight: 900,
+              fontFamily: 'var(--font-sans, system-ui)', color: '#fff',
+              textAlign: 'center', letterSpacing: '-0.5px'
+            }}>
+              Pending Master Approval
+            </h2>
+            <p style={{
+              margin: '0 0 28px 0', fontSize: '0.95rem', color: 'rgba(255,255,255,0.55)',
+              fontFamily: 'var(--font-mono, monospace)', textAlign: 'center', lineHeight: 1.6,
+              maxWidth: 440
+            }}>
+              Your account is under review by the Master Admin.<br />
+              You'll be granted access automatically once approved.
+            </p>
+
+            {/* Email badge */}
+            <div style={{
+              background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.35)',
+              borderRadius: 10, padding: '10px 22px', marginBottom: 32,
+              display: 'flex', alignItems: 'center', gap: 10
+            }}>
+              <span style={{ fontSize: 18 }}>📧</span>
+              <span style={{
+                fontSize: '0.9rem', fontWeight: 800, color: '#c084fc',
+                fontFamily: 'var(--font-mono, monospace)'
+              }}>
+                {pendingVerificationEmail}
+              </span>
+            </div>
+
+            {/* Live checking indicator */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 36,
+              color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem',
+              fontFamily: 'var(--font-mono, monospace)'
+            }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%', background: '#22c55e',
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }} />
+              Checking for approval every 5 seconds...
+            </div>
+
+            {/* Info box */}
+            <div style={{
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 12, padding: '16px 22px', maxWidth: 420, marginBottom: 28, width: '100%'
+            }}>
+              <p style={{
+                margin: 0, fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)',
+                fontFamily: 'var(--font-mono, monospace)', lineHeight: 1.7, textAlign: 'center'
+              }}>
+                📱 Ask <strong style={{ color: 'rgba(255,255,255,0.7)' }}>mahinshanavas1@gmail.com</strong> to open<br />
+                the <strong style={{ color: '#a855f7' }}>👥 Staff Approvals</strong> panel and approve your request.
+              </p>
+            </div>
+
+            {/* Cancel button */}
+            <button
+              onClick={handleCancelPendingVerification}
+              style={{
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
+                color: 'rgba(255,255,255,0.5)', padding: '9px 24px', borderRadius: 8,
+                fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer',
+                fontFamily: 'var(--font-mono, monospace)',
+                transition: 'all 0.2s'
+              }}
+            >
+              ✕ Cancel & Go Back
+            </button>
+
+            {/* Inline keyframes */}
+            <style>{`
+              @keyframes spin { to { transform: rotate(360deg); } }
+              @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+            `}</style>
           </motion.div>
         )}
       </AnimatePresence>

@@ -162,31 +162,81 @@ export async function makeDriveFilePublic(fileId, accessToken) {
 }
 
 /**
- * Upload a photo file directly to Google Drive under an organized laptop folder.
+/**
+ * Make a Google Drive folder publicly writable so staff members can upload directly into Master's folder.
+ * @param {string} folderId
+ * @param {string} accessToken
+ */
+export async function makeDriveFolderWritable(folderId, accessToken) {
+  await fetch(`https://www.googleapis.com/drive/v3/files/${folderId}/permissions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      role: 'writer',
+      type: 'anyone'
+    })
+  }).catch(console.warn);
+}
+
+/**
+ * Ensure Master Root Folder exists and return its folder ID.
+ * Called by Master to set up shared storage.
+ * @param {string} accessToken
+ * @returns {Promise<string>} Master folder ID
+ */
+export async function ensureMasterFolderId(accessToken) {
+  const rootFolderId = await getOrCreateDriveFolder('Laptop_Catalog_Photos', null, accessToken);
+  await makeDriveFolderWritable(rootFolderId, accessToken);
+  return rootFolderId;
+}
+
+/**
+ * Upload a photo file directly to Google Drive under Master's folder (Option A).
  * Automatically sets public view permission and returns direct image CDN URL.
  * @param {File} file - Image file
  * @param {string} laptopTitle - Laptop model/title (e.g. "Dell Latitude 5410")
  * @param {string} accessToken - Google OAuth Access Token
+ * @param {string} [customMasterFolderId] - Master Google Drive Folder ID
  * @returns {Promise<string>} Direct high-res image URL
  */
-export async function uploadPhotoToGoogleDriveApi(file, laptopTitle, accessToken) {
+export async function uploadPhotoToGoogleDriveApi(file, laptopTitle, accessToken, customMasterFolderId = null) {
   if (!accessToken) {
     throw new Error('Google Drive Access Token is required. Please sign in with Google first.');
   }
 
-  // 1. Get/Create root folder: /Laptop_Catalog_Photos
-  const rootFolderId = await getOrCreateDriveFolder('Laptop_Catalog_Photos', null, accessToken);
+  // 1. Root folder: Use Master's folder ID if available, otherwise get/create /Laptop_Catalog_Photos
+  let rootFolderId = customMasterFolderId;
+  if (!rootFolderId) {
+    try {
+      rootFolderId = await getOrCreateDriveFolder('Laptop_Catalog_Photos', null, accessToken);
+    } catch {
+      rootFolderId = null;
+    }
+  }
 
-  // 2. Get/Create laptop subfolder: /Laptop_Catalog_Photos/Dell_Latitude_5410
+  // 2. Get/Create laptop subfolder inside Master's folder: /Laptop_Catalog_Photos/Dell_Latitude_5410
   const safeLaptopFolder = (laptopTitle || 'General_Laptop').replace(/[^a-zA-Z0-9_-]/g, '_');
-  const laptopFolderId = await getOrCreateDriveFolder(safeLaptopFolder, rootFolderId, accessToken);
+  let laptopFolderId = null;
+  if (rootFolderId) {
+    try {
+      laptopFolderId = await getOrCreateDriveFolder(safeLaptopFolder, rootFolderId, accessToken);
+    } catch {
+      laptopFolderId = null;
+    }
+  }
 
   // 3. Upload file via Google Drive Multipart API
+  const parentList = laptopFolderId ? [laptopFolderId] : (rootFolderId ? [rootFolderId] : []);
   const metadata = {
     name: `${safeLaptopFolder}_${Date.now()}.jpg`,
-    parents: [laptopFolderId],
     mimeType: file.type || 'image/jpeg'
   };
+  if (parentList.length > 0) {
+    metadata.parents = parentList;
+  }
 
   const form = new FormData();
   form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
@@ -212,3 +262,4 @@ export async function uploadPhotoToGoogleDriveApi(file, laptopTitle, accessToken
   // 5. Return direct high-res image CDN URL
   return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
 }
+

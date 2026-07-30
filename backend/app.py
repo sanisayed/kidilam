@@ -127,6 +127,22 @@ def api_reset_approved_list():
     return jsonify({"ok": True, "message": "Approved list reset to master only", "data": db.get_admin_requests()})
 
 
+@app.route("/api/master-folder", methods=["GET"])
+def api_get_master_folder():
+    folder_id = db.get_catalog_setting("master_drive_folder_id", "")
+    return jsonify({"folder_id": folder_id})
+
+
+@app.route("/api/master-folder", methods=["POST"])
+def api_set_master_folder():
+    data = request.get_json() or {}
+    folder_id = data.get("folder_id", "")
+    if folder_id:
+        db.set_catalog_setting("master_drive_folder_id", folder_id)
+    return jsonify({"ok": True, "folder_id": folder_id})
+
+
+
 
 
 

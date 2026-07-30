@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos, uploadAdminRequestsToSupabase, downloadAdminRequestsFromSupabase } from '../services/supabaseClient';
 
-import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi } from '../services/googleDriveService';
+import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi, ensureMasterFolderId } from '../services/googleDriveService';
 import { saveCatalogToCloud, fetchCatalogFromCloud } from '../services/catalogSyncService';
 import { getApiUrl } from '../config';
 
@@ -751,6 +751,34 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const isAdmin = Boolean(googleAccessToken);
   const isMasterUser = (googleUserEmail || '').toLowerCase() === MASTER_EMAIL;
 
+  // Master Google Drive Root Folder ID for Option A shared uploads
+  const [masterDriveFolderId, setMasterDriveFolderId] = useState('');
+
+  // Fetch Master Folder ID from backend on mount
+  useEffect(() => {
+    fetch(getApiUrl('/api/master-folder'))
+      .then(res => res.json())
+      .then(data => { if (data.folder_id) setMasterDriveFolderId(data.folder_id); })
+      .catch(console.warn);
+  }, []);
+
+  // When Master connects to Google Drive, ensure shared folder is created & synced to backend
+  useEffect(() => {
+    if (googleAccessToken && isMasterUser) {
+      ensureMasterFolderId(googleAccessToken).then(folderId => {
+        if (folderId) {
+          setMasterDriveFolderId(folderId);
+          fetch(getApiUrl('/api/master-folder'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folder_id: folderId })
+          }).catch(console.warn);
+        }
+      }).catch(console.warn);
+    }
+  }, [googleAccessToken, isMasterUser]);
+
+
   // Auto-validate session: force logout if active session is not master and not approved
   useEffect(() => {
     if (googleAccessToken && googleUserEmail && googleUserEmail.toLowerCase() !== MASTER_EMAIL) {
@@ -981,7 +1009,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       try {
         let url;
         if (googleAccessToken) {
-          url = await uploadPhotoToGoogleDriveApi(file, modelTitle, googleAccessToken);
+          url = await uploadPhotoToGoogleDriveApi(file, modelTitle, googleAccessToken, masterDriveFolderId);
         } else {
           url = await uploadProductPhoto(file, key, angleIdx);
         }
@@ -1147,8 +1175,8 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       try {
         let url;
         if (googleAccessToken) {
-          // Upload directly to admin's Google Drive via API!
-          url = await uploadPhotoToGoogleDriveApi(file, p.title || p.brand, googleAccessToken);
+          // Upload directly to admin's Google Drive via API (Option A Shared Master Folder)!
+          url = await uploadPhotoToGoogleDriveApi(file, p.title || p.brand, googleAccessToken, masterDriveFolderId);
         } else {
           // Compressed fallback storage
           url = await uploadProductPhoto(file, stableId, angleIdx);

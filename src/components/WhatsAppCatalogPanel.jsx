@@ -997,10 +997,12 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
           Object.entries(cloudPhotos).forEach(([key, photos]) => {
             if (!Array.isArray(photos) || photos.length === 0) return;
             const prevPhotos = prev[key] || [];
-            // Only ADD new photos that aren't already local — never replace/shrink
-            const newUrls = photos.filter(p => !prevPhotos.some(lp => lp.url === p.url));
-            if (newUrls.length > 0) {
-              merged[key] = [...prevPhotos, ...newUrls];
+            // Sync with cloud: Filter local photos so deleted ones (removed from cloud DB) are removed locally too,
+            // while appending any brand new photos uploaded by others.
+            const validLocalPhotos = prevPhotos.filter(lp => photos.some(cp => cp.url === lp.url));
+            const newCloudPhotos = photos.filter(cp => !prevPhotos.some(lp => lp.url === cp.url));
+            if (validLocalPhotos.length !== prevPhotos.length || newCloudPhotos.length > 0) {
+              merged[key] = [...validLocalPhotos, ...newCloudPhotos];
               changed = true;
             }
           });

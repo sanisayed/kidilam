@@ -2344,17 +2344,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                         {(() => {
                           const stableId = p.stableId || p.id;
                           const photos = getPhotos(stableId, p);
-
                           const activeIdx = activePhotoIdx[stableId] || 0;
                           const activePhoto = photos[activeIdx] || null;
                           const isUploading = photoUploading[stableId] || false;
 
                           return (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                              {/* Main Photo Preview */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                              {/* 1. HERO PHOTO PREVIEW AT TOP OF CARD */}
                               {activePhoto ? (
                                 <div
-                                  style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000', cursor: 'zoom-in', aspectRatio: '16/9' }}
+                                  style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000', cursor: 'zoom-in', aspectRatio: '16/9' }}
                                   onClick={() => setLightbox({ stableId, idx: activeIdx })}
                                 >
                                   <img
@@ -2370,11 +2369,28 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                   />
 
-                                  <span style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>
-                                    {activeIdx + 1} / {photos.length}
+                                  {/* Floating Top Left Brand Badge */}
+                                  <span className={`badge ${
+                                    p.brand === 'DELL' ? 'badge-cyan' :
+                                    p.brand === 'HP' ? 'badge-purple' :
+                                    p.brand === 'LENOVO' ? 'badge-orange' : 'badge-pink'
+                                  }`} style={{ position: 'absolute', top: 8, left: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
+                                    {p.brand}
                                   </span>
-                                  <span style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: '50%', padding: '4px', display: 'flex' }}>
-                                    <ZoomIn size={12} />
+
+                                  {/* Floating Top Right Price Tag */}
+                                  <div style={{
+                                    position: 'absolute', top: 8, right: 8,
+                                    fontSize: '0.82rem', fontWeight: 900,
+                                    background: 'var(--citrus)', color: '#000000',
+                                    padding: '3px 8px', borderRadius: '6px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.5)', border: '1px solid #000'
+                                  }}>
+                                    AED {p.offerPrice}/-
+                                  </div>
+
+                                  <span style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>
+                                    {activeIdx + 1} / {photos.length}
                                   </span>
                                   {/* Prev/Next arrows */}
                                   {photos.length > 1 && (
@@ -2391,9 +2407,28 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                   )}
                                 </div>
                               ) : (
-                                <div style={{ width: '100%', aspectRatio: '16/9', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-sm)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.02)', gap: 6, color: 'var(--text-muted)' }}>
+                                <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.02)', gap: 6, color: 'var(--text-muted)' }}>
                                   <Camera size={28} strokeWidth={1.5} />
-                                  <span style={{ fontSize: '0.73rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>No photos yet</span>
+                                  <span style={{ fontSize: '0.73rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>No photos uploaded</span>
+
+                                  {/* Floating Top Left Brand Badge */}
+                                  <span className={`badge ${
+                                    p.brand === 'DELL' ? 'badge-cyan' :
+                                    p.brand === 'HP' ? 'badge-purple' :
+                                    p.brand === 'LENOVO' ? 'badge-orange' : 'badge-pink'
+                                  }`} style={{ position: 'absolute', top: 8, left: 8 }}>
+                                    {p.brand}
+                                  </span>
+
+                                  {/* Floating Top Right Price Tag */}
+                                  <div style={{
+                                    position: 'absolute', top: 8, right: 8,
+                                    fontSize: '0.82rem', fontWeight: 900,
+                                    background: 'var(--citrus)', color: '#000000',
+                                    padding: '3px 8px', borderRadius: '6px', border: '1px solid #000'
+                                  }}>
+                                    AED {p.offerPrice}/-
+                                  </div>
                                 </div>
                               )}
 
@@ -2407,10 +2442,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                         alt={ph.label}
                                         onClick={() => setActivePhotoIdx(prev => ({ ...prev, [stableId]: i }))}
                                         style={{
-                                          width: 54, height: 40, objectFit: 'cover', borderRadius: 4, cursor: 'pointer',
-                                          border: activeIdx === i ? '2px solid var(--purple)' : '2px solid var(--border-light-color)',
-                                          opacity: activeIdx === i ? 1 : 0.65,
-                                          transition: 'all 0.15s'
+                                          width: 52, height: 38, objectFit: 'cover', borderRadius: 6, cursor: 'pointer',
+                                          border: activeIdx === i ? '2px solid var(--purple)' : '1px solid var(--border-light-color)',
+                                          opacity: activeIdx === i ? 1 : 0.65, transition: 'all 0.15s'
                                         }}
                                       />
                                       {isAdmin && (
@@ -2424,6 +2458,40 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                   ))}
                                 </div>
                               )}
+
+                              {/* 2. LAPTOP TITLE & CATEGORY BADGE */}
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                  <h3 style={{ margin: 0, fontSize: isMobile ? '1.02rem' : '1.1rem', fontWeight: 900, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span>💻</span> {p.title}
+                                  </h3>
+                                </div>
+
+                                {/* 3. COMPACT MINIMALIST SPEC TAG PILLS */}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'rgba(6, 182, 212, 0.1)', color: 'var(--cyan)', border: '1px solid rgba(6, 182, 212, 0.2)', fontFamily: 'var(--font-mono)' }}>
+                                    ⚡ {p.processor} {p.gen ? `(${p.gen})` : ''}
+                                  </span>
+
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'rgba(236, 72, 153, 0.1)', color: 'var(--pink)', border: '1px solid rgba(236, 72, 153, 0.2)', fontFamily: 'var(--font-mono)' }}>
+                                    💾 {p.ram} GB RAM
+                                  </span>
+
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'rgba(124, 58, 237, 0.1)', color: 'var(--purple)', border: '1px solid rgba(124, 58, 237, 0.2)', fontFamily: 'var(--font-mono)' }}>
+                                    💿 {p.storage} GB SSD
+                                  </span>
+
+                                  {p.gpu && (
+                                    <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: p.isDedicatedGpu ? 'rgba(249, 115, 22, 0.12)' : 'var(--bg)', color: p.isDedicatedGpu ? 'var(--orange)' : 'var(--text-secondary)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
+                                      🎮 {p.gpu}
+                                    </span>
+                                  )}
+
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
+                                    📐 {p.display}
+                                  </span>
+                                </div>
+                              </div>
 
                               {/* Photo Upload (Admin Only) */}
                               {isAdmin && (
@@ -2447,58 +2515,46 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                 </label>
                               )}
 
-
-
-                              {/* Action Buttons */}
-                              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                                {/* Copy Text Quote (always available) */}
+                              {/* 4. DUAL ACTION BUTTONS (Copy Text & Share) */}
+                              <div style={{ display: 'flex', gap: 8, width: '100%', marginTop: 2 }}>
                                 <button 
                                   className="btn btn-primary" 
                                   style={{ 
                                     flex: 1, 
-                                    fontSize: '0.82rem', 
+                                    fontSize: '0.83rem', 
                                     fontWeight: 900,
                                     justifyContent: 'center',
                                     background: copiedId === p.id ? 'var(--green)' : 'var(--citrus)',
                                     color: '#000000',
-                                    padding: '9px 8px',
-                                    whiteSpace: 'nowrap'
+                                    padding: '10px 8px',
+                                    borderRadius: '8px'
                                   }}
                                   onClick={() => handleCopy(p.rawText, p.id)}
-                                  title="Copy WhatsApp text quote only"
                                 >
-                                  {copiedId === p.id ? <Check size={14} /> : <Copy size={14} />}
+                                  {copiedId === p.id ? <Check size={15} /> : <Copy size={15} />}
                                   <span>{copiedId === p.id ? 'Copied!' : '📋 Copy Text'}</span>
                                 </button>
 
-                                {/* Smart Share Button */}
                                 <button
                                   className="btn btn-secondary"
                                   style={{
-                                    flex: photos.length > 0 ? 1 : 'none',
-                                    padding: '9px 12px',
-                                    fontSize: '0.82rem',
+                                    flex: 1,
+                                    padding: '10px 12px',
+                                    fontSize: '0.83rem',
                                     fontWeight: 900,
                                     justifyContent: 'center',
-                                    whiteSpace: 'nowrap',
+                                    borderRadius: '8px',
                                     opacity: sharingId === (p.stableId || p.id) ? 0.7 : 1
                                   }}
                                   disabled={sharingId === (p.stableId || p.id)}
                                   onClick={() => handleSmartShare(p)}
-                                  title={isMobileShareSupported
-                                    ? `Share ${photos.length} photo(s) + text to WhatsApp`
-                                    : photos.length === 1
-                                      ? 'Copy photo + text to clipboard (Ctrl+V in WhatsApp Web)'
-                                      : photos.length > 1
-                                        ? 'Copy text + download all photos for WhatsApp Web'
-                                        : 'Copy text to clipboard'}
                                 >
                                   {sharingId === (p.stableId || p.id) ? (
                                     <span>⏳</span>
                                   ) : isMobileShareSupported ? (
-                                    <Share2 size={14} />
+                                    <Share2 size={15} />
                                   ) : (
-                                    <Copy size={14} />
+                                    <Copy size={15} />
                                   )}
                                   <span>
                                     {sharingId === (p.stableId || p.id)
@@ -2516,7 +2572,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
                               {/* Admin Single Item Action Bar */}
                               {isAdmin && (
-                                <div style={{ display: 'flex', gap: 6, width: '100%', marginTop: 4 }}>
+                                <div style={{ display: 'flex', gap: 6, width: '100%', marginTop: 2 }}>
                                   <button
                                     onClick={() => handleOpenEditProduct(p)}
                                     style={{
@@ -2524,7 +2580,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                       color: 'var(--cyan)', border: '1px solid var(--cyan)', borderRadius: 'var(--radius-sm)',
                                       fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
                                     }}
-                                    title="Edit specs or title of this single laptop"
                                   >
                                     <Edit3 size={13} /> Edit Item
                                   </button>
@@ -2536,7 +2591,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                       color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 'var(--radius-sm)',
                                       fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
                                     }}
-                                    title="Delete this single laptop item from catalog"
                                   >
                                     <Trash2 size={13} /> Delete
                                   </button>

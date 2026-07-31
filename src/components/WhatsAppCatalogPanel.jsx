@@ -970,7 +970,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   }, []);
 
   // ── LIVE PHOTO POLL (every 8s) ──────────────────────────────────────────────
-  // All devices see new photos within 8 seconds — ADDITIVE ONLY (never restores deleted photos).
+  // All devices see new photos within 8 seconds — ADDITIVE ONLY (never deletes local photos).
   useEffect(() => {
     let active = true;
     const pollPhotos = async () => {
@@ -984,12 +984,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
           Object.entries(cloudPhotos).forEach(([key, photos]) => {
             if (!Array.isArray(photos) || photos.length === 0) return;
             const prevPhotos = prev[key] || [];
-            // Sync with cloud: Filter local photos so deleted ones (removed from cloud DB) are removed locally too,
-            // while appending any brand new photos uploaded by others.
-            const validLocalPhotos = prevPhotos.filter(lp => photos.some(cp => cp.url === lp.url));
             const newCloudPhotos = photos.filter(cp => !prevPhotos.some(lp => lp.url === cp.url));
-            if (validLocalPhotos.length !== prevPhotos.length || newCloudPhotos.length > 0) {
-              merged[key] = [...validLocalPhotos, ...newCloudPhotos];
+            if (newCloudPhotos.length > 0) {
+              merged[key] = [...prevPhotos, ...newCloudPhotos];
               changed = true;
             }
           });
@@ -1050,6 +1047,19 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
   const getPhotos = useCallback((stableId, p = null) => {
     let local = productPhotos[stableId] || [];
+
+    // Fallback lookup by model title key if exact spec stableId isn't found
+    if (local.length === 0 && p && p.title) {
+      const altKey = normalizeModelKey(p.title);
+      if (altKey && productPhotos[altKey]) {
+        local = productPhotos[altKey];
+      } else {
+        const foundKey = Object.keys(productPhotos).find(k => k.includes(altKey) || altKey.includes(k));
+        if (foundKey && productPhotos[foundKey]) {
+          local = productPhotos[foundKey];
+        }
+      }
+    }
 
     const seenUrls = new Set();
     const valid = [];

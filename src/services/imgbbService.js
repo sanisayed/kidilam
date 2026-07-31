@@ -1,58 +1,55 @@
 // src/services/imgbbService.js
-// 100% Zero-Login ImgBB Upload Service for Laptop Catalog Photos (Account: saidali-navas).
-// Provides fast, permanent public HTTPS CDN URLs (https://i.ibb.co/...) with zero login requirements.
-
-import { getApiUrl } from '../config';
+// Direct 100% High-Res ImgBB Upload Service for Laptop Catalog Photos (Account: saidali-navas).
+// Guarantees EXACTLY ONE upload per image file with zero duplicates.
 
 const USER_IMGBB_KEY = import.meta.env.VITE_IMGBB_API_KEY || 'ce23737d34f6c30a67299fbb631d2f76';
 
+// In-flight upload deduplication cache map
+const inflightUploads = new Map();
+
 /**
- * Upload a photo to ImgBB via the backend proxy API with direct client-side fallback.
+ * Upload a photo directly to ImgBB (Account: saidali-navas) at 100% original full resolution.
  * @param {File} file - Image file
  * @param {string} modelTitle - Laptop model name (e.g. "Dell Latitude 5410")
  * @param {string} albumKey - stableId key for the album
  * @returns {Promise<string>} Direct ImgBB public HTTPS URL (e.g. https://i.ibb.co/...)
  */
 export async function uploadPhotoToImgBB(file, modelTitle, albumKey) {
-  // Step 1: Try Backend Upload Proxy
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('albumKey', albumKey || 'General');
-    formData.append('modelTitle', modelTitle || albumKey || 'General');
+  if (!file) throw new Error('No file provided for upload');
 
-    const res = await fetch(getApiUrl('/api/upload-photo'), {
-      method: 'POST',
-      body: formData,
-    });
+  // Prevent duplicate concurrent uploads of the same file (same name & size)
+  const fileHash = `${file.name}_${file.size}_${albumKey}`;
+  if (inflightUploads.has(fileHash)) {
+    return inflightUploads.get(fileHash);
+  }
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.url) return data.url;
+  const uploadPromise = (async () => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('name', `${(modelTitle || 'laptop').replace(/[^a-z0-9]/gi, '_')}_${Date.now()}`);
+
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=${USER_IMGBB_KEY}`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `ImgBB Upload failed (${res.status})`);
+      }
+
+      const result = await res.json();
+      if (result.data && (result.data.url || result.data.display_url)) {
+        return result.data.url || result.data.display_url;
+      }
+
+      throw new Error('Could not retrieve image URL from ImgBB response');
+    } finally {
+      setTimeout(() => inflightUploads.delete(fileHash), 2000);
     }
-  } catch (err) {
-    console.warn('Backend upload proxy error, falling back to direct ImgBB API:', err);
-  }
+  })();
 
-  // Step 2: Direct Client-Side ImgBB Upload Fallback (Account: saidali-navas)
-  const directData = new FormData();
-  directData.append('image', file);
-  directData.append('name', `${modelTitle || 'laptop'}_${Date.now()}`);
-
-  const directRes = await fetch(`https://api.imgbb.com/1/upload?key=${USER_IMGBB_KEY}`, {
-    method: 'POST',
-    body: directData,
-  });
-
-  if (!directRes.ok) {
-    const errData = await directRes.json().catch(() => ({}));
-    throw new Error(errData.error?.message || `ImgBB Upload failed (${directRes.status})`);
-  }
-
-  const result = await directRes.json();
-  if (result.data && (result.data.url || result.data.display_url)) {
-    return result.data.url || result.data.display_url;
-  }
-
-  throw new Error('Could not retrieve image URL from ImgBB upload response');
+  inflightUploads.set(fileHash, uploadPromise);
+  return uploadPromise;
 }

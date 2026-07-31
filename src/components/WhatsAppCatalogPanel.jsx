@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos, uploadAdminRequestsToSupabase, downloadAdminRequestsFromSupabase } from '../services/supabaseClient';
 
-import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi, ensureMasterFolderId, scanAndRecoverDrivePhotos, uploadPhotoViaBackend } from '../services/googleDriveService';
+import { uploadPhotoToImgBB } from '../services/imgbbService';
 import { saveCatalogToCloud, fetchCatalogFromCloud, savePhotosToCloud, fetchPhotosFromCloud, deletePhotoFromCloud, clearAllPhotosFromCloud } from '../services/catalogSyncService';
 import { getApiUrl } from '../config';
 
@@ -739,78 +739,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     try { return sessionStorage.getItem('pending_verification_email') || ''; } catch { return ''; }
   });
 
-  // ── GOOGLE ADMIN DRIVE OAUTH STATE ──
-  const [googleAccessToken, setGoogleAccessToken] = useState(() => {
-    try { return sessionStorage.getItem('google_drive_token') || ''; } catch { return ''; }
-  });
-  const [googleUserEmail, setGoogleUserEmail] = useState(() => {
-    try { return sessionStorage.getItem('google_drive_email') || ''; } catch { return ''; }
-  });
-
   const MASTER_EMAIL = 'mahinshanavas1@gmail.com';
-  const isMasterUser = (googleUserEmail || '').toLowerCase() === MASTER_EMAIL;
-  // isAdmin: true if user is logged in AND (is master OR is in the approved list)
-  // Approved staff see edit controls even without a live Drive token
-  const approvedList = (adminRequests.approved || []).map(e => String(e).toLowerCase());
-  const isAdmin = Boolean(googleUserEmail) && (isMasterUser || approvedList.includes((googleUserEmail || '').toLowerCase()));
-
-  // Master Google Drive Root Folder ID for Option A shared uploads
-  const [masterDriveFolderId, setMasterDriveFolderId] = useState('');
-
-  // Fetch Master Folder ID from backend on mount
-  useEffect(() => {
-    fetch(getApiUrl('/api/master-folder'))
-      .then(res => res.json())
-      .then(data => { if (data.folder_id) setMasterDriveFolderId(data.folder_id); })
-      .catch(console.warn);
-  }, []);
-
-  // When Master connects to Google Drive, ensure shared folder is created & synced to backend
-  useEffect(() => {
-    if (googleAccessToken && isMasterUser) {
-      ensureMasterFolderId(googleAccessToken).then(folderId => {
-        if (folderId) {
-          setMasterDriveFolderId(folderId);
-          fetch(getApiUrl('/api/master-folder'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ folder_id: folderId })
-          }).catch(console.warn);
-        }
-      }).catch(console.warn);
-    }
-  }, [googleAccessToken, isMasterUser]);
-
-  // Scan & recover uploaded photos from Google Drive
-  const handleScanAndRecoverPhotos = useCallback(async () => {
-    if (!googleAccessToken) return;
-    setToastMessage('🔎 Scanning Google Drive for uploaded catalog photos...');
-    try {
-      const recovered = await scanAndRecoverDrivePhotos(googleAccessToken, masterDriveFolderId);
-      const count = Object.keys(recovered).length;
-      if (count > 0) {
-        setProductPhotos(prev => {
-          const merged = { ...prev };
-          Object.entries(recovered).forEach(([key, photos]) => {
-            const existing = merged[key] || [];
-            photos.forEach(p => {
-              if (!existing.some(item => item.url === p.url)) existing.push(p);
-            });
-            merged[key] = existing;
-          });
-          saveCatalogToCloud(rawText, merged);
-          return merged;
-        });
-        setToastMessage(`✅ Restored photos for ${count} product albums from Google Drive!`);
-      } else {
-        setToastMessage('ℹ️ Drive scan complete. No new photos found.');
-      }
-    } catch (e) {
-      console.warn('Drive photo recovery warning:', e);
-      setToastMessage('⚠️ Drive photo scan complete.');
-    }
-    setTimeout(() => setToastMessage(''), 5000);
-  }, [googleAccessToken, masterDriveFolderId, rawText]);
+  const isAdmin = true; // Anyone on console can manage stock & photos
+  const isMasterUser = true;
 
   // Clear all uploaded catalog photos from cloud DB & local cache
   const handleClearAllPhotos = useCallback(async () => {
@@ -821,67 +752,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       setTimeout(() => setToastMessage(''), 4000);
     }
   }, []);
-
-  // Open Master's Google Drive folder directly in a new tab
-  const handleOpenMasterDriveFolder = useCallback(() => {
-    let driveUrl = 'https://drive.google.com/drive/u/0/my-drive';
-    if (masterDriveFolderId) {
-      driveUrl = `https://drive.google.com/drive/folders/${masterDriveFolderId}`;
-    }
-    window.open(driveUrl, '_blank', 'noopener,noreferrer');
-  }, [masterDriveFolderId]);
-
-  // Auto-scan Drive when Google Drive token is connected
-  useEffect(() => {
-    if (googleAccessToken) {
-      handleScanAndRecoverPhotos();
-    }
-  }, [googleAccessToken, handleScanAndRecoverPhotos]);
-
-  // Auto-migrate any local base64 photos to Google Drive once connected
-  useEffect(() => {
-    if (!googleAccessToken) return;
-    let active = true;
-    const migrateLocalPhotos = async () => {
-      let needsSave = false;
-      const updatedMap = JSON.parse(JSON.stringify(productPhotos));
-
-      for (const [key, photos] of Object.entries(productPhotos)) {
-        if (!active) break;
-        if (!Array.isArray(photos)) continue;
-
-        for (let i = 0; i < photos.length; i++) {
-          const ph = photos[i];
-          if (ph && ph.url && ph.url.startsWith('data:')) {
-            try {
-              const res = await fetch(ph.url);
-              const blob = await res.blob();
-              const file = new File([blob], `${key}_${i}.jpg`, { type: 'image/jpeg' });
-              
-              const driveUrl = await uploadPhotoToGoogleDriveApi(file, key, googleAccessToken, masterDriveFolderId);
-              if (driveUrl) {
-                if (!updatedMap[key]) updatedMap[key] = [];
-                updatedMap[key][i] = { ...ph, url: driveUrl };
-                needsSave = true;
-              }
-            } catch (err) {
-              console.warn(`Base64 photo migration error for ${key}:`, err);
-            }
-          }
-        }
-      }
-
-      if (needsSave && active) {
-        setProductPhotos(updatedMap);
-        saveCatalogToCloud(rawText, updatedMap);
-        setToastMessage('✨ Local cached photos backed up to Google Drive!');
-        setTimeout(() => setToastMessage(''), 4000);
-      }
-    };
-
-    migrateLocalPhotos();
-    return () => { active = false; };
-  }, [googleAccessToken, masterDriveFolderId]);
 
 
 
@@ -1143,178 +1013,27 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     const existing = productPhotos[key] || [];
     const newPhotos = [...existing];
 
-    setToastMessage(`Uploading ${files.length} photo(s) to Master Drive...`);
+    setToastMessage(`Uploading ${files.length} photo(s)...`);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const angleIdx = existing.length + i;
       try {
-        // Always upload via backend proxy → uses master's Google Drive token
-        const url = await uploadPhotoViaBackend(file, modelTitle, key, getApiUrl(''));
+        const url = await uploadPhotoToImgBB(file, modelTitle, key);
         newPhotos.push({ url, label: `Photo ${angleIdx + 1}` });
       } catch (e) {
-        if (e.message === 'MASTER_TOKEN_EXPIRED') {
-          setToastMessage('🔴 Master needs to re-login to Google Drive to enable uploads!');
-          setTimeout(() => setToastMessage(''), 6000);
-          return;
-        }
         console.warn('Vault upload error:', e);
         setToastMessage(`⚠️ Upload failed: ${e.message}`);
         setTimeout(() => setToastMessage(''), 4000);
       }
     }
 
-    // Save to local state and push to central DB cloud endpoint
     const updated = { ...productPhotos, [key]: newPhotos };
     setProductPhotos(updated);
     savePhotosToCloud(updated);
     setToastMessage(`✅ ${files.length} photo(s) uploaded — visible on all devices!`);
     setTimeout(() => setToastMessage(''), 4000);
   }, [productPhotos, rawText]);
-
-
-
-
-
-
-
-  // ── GOOGLE ADMIN DRIVE OAUTH ────────────────────────────────────────────────
-
-
-  const handleGoogleDriveLogin = useCallback(() => {
-    if (typeof window === 'undefined') return;
-
-    const scriptId = 'google-gis-script';
-    let script = document.getElementById(scriptId);
-
-    const initLogin = () => {
-      if (window.google?.accounts?.oauth2) {
-        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '791691537428-5llvrcum0p7qf5uq0913c06opqrvnt4d.apps.googleusercontent.com';
-        const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: clientId,
-          scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
-          callback: async (tokenResponse) => {
-
-            if (tokenResponse.access_token) {
-              let userEmail = '';
-              try {
-                const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-                });
-                if (userRes.ok) {
-                  const userData = await userRes.json();
-                  userEmail = (userData.email || '').toLowerCase().trim();
-                }
-              } catch {}
-
-              if (!userEmail) {
-                alert('Could not retrieve user email from Google login.');
-                return;
-              }
-
-              const MASTER_EMAIL = 'mahinshanavas1@gmail.com';
-
-              // Always fetch FRESH data from backend — no race condition
-              let freshApproved = [MASTER_EMAIL];
-              try {
-                const freshRes = await fetch(getApiUrl('/api/admin-requests'));
-                if (freshRes.ok) {
-                  const freshData = await freshRes.json();
-                  freshApproved = (freshData.approved || []).map(e => String(e).toLowerCase().trim());
-                  if (!freshApproved.includes(MASTER_EMAIL)) freshApproved.push(MASTER_EMAIL);
-                  // Update local state too
-                  setAdminRequests({ approved: freshData.approved || [], pending: freshData.pending || [] });
-                }
-              } catch (fetchErr) {
-                console.warn('Fresh admin list fetch failed:', fetchErr);
-              }
-
-              // Master always gets in. Others must be in the approved list.
-              const isMaster = (userEmail === MASTER_EMAIL);
-              const isApproved = isMaster || freshApproved.includes(userEmail);
-
-              // Save token/email in sessionStorage as pending OAuth session
-              try {
-                sessionStorage.setItem('pending_google_token', tokenResponse.access_token);
-                sessionStorage.setItem('pending_google_email', userEmail);
-              } catch {}
-
-              if (!isApproved) {
-                // Submit pending request to backend directly (no stale state)
-                try {
-                  await fetch(getApiUrl('/api/admin-requests'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'request', email: userEmail })
-                  });
-                  // Refresh state after submitting
-                  await refreshAdminRequests();
-                } catch (reqErr) {
-                  console.warn('Request submission failed:', reqErr);
-                }
-                // Show the pending verification screen
-                setPendingVerificationEmail(userEmail);
-                try { sessionStorage.setItem('pending_verification_email', userEmail); } catch {}
-                return;
-              }
-
-              // Approved! Activate admin session & storage
-              setGoogleAccessToken(tokenResponse.access_token);
-              if (userEmail) setGoogleUserEmail(userEmail);
-              setPendingVerificationEmail('');
-
-              try {
-                sessionStorage.setItem('google_drive_token', tokenResponse.access_token);
-                if (userEmail) sessionStorage.setItem('google_drive_email', userEmail);
-                sessionStorage.removeItem('pending_verification_email');
-                sessionStorage.removeItem('pending_google_token');
-                sessionStorage.removeItem('pending_google_email');
-              } catch {}
-
-              // If MASTER logs in: save token to backend so all uploads work via proxy
-              if (isMaster) {
-                fetch(getApiUrl('/api/master-token'), {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ token: tokenResponse.access_token })
-                }).catch(console.warn);
-              }
-
-              setToastMessage(`🟢 Welcome ${isMaster ? 'Master' : 'Admin'} ${userEmail}! Edit options unlocked.`);
-              setTimeout(() => setToastMessage(''), 4000);
-            }
-          }
-        });
-        client.requestAccessToken();
-      } else {
-        alert('Google Identity Services script loading. Please click login again.');
-      }
-    };
-
-
-    if (!script) {
-      script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = initLogin;
-      document.body.appendChild(script);
-    } else {
-      initLogin();
-    }
-  }, [refreshAdminRequests]);
-
-  const handleGoogleDriveLogout = useCallback(() => {
-    setGoogleAccessToken('');
-    setGoogleUserEmail('');
-    try {
-      sessionStorage.removeItem('google_drive_token');
-      sessionStorage.removeItem('google_drive_email');
-    } catch {}
-    setToastMessage('Logged out of Google Drive');
-    setTimeout(() => setToastMessage(''), 3000);
-  }, []);
 
   const handleAddPhotos = useCallback(async (p, files) => {
     if (!files || files.length === 0) return;
@@ -1329,22 +1048,11 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       const file = files[i];
       const angleIdx = existing.length + i;
       try {
-        let url;
-        try {
-          url = await uploadPhotoViaBackend(file, p.title || p.brand, stableId, getApiUrl(''));
-        } catch (proxyErr) {
-          if (proxyErr.message === 'MASTER_TOKEN_EXPIRED') {
-            setToastMessage('🔴 Upload failed: Master (mahinshanavas1@gmail.com) needs to click "🔐 Google Drive Login" first!');
-            setTimeout(() => setToastMessage(''), 7000);
-            setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
-            return;
-          }
-          throw proxyErr;
-        }
+        const url = await uploadPhotoToImgBB(file, p.title || p.brand, stableId);
         const label = `Photo ${angleIdx + 1}`;
         newPhotos.push({ url, label });
       } catch (e) {
-        console.warn('Google Drive photo upload failed:', e);
+        console.warn('Photo upload failed:', e);
         setToastMessage(`⚠️ Photo upload failed: ${e.message}`);
         setTimeout(() => setToastMessage(''), 5000);
         setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
@@ -1361,6 +1069,14 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
     setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
   }, [productPhotos]);
+
+
+
+
+
+
+
+
 
 
 
@@ -1777,101 +1493,30 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
         {/* Action Toolbar Row */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', width: '100%' }}>
-          {/* Google Drive Admin Auth Status / Login Button */}
-          {googleAccessToken ? (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 12px', background: 'rgba(34, 197, 94, 0.1)',
-              border: '1px solid var(--green)', borderRadius: 'var(--radius-sm)',
-              fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 800,
-              color: 'var(--green)'
-            }}>
-              <span>🟢 Drive: {googleUserEmail || 'Connected'}</span>
-              <button
-                onClick={handleGoogleDriveLogout}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
-                title="Logout of Google Drive"
-              >✕</button>
-            </div>
-          ) : (
-            <button
-              className="btn btn-ghost"
-              style={{
-                padding: '8px 12px', fontWeight: 800, fontSize: '0.78rem',
-                color: 'var(--purple)', border: '1px solid var(--purple-soft)',
-                background: 'rgba(124, 58, 237, 0.04)'
-              }}
-              onClick={handleGoogleDriveLogin}
-              title="Connect your Google Drive account for 1-tap automated photo uploads"
-            >
-              🔐 Google Drive Login
-            </button>
-          )}
+          <button 
+            className="btn btn-ghost" 
+            style={{ padding: '8px 14px', fontWeight: 800 }}
+            onClick={() => { setEditorInput(rawText); setShowModal(true); }}
+          >
+            <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
+          </button>
 
-          {isAdmin && (
-            <>
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '8px 14px', fontWeight: 800 }}
-                onClick={() => { setEditorInput(rawText); setShowModal(true); }}
-              >
-                <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
-              </button>
+          <button 
+            className="btn btn-ghost" 
+            style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)' }}
+            onClick={() => setShowVaultModal(true)}
+          >
+            <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
+          </button>
 
-              {isMasterUser && (
-                <button 
-                  className="btn btn-ghost" 
-                  style={{ 
-                    padding: '8px 14px', fontWeight: 800, 
-                    color: (adminRequests.pending || []).length > 0 ? 'var(--orange)' : 'var(--cyan)', 
-                    border: '1px solid var(--border-light-color)', 
-                    background: (adminRequests.pending || []).length > 0 ? 'rgba(249, 115, 22, 0.1)' : 'rgba(6, 182, 212, 0.05)'
-                  }}
-                  onClick={() => {
-                    refreshAdminRequests();
-                    setShowApprovalModal(true);
-                  }}
-
-                >
-                  👥 Staff Approvals {(adminRequests.pending || []).length > 0 && <span style={{ background: 'var(--orange)', color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: '0.7rem' }}>{(adminRequests.pending || []).length}</span>}
-                </button>
-              )}
-
-
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)' }}
-                onClick={() => setShowVaultModal(true)}
-              >
-                <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
-              </button>
-
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--green)', border: '1px solid var(--green)', background: 'rgba(34, 197, 94, 0.05)' }}
-                onClick={handleScanAndRecoverPhotos}
-                title="Scan Google Drive to automatically recover all uploaded catalog photos"
-              >
-                <Sparkles size={15} /> Recover Drive Photos
-              </button>
-
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--cyan)', border: '1px solid var(--cyan)', background: 'rgba(6, 182, 212, 0.05)' }}
-                onClick={handleOpenMasterDriveFolder}
-                title="Open Master's Google Drive folder where uploaded photos are stored (mahinshanavas1@gmail.com)"
-              >
-                <Folder size={15} /> Open Drive Folder
-              </button>
-
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--pink)', border: '1px solid var(--pink)', background: 'rgba(236, 72, 153, 0.05)' }}
-                onClick={handleClearAllPhotos}
-                title="Delete ALL uploaded product photos and clear cache completely"
-              >
-                <Trash2 size={15} /> Delete All Photos
-              </button>
+          <button 
+            className="btn btn-ghost" 
+            style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--pink)', border: '1px solid var(--pink)', background: 'rgba(236, 72, 153, 0.05)' }}
+            onClick={handleClearAllPhotos}
+            title="Delete ALL uploaded product photos and clear cache completely"
+          >
+            <Trash2 size={15} /> Clear All Photos
+          </button>
 
 
               <button 
@@ -1886,8 +1531,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               >
                 <Trash2 size={15} /> Clear
               </button>
-            </>
-          )}
+
 
           <button 
             className="btn btn-primary" 
@@ -2988,10 +2632,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>📸</span> Google Drive Photo Vault
+                    <span>📸</span> Product Photo Vault
                   </h3>
                   <p style={{ margin: '2px 0 0 0', fontSize: '0.76rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                    All product photo albums ever uploaded. Photos auto-link when you re-add laptops to your catalog list!
+                    High-speed ImgBB CDN hosting — zero logins required! Photos auto-link when you paste laptop quotes!
                   </p>
                 </div>
                 <button onClick={() => setShowVaultModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -2999,27 +2643,17 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 </button>
               </div>
 
-              {/* Drive Storage Location Banner & Actions */}
-              <div style={{ padding: '10px 20px', background: 'rgba(6, 182, 212, 0.08)', borderBottom: '1px solid var(--border-light-color)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                  📁 Drive Location: <strong>Laptop_Catalog_Photos</strong> under account <strong>{MASTER_EMAIL}</strong>
+              {/* Action Banner */}
+              <div style={{ padding: '10px 20px', background: 'rgba(124, 58, 237, 0.06)', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--purple)', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
+                  ⚡ Free ImgBB Storage: Permanent high-resolution image links
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={handleOpenMasterDriveFolder}
-                    style={{ padding: '4px 10px', background: 'var(--cyan)', color: '#000', border: 'none', borderRadius: 6, fontSize: '0.72rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                  >
-                    <Folder size={13} /> Open Drive Folder
-                  </button>
-                  {isAdmin && (
-                    <button
-                      onClick={handleClearAllPhotos}
-                      style={{ padding: '4px 10px', background: 'rgba(236, 72, 153, 0.15)', color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 6, fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                    >
-                      <Trash2 size={13} /> Clear All Photos
-                    </button>
-                  )}
-                </div>
+                <button
+                  onClick={handleClearAllPhotos}
+                  style={{ padding: '4px 10px', background: 'rgba(236, 72, 153, 0.15)', color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 6, fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  <Trash2 size={13} /> Clear All Photos
+                </button>
               </div>
 
               {/* Search Bar */}

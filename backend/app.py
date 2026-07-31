@@ -183,53 +183,18 @@ def api_reset_approved_list():
     return jsonify({"ok": True, "message": "Approved list reset to master only", "data": db.get_admin_requests()})
 
 
-@app.route("/api/master-folder", methods=["GET"])
-def api_get_master_folder():
-    folder_id = db.get_catalog_setting("master_drive_folder_id", "")
-    return jsonify({"folder_id": folder_id})
-
-
-@app.route("/api/master-folder", methods=["POST"])
-def api_set_master_folder():
-    data = request.get_json() or {}
-    folder_id = data.get("folder_id", "")
-    if folder_id:
-        db.set_catalog_setting("master_drive_folder_id", folder_id)
-    return jsonify({"ok": True, "folder_id": folder_id})
-
-
-@app.route("/api/master-token", methods=["POST"])
-def api_save_master_token():
-    """Store master's Google Drive access token so backend can upload on behalf of master."""
-    data = request.get_json() or {}
-    token = data.get("token", "")
-    if not token:
-        return jsonify({"error": "token is required"}), 400
-    db.set_catalog_setting("master_drive_token", token)
-    return jsonify({"ok": True})
-
-
-@app.route("/api/master-token", methods=["GET"])
-def api_get_master_token_status():
-    """Check if master token is stored (never expose the actual token)."""
-    token = db.get_catalog_setting("master_drive_token", "")
-    return jsonify({"hasToken": bool(token)})
-
-
 @app.route("/api/upload-photo", methods=["POST"])
 def api_upload_photo():
     """
-    Backend proxy: upload a photo to master's Google Drive using master's stored token.
-    Any user (staff, admin, master) can call this — no Drive login needed on the frontend.
-    Accepts multipart/form-data with fields: file, albumKey, modelTitle
-    Returns { url, albumKey } on success.
+    100% Zero-Login ImgBB Upload Endpoint.
+    Accepts multipart/form-data with fields: file, albumKey, modelTitle.
+    Uploads photo to ImgBB CDN, returns permanent public HTTPS URL, and saves to DB.
     """
     import urllib.request
     import urllib.parse
-    import mimetypes
-
-    master_token = db.get_catalog_setting("master_drive_token", "")
-    folder_id = db.get_catalog_setting("master_drive_folder_id", "")
+    import base64
+    import time
+    import json
 
     album_key = request.form.get("albumKey", "General")
     model_title = request.form.get("modelTitle", album_key)
@@ -238,47 +203,14 @@ def api_upload_photo():
         return jsonify({"error": "No file provided"}), 400
 
     file_bytes = file.read()
-    mime_type = file.content_type or "image/jpeg"
     safe_name = "".join(c if c.isalnum() or c in "-_." else "_" for c in model_title)
-    import time
     filename = f"{safe_name}_{int(time.time())}.jpg"
 
-    # Helper: Perform Drive multipart upload
-    def _upload_to_drive(parent_id):
-        boundary = "---UploadBoundary987654321"
-        metadata = {"name": filename, "mimeType": mime_type}
-        if parent_id:
-            metadata["parents"] = [parent_id]
+    # ImgBB API Key (Free Tier)
+    api_key = "6d70421605d5b727e4646ef7d05dbeb9"
+    cdn_url = f"https://api.imgbb.com/1/upload?key={api_key}"
 
-        body_parts = []
-        meta_bytes = json.dumps(metadata).encode("utf-8")
-        body_parts.append(f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".encode())
-        body_parts.append(meta_bytes)
-        body_parts.append(f"\r\n--{boundary}\r\nContent-Type: {mime_type}\r\n\r\n".encode())
-        body_parts.append(file_bytes)
-        body_parts.append(f"\r\n--{boundary}--".encode())
-        body = b"".join(body_parts)
-
-        upload_url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id"
-        req = urllib.request.Request(
-            upload_url,
-            data=body,
-            headers={
-                "Authorization": f"Bearer {master_token}",
-                "Content-Type": f"multipart/related; boundary={boundary}",
-                "Content-Length": str(len(body)),
-            },
-            method="POST"
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode())
-
-    # Helper: Fallback to free image hosting CDN (ImgBB) — zero login required!
-    def _upload_to_free_cdn():
-        import urllib.parse
-        import base64
-        api_key = "6d70421605d5b727e4646ef7d05dbeb9"  # Free ImgBB API key
-        cdn_url = f"https://api.imgbb.com/1/upload?key={api_key}"
+    try:
         b64_data = base64.b64encode(file_bytes).decode('utf-8')
         post_data = urllib.parse.urlencode({
             'image': b64_data,
@@ -289,48 +221,10 @@ def api_upload_photo():
         with urllib.request.urlopen(req, timeout=30) as resp:
             res_json = json.loads(resp.read().decode('utf-8'))
             data = res_json.get('data', {})
-            return data.get('url') or data.get('display_url')
-
-    photo_url = None
-
-    # Step 1: Try Master Google Drive if token exists
-    if master_token:
-        try:
-            file_data = _upload_to_drive(folder_id)
-            if file_data and file_data.get("id"):
-                file_id = file_data.get("id")
-                try:
-                    perm_url = f"https://www.googleapis.com/drive/v3/files/{file_id}/permissions"
-                    perm_body = json.dumps({"role": "reader", "type": "anyone"}).encode()
-                    perm_req = urllib.request.Request(
-                        perm_url, data=perm_body,
-                        headers={"Authorization": f"Bearer {master_token}", "Content-Type": "application/json"},
-                        method="POST"
-                    )
-                    urllib.request.urlopen(perm_req, timeout=10)
-                except Exception:
-                    pass
-                photo_url = f"https://lh3.googleusercontent.com/d/{file_id}=w1600"
-        except urllib.error.HTTPError as e:
-            if folder_id and e.code == 403:
-                try:
-                    file_data = _upload_to_drive(None)
-                    if file_data and file_data.get("id"):
-                        photo_url = f"https://lh3.googleusercontent.com/d/{file_data.get('id')}=w1600"
-                except Exception:
-                    photo_url = None
-            else:
-                photo_url = None
-        except Exception:
-            photo_url = None
-
-    # Step 2: Zero-Login Fallback to Free CDN if Drive is not connected or fails
-    if not photo_url:
-        try:
-            photo_url = _upload_to_free_cdn()
-        except Exception as cdn_err:
-            print(f"CDN upload error: {cdn_err}")
-            return jsonify({"error": f"Image upload failed: {str(cdn_err)}"}), 500
+            photo_url = data.get('url') or data.get('display_url')
+    except Exception as err:
+        print(f"ImgBB upload error: {err}")
+        return jsonify({"error": f"Image upload failed: {str(err)}"}), 500
 
     if not photo_url:
         return jsonify({"error": "Failed to generate image URL"}), 500

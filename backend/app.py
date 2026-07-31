@@ -376,28 +376,7 @@ def api_upload_photo():
 
 
 
-@app.route("/api/photos", methods=["DELETE"])
-def api_delete_photo():
-    """Remove a specific photo URL from the product_photos DB map (prevents poll from restoring it)."""
-    data = request.get_json() or {}
-    album_key = data.get("albumKey", "")
-    photo_url = data.get("url", "")
-    if not album_key or not photo_url:
-        return jsonify({"error": "albumKey and url are required"}), 400
 
-    existing_str = db.get_catalog_setting("product_photos", "{}")
-    try:
-        existing = json.loads(existing_str)
-    except Exception:
-        existing = {}
-
-    if album_key in existing:
-        existing[album_key] = [p for p in existing[album_key] if p.get("url") != photo_url]
-        if not existing[album_key]:
-            del existing[album_key]
-        db.set_catalog_setting("product_photos", json.dumps(existing))
-
-    return jsonify({"ok": True})
 
 
 

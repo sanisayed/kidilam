@@ -1549,13 +1549,20 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
           {/* Quick Metrics Badges */}
           {products.length > 0 && (
-            <div style={{ display: 'flex', gap: 12, padding: '8px 14px', background: 'var(--bg)', border: '1px solid var(--border-light-color)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem', width: isMobile ? '100%' : 'auto', justifyContent: 'space-between', flexShrink: 0 }}>
-              <div>Total Stock: <strong style={{ color: 'var(--purple)', fontSize: '0.95rem' }}>{stats.total}</strong></div>
-              <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
-                Matched: <strong style={{ color: 'var(--citrus-dark)', fontSize: '0.95rem' }}>{stats.matched}</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.73rem', fontWeight: 800, color: 'var(--green)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 8px var(--green)', display: 'inline-block' }}></span>
+                <span>Cloud Sync Active</span>
               </div>
-              <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
-                Workstations: <strong style={{ color: 'var(--orange)', fontSize: '0.95rem' }}>{stats.workstationCount}</strong>
+
+              <div style={{ display: 'flex', gap: 12, padding: '8px 14px', background: 'var(--bg)', border: '1px solid var(--border-light-color)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem', width: isMobile ? '100%' : 'auto', justifyContent: 'space-between', flexShrink: 0 }}>
+                <div>Total Stock: <strong style={{ color: 'var(--purple)', fontSize: '0.95rem' }}>{stats.total}</strong></div>
+                <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
+                  Matched: <strong style={{ color: 'var(--citrus-dark)', fontSize: '0.95rem' }}>{stats.matched}</strong>
+                </div>
+                <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
+                  Workstations: <strong style={{ color: 'var(--orange)', fontSize: '0.95rem' }}>{stats.workstationCount}</strong>
+                </div>
               </div>
             </div>
           )}

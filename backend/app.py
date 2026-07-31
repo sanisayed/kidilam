@@ -255,7 +255,7 @@ def api_upload_photo():
             metadata["parents"] = [parent_id]
 
         body_parts = []
-        meta_bytes = _json.dumps(metadata).encode("utf-8")
+        meta_bytes = json.dumps(metadata).encode("utf-8")
         body_parts.append(f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".encode())
         body_parts.append(meta_bytes)
         body_parts.append(f"\r\n--{boundary}\r\nContent-Type: {mime_type}\r\n\r\n".encode())
@@ -275,7 +275,7 @@ def api_upload_photo():
             method="POST"
         )
         with urllib.request.urlopen(req, timeout=30) as resp:
-            return _json.loads(resp.read().decode())
+            return json.loads(resp.read().decode())
 
     file_data = None
     # Attempt 1: Upload to master folder ID
@@ -308,7 +308,7 @@ def api_upload_photo():
     # Make file publicly viewable
     try:
         perm_url = f"https://www.googleapis.com/drive/v3/files/{file_id}/permissions"
-        perm_body = _json.dumps({"role": "reader", "type": "anyone"}).encode()
+        perm_body = json.dumps({"role": "reader", "type": "anyone"}).encode()
         perm_req = urllib.request.Request(
             perm_url,
             data=perm_body,
@@ -327,7 +327,7 @@ def api_upload_photo():
     # Save the URL to the product_photos DB map immediately
     existing_str = db.get_catalog_setting("product_photos", "{}")
     try:
-        existing = _json.loads(existing_str)
+        existing = json.loads(existing_str)
     except Exception:
         existing = {}
     album = existing.get(album_key, [])

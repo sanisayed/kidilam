@@ -107,7 +107,45 @@ def api_save_catalog():
             if photo_list and isinstance(photo_list, list) and len(photo_list) > 0:
                 existing[key] = photo_list
         db.set_catalog_setting("product_photos", json.dumps(existing))
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "productPhotos": json.loads(db.get_catalog_setting("product_photos", "{}"))})
+
+
+@app.route("/api/photos", methods=["GET"])
+def api_get_photos():
+    """Dedicated endpoint to get just the product photos map (no rawText needed)."""
+    photos_str = db.get_catalog_setting("product_photos", "{}")
+    try:
+        photos = json.loads(photos_str)
+    except Exception:
+        photos = {}
+    return jsonify({"productPhotos": photos, "count": len(photos)})
+
+
+@app.route("/api/photos", methods=["POST"])
+def api_save_photos():
+    """Dedicated endpoint to save/merge product photos - completely independent of rawText."""
+    data = request.get_json() or {}
+    incoming = data.get("productPhotos", {})
+    if not isinstance(incoming, dict):
+        return jsonify({"error": "productPhotos must be an object"}), 400
+
+    existing_str = db.get_catalog_setting("product_photos", "{}")
+    try:
+        existing = json.loads(existing_str)
+    except Exception:
+        existing = {}
+
+    updated_count = 0
+    for key, photo_list in incoming.items():
+        if photo_list and isinstance(photo_list, list) and len(photo_list) > 0:
+            existing[key] = photo_list
+            updated_count += 1
+
+    db.set_catalog_setting("product_photos", json.dumps(existing))
+    return jsonify({"ok": True, "updatedAlbums": updated_count, "totalAlbums": len(existing)})
+
+
+
 
 
 

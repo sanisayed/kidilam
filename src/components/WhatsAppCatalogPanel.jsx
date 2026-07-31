@@ -6,7 +6,7 @@ import {
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos, uploadAdminRequestsToSupabase, downloadAdminRequestsFromSupabase } from '../services/supabaseClient';
 
 import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi, ensureMasterFolderId, scanAndRecoverDrivePhotos } from '../services/googleDriveService';
-import { saveCatalogToCloud, fetchCatalogFromCloud } from '../services/catalogSyncService';
+import { saveCatalogToCloud, fetchCatalogFromCloud, savePhotosToCloud, fetchPhotosFromCloud } from '../services/catalogSyncService';
 import { getApiUrl } from '../config';
 
 
@@ -978,6 +978,35 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     });
     return () => { active = false; };
   }, []);
+
+  // ── LIVE PHOTO POLL (every 10s) ─────────────────────────────────────────────
+  // All devices (master, viewer, staff) always see newly uploaded photos without reload!
+  useEffect(() => {
+    let active = true;
+    const pollPhotos = async () => {
+      try {
+        const cloudPhotos = await fetchPhotosFromCloud();
+        if (!active) return;
+        if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
+          setProductPhotos(prev => {
+            const merged = { ...prev };
+            let changed = false;
+            Object.entries(cloudPhotos).forEach(([key, photos]) => {
+              const localLen = (prev[key] || []).length;
+              if (photos.length !== localLen) {
+                merged[key] = photos;
+                changed = true;
+              }
+            });
+            return changed ? merged : prev;
+          });
+        }
+      } catch {}
+    };
+    // Poll every 10 seconds
+    const interval = setInterval(pollPhotos, 10000);
+    return () => { active = false; clearInterval(interval); };
+  }, []);
   // ── AUTO-POLL FOR APPROVAL WHEN PENDING ─────────────────────────────────────
   // Every 5s: if we're showing the pending screen, check if master approved us
   useEffect(() => {
@@ -1107,6 +1136,8 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
     const updated = { ...productPhotos, [key]: newPhotos };
     setProductPhotos(updated);
+    // Save photos via dedicated endpoint — always persisted to cloud, no rawText dependency
+    savePhotosToCloud(updated);
     saveCatalogToCloud(rawText, updated);
     setToastMessage(`✅ Added ${files.length} photos to Vault!`);
     setTimeout(() => setToastMessage(''), 3000);
@@ -1280,6 +1311,8 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
     const updated = { ...productPhotos, [stableId]: newPhotos };
     saveProductPhotos(updated);
+    // Also save directly to dedicated photos endpoint to guarantee cross-device sync
+    savePhotosToCloud(updated);
     setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
     setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
   }, [productPhotos, saveProductPhotos, googleAccessToken]);

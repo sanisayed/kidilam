@@ -1192,7 +1192,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '791691537428-5llvrcum0p7qf5uq0913c06opqrvnt4d.apps.googleusercontent.com';
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: clientId,
-          scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+          scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
           callback: async (tokenResponse) => {
 
             if (tokenResponse.access_token) {

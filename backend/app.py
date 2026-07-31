@@ -247,23 +247,22 @@ def api_upload_photo():
     import time
     filename = f"{safe_name}_{int(time.time())}.jpg"
 
-    # Build Drive upload request (multipart)
-    import json as _json
-    boundary = "---UploadBoundary987654321"
-    metadata = {"name": filename, "mimeType": mime_type}
-    if folder_id:
-        metadata["parents"] = [folder_id]
+    # Helper to perform Drive multipart upload
+    def _upload_to_drive(parent_id):
+        boundary = "---UploadBoundary987654321"
+        metadata = {"name": filename, "mimeType": mime_type}
+        if parent_id:
+            metadata["parents"] = [parent_id]
 
-    body_parts = []
-    meta_bytes = _json.dumps(metadata).encode("utf-8")
-    body_parts.append(f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".encode())
-    body_parts.append(meta_bytes)
-    body_parts.append(f"\r\n--{boundary}\r\nContent-Type: {mime_type}\r\n\r\n".encode())
-    body_parts.append(file_bytes)
-    body_parts.append(f"\r\n--{boundary}--".encode())
-    body = b"".join(body_parts)
+        body_parts = []
+        meta_bytes = _json.dumps(metadata).encode("utf-8")
+        body_parts.append(f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".encode())
+        body_parts.append(meta_bytes)
+        body_parts.append(f"\r\n--{boundary}\r\nContent-Type: {mime_type}\r\n\r\n".encode())
+        body_parts.append(file_bytes)
+        body_parts.append(f"\r\n--{boundary}--".encode())
+        body = b"".join(body_parts)
 
-    try:
         upload_url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id"
         req = urllib.request.Request(
             upload_url,
@@ -276,14 +275,29 @@ def api_upload_photo():
             method="POST"
         )
         with urllib.request.urlopen(req, timeout=30) as resp:
-            file_data = _json.loads(resp.read().decode())
+            return _json.loads(resp.read().decode())
+
+    file_data = None
+    # Attempt 1: Upload to master folder ID
+    try:
+        file_data = _upload_to_drive(folder_id)
     except urllib.error.HTTPError as e:
-        err_body = e.read().decode()
-        if e.code == 401:
-            # Token expired — clear it so frontend knows
-            db.set_catalog_setting("master_drive_token", "")
-            return jsonify({"error": "master_token_expired", "message": "Master token expired. Master needs to re-login."}), 503
-        return jsonify({"error": f"Drive upload failed: {e.code}", "detail": err_body}), 502
+        if e.code == 401 or e.code == 403:
+            # If 403 was due to parent folder permission restriction, retry uploading directly to Master's Drive root
+            if folder_id and e.code == 403:
+                try:
+                    db.set_catalog_setting("master_drive_folder_id", "")
+                    file_data = _upload_to_drive(None)
+                except urllib.error.HTTPError as e2:
+                    # Token invalid or scope forbidden — clear master token so Master is prompted to refresh Drive login
+                    db.set_catalog_setting("master_drive_token", "")
+                    return jsonify({"error": "master_token_expired", "message": f"Master Google Drive token expired or forbidden ({e2.code}). Please click Google Drive Login to refresh."}), 503
+            else:
+                db.set_catalog_setting("master_drive_token", "")
+                return jsonify({"error": "master_token_expired", "message": f"Master Google Drive token expired ({e.code}). Please click Google Drive Login to refresh."}), 503
+        else:
+            err_body = e.read().decode()
+            return jsonify({"error": f"Drive upload failed: {e.code}", "detail": err_body}), 502
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
 

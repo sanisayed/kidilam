@@ -1717,25 +1717,63 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
             {isMobile ? (
               /* MOBILE MINIMALISTIC FILTER BAR */
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-                {/* 1. Mobile Search Bar */}
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
-                  <input 
-                    type="text" 
-                    className="field-input" 
-                    placeholder="🔍 Search laptop specs (e.g. i7, 16GB, 4GB GPU)..." 
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    style={{ paddingLeft: 42, paddingRight: 36, fontSize: '0.9rem', height: '42px', width: '100%' }}
-                  />
-                  {searchQuery && (
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}
-                    >
-                      ✕
-                    </button>
-                  )}
+                {/* 1. Mobile Search Bar & Quick Chips */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                    <input 
+                      type="text" 
+                      className="field-input" 
+                      placeholder="🔍 Search laptop specs (e.g. i7, 16GB, 4GB GPU)..." 
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      style={{ paddingLeft: 42, paddingRight: 36, fontSize: '0.9rem', height: '44px', width: '100%', borderRadius: '10px' }}
+                    />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Horizontal 1-Tap Quick Filter Chips Bar */}
+                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                    {[
+                      { label: 'ALL', isSelected: selectedBrand === 'ALL' && selectedCategory === 'ALL' && selectedGpu === 'ALL' && selectedCpu === 'ALL', action: () => resetAllFilters() },
+                      { label: '🖥️ Workstations', isSelected: selectedCategory === 'WORKSTATION', action: () => setSelectedCategory(selectedCategory === 'WORKSTATION' ? 'ALL' : 'WORKSTATION') },
+                      { label: 'DELL', isSelected: selectedBrand === 'DELL', action: () => setSelectedBrand(selectedBrand === 'DELL' ? 'ALL' : 'DELL') },
+                      { label: 'HP', isSelected: selectedBrand === 'HP', action: () => setSelectedBrand(selectedBrand === 'HP' ? 'ALL' : 'HP') },
+                      { label: 'LENOVO', isSelected: selectedBrand === 'LENOVO', action: () => setSelectedBrand(selectedBrand === 'LENOVO' ? 'ALL' : 'LENOVO') },
+                      { label: 'Core i7', isSelected: selectedCpu === 'i7', action: () => setSelectedCpu(selectedCpu === 'i7' ? 'ALL' : 'i7') },
+                      { label: '16GB RAM', isSelected: selectedRam === '16', action: () => setSelectedRam(selectedRam === '16' ? 'ALL' : '16') },
+                      { label: '🎮 Dedicated GPU', isSelected: selectedGpu === 'dedicated', action: () => setSelectedGpu(selectedGpu === 'dedicated' ? 'ALL' : 'dedicated') },
+                      { label: '💰 < 1500 AED', isSelected: selectedBudget === '1500', action: () => setSelectedBudget(selectedBudget === '1500' ? 'ALL' : '1500') },
+                    ].map((chip, idx) => (
+                      <button
+                        key={idx}
+                        onClick={chip.action}
+                        style={{
+                          flexShrink: 0,
+                          padding: '6px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.76rem',
+                          fontWeight: 800,
+                          fontFamily: 'var(--font-mono)',
+                          whiteSpace: 'nowrap',
+                          border: chip.isSelected ? '2px solid var(--purple)' : '1px solid var(--border-color)',
+                          background: chip.isSelected ? 'var(--purple)' : 'var(--bg-card)',
+                          color: chip.isSelected ? '#ffffff' : 'var(--text-primary)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* 2. Mobile 1-Tap Filter Action Row */}
@@ -1746,7 +1784,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                     style={{ 
                       flex: 1, 
                       height: '42px', 
-                      justify: 'space-between', 
+                      justifyContent: 'space-between', 
                       padding: '0 14px', 
                       fontWeight: 900, 
                       fontSize: '0.85rem',
@@ -1757,7 +1795,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                   >
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Filter size={15} />
-                      <span>{showMobileFilters ? 'Hide Filters' : '⚡ Filter Stock Specs'}</span>
+                      <span>{showMobileFilters ? 'Hide Filters' : '⚡ More Filter Options'}</span>
                     </span>
 
                     {(selectedBrand !== 'ALL' || selectedBudget !== 'ALL' || selectedSeries !== 'ALL' || selectedGpu !== 'ALL' || selectedCategory !== 'ALL' || selectedCpu !== 'ALL' || selectedRam !== 'ALL') && (
@@ -2657,6 +2695,47 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
           </div>
         )}
       </AnimatePresence>
+      {/* ── STICKY MOBILE BOTTOM FLOATING ACTION BAR ── */}
+      {isMobile && products.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'var(--bg-card)',
+          borderTop: '2px solid var(--border-color)',
+          padding: '10px 14px',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justify: 'space-between',
+          gap: 10,
+          zIndex: 9999
+        }}>
+          <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
+            <span style={{ color: 'var(--text-muted)' }}>Stock:</span>{' '}
+            <strong style={{ color: 'var(--citrus-dark)' }}>{stats.matched}</strong> / {stats.total}
+          </div>
+
+          <button
+            className="btn btn-primary"
+            style={{
+              flex: 1,
+              maxWidth: '220px',
+              padding: '10px 12px',
+              fontWeight: 900,
+              fontSize: '0.82rem',
+              justifyContent: 'center',
+              background: 'var(--citrus)',
+              color: '#000000'
+            }}
+            onClick={() => handleCopy(formattedOutputText, 'mobile-bottom')}
+          >
+            {copiedId === 'mobile-bottom' ? <Check size={14} /> : <Copy size={14} />}
+            <span>{copiedId === 'mobile-bottom' ? 'Copied Quotes!' : '📋 Copy All Quotes'}</span>
+          </button>
+        </div>
+      )}
 
       {/* ── LIGHTBOX OVERLAY ── */}
       <AnimatePresence>

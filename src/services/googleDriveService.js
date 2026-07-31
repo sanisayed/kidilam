@@ -328,3 +328,44 @@ export async function scanAndRecoverDrivePhotos(accessToken, masterFolderId = nu
 }
 
 
+
+/**
+ * Upload a photo via the backend proxy — uses master's stored Google Drive token.
+ * Works for ALL users (staff, approved admin, master) — no Google login required on client.
+ * The backend uploads to mahinshanavas1@gmail.com's Drive, making URL visible to everyone.
+ * @param {File} file - Image file to upload
+ * @param {string} modelTitle - Laptop model name (e.g. "Dell Latitude 5410")
+ * @param {string} albumKey - stableId used as album key in productPhotos map
+ * @param {string} apiBaseUrl - Backend API base URL (from getApiUrl(''))
+ * @returns {Promise<string>} Public Google Drive image URL
+ */
+export async function uploadPhotoViaBackend(file, modelTitle, albumKey, apiBaseUrl = '') {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('albumKey', albumKey || 'General');
+  formData.append('modelTitle', modelTitle || albumKey || 'General');
+
+  const endpoint = `${apiBaseUrl}/api/upload-photo`;
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    body: formData,
+    // No Content-Type header — browser sets it with boundary for multipart
+  });
+
+  if (res.status === 503) {
+    const errData = await res.json().catch(() => ({}));
+    if (errData.error === 'master_token_expired') {
+      throw new Error('MASTER_TOKEN_EXPIRED');
+    }
+    throw new Error(`Upload service unavailable: ${errData.message || res.statusText}`);
+  }
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(`Upload failed (${res.status}): ${errData.error || res.statusText}`);
+  }
+
+  const data = await res.json();
+  if (!data.url) throw new Error('No URL returned from upload');
+  return data.url;
+}

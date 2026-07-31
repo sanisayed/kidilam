@@ -190,6 +190,154 @@ def api_set_master_folder():
     return jsonify({"ok": True, "folder_id": folder_id})
 
 
+@app.route("/api/master-token", methods=["POST"])
+def api_save_master_token():
+    """Store master's Google Drive access token so backend can upload on behalf of master."""
+    data = request.get_json() or {}
+    token = data.get("token", "")
+    if not token:
+        return jsonify({"error": "token is required"}), 400
+    db.set_catalog_setting("master_drive_token", token)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/master-token", methods=["GET"])
+def api_get_master_token_status():
+    """Check if master token is stored (never expose the actual token)."""
+    token = db.get_catalog_setting("master_drive_token", "")
+    return jsonify({"hasToken": bool(token)})
+
+
+@app.route("/api/upload-photo", methods=["POST"])
+def api_upload_photo():
+    """
+    Backend proxy: upload a photo to master's Google Drive using master's stored token.
+    Any user (staff, admin, master) can call this — no Drive login needed on the frontend.
+    Accepts multipart/form-data with fields: file, albumKey, modelTitle
+    Returns { url, albumKey } on success.
+    """
+    import urllib.request
+    import urllib.parse
+    import mimetypes
+
+    # Get master's token and folder ID
+    master_token = db.get_catalog_setting("master_drive_token", "")
+    folder_id = db.get_catalog_setting("master_drive_folder_id", "")
+
+    if not master_token:
+        return jsonify({"error": "master_token_expired", "message": "Master needs to re-login to Google Drive to enable uploads"}), 503
+
+    album_key = request.form.get("albumKey", "General")
+    model_title = request.form.get("modelTitle", album_key)
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file provided"}), 400
+
+    file_bytes = file.read()
+    mime_type = file.content_type or "image/jpeg"
+    safe_name = "".join(c if c.isalnum() or c in "-_." else "_" for c in model_title)
+    import time
+    filename = f"{safe_name}_{int(time.time())}.jpg"
+
+    # Build Drive upload request (multipart)
+    import json as _json
+    boundary = "---UploadBoundary987654321"
+    metadata = {"name": filename, "mimeType": mime_type}
+    if folder_id:
+        metadata["parents"] = [folder_id]
+
+    body_parts = []
+    meta_bytes = _json.dumps(metadata).encode("utf-8")
+    body_parts.append(f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".encode())
+    body_parts.append(meta_bytes)
+    body_parts.append(f"\r\n--{boundary}\r\nContent-Type: {mime_type}\r\n\r\n".encode())
+    body_parts.append(file_bytes)
+    body_parts.append(f"\r\n--{boundary}--".encode())
+    body = b"".join(body_parts)
+
+    try:
+        upload_url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id"
+        req = urllib.request.Request(
+            upload_url,
+            data=body,
+            headers={
+                "Authorization": f"Bearer {master_token}",
+                "Content-Type": f"multipart/related; boundary={boundary}",
+                "Content-Length": str(len(body)),
+            },
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            file_data = _json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode()
+        if e.code == 401:
+            # Token expired — clear it so frontend knows
+            db.set_catalog_setting("master_drive_token", "")
+            return jsonify({"error": "master_token_expired", "message": "Master token expired. Master needs to re-login."}), 503
+        return jsonify({"error": f"Drive upload failed: {e.code}", "detail": err_body}), 502
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+    file_id = file_data.get("id")
+    if not file_id:
+        return jsonify({"error": "No file ID returned from Drive"}), 500
+
+    # Make file publicly viewable
+    try:
+        perm_url = f"https://www.googleapis.com/drive/v3/files/{file_id}/permissions"
+        perm_body = _json.dumps({"role": "reader", "type": "anyone"}).encode()
+        perm_req = urllib.request.Request(
+            perm_url,
+            data=perm_body,
+            headers={
+                "Authorization": f"Bearer {master_token}",
+                "Content-Type": "application/json",
+            },
+            method="POST"
+        )
+        urllib.request.urlopen(perm_req, timeout=10)
+    except Exception:
+        pass  # Non-fatal — continue even if permission fails
+
+    photo_url = f"https://lh3.googleusercontent.com/d/{file_id}=w1600"
+
+    # Save the URL to the product_photos DB map immediately
+    existing_str = db.get_catalog_setting("product_photos", "{}")
+    try:
+        existing = _json.loads(existing_str)
+    except Exception:
+        existing = {}
+    album = existing.get(album_key, [])
+    album.append({"url": photo_url, "label": f"Photo {len(album) + 1}"})
+    existing[album_key] = album
+    db.set_catalog_setting("product_photos", _json.dumps(existing))
+
+    return jsonify({"ok": True, "url": photo_url, "albumKey": album_key, "fileId": file_id})
+
+
+@app.route("/api/photos", methods=["DELETE"])
+def api_delete_photo():
+    """Remove a specific photo URL from the product_photos DB map (prevents poll from restoring it)."""
+    data = request.get_json() or {}
+    album_key = data.get("albumKey", "")
+    photo_url = data.get("url", "")
+    if not album_key or not photo_url:
+        return jsonify({"error": "albumKey and url are required"}), 400
+
+    existing_str = db.get_catalog_setting("product_photos", "{}")
+    try:
+        existing = json.loads(existing_str)
+    except Exception:
+        existing = {}
+
+    if album_key in existing:
+        existing[album_key] = [p for p in existing[album_key] if p.get("url") != photo_url]
+        if not existing[album_key]:
+            del existing[album_key]
+        db.set_catalog_setting("product_photos", json.dumps(existing))
+
+    return jsonify({"ok": True})
 
 
 

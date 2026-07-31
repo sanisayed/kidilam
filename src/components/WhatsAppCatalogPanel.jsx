@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos, uploadAdminRequestsToSupabase, downloadAdminRequestsFromSupabase } from '../services/supabaseClient';
 
-import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi, ensureMasterFolderId, scanAndRecoverDrivePhotos } from '../services/googleDriveService';
-import { saveCatalogToCloud, fetchCatalogFromCloud, savePhotosToCloud, fetchPhotosFromCloud } from '../services/catalogSyncService';
+import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi, ensureMasterFolderId, scanAndRecoverDrivePhotos, uploadPhotoViaBackend } from '../services/googleDriveService';
+import { saveCatalogToCloud, fetchCatalogFromCloud, savePhotosToCloud, fetchPhotosFromCloud, deletePhotoFromCloud } from '../services/catalogSyncService';
 import { getApiUrl } from '../config';
 
 
@@ -748,8 +748,11 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   });
 
   const MASTER_EMAIL = 'mahinshanavas1@gmail.com';
-  const isAdmin = Boolean(googleAccessToken);
   const isMasterUser = (googleUserEmail || '').toLowerCase() === MASTER_EMAIL;
+  // isAdmin: true if user is logged in AND (is master OR is in the approved list)
+  // Approved staff see edit controls even without a live Drive token
+  const approvedList = (adminRequests.approved || []).map(e => String(e).toLowerCase());
+  const isAdmin = Boolean(googleUserEmail) && (isMasterUser || approvedList.includes((googleUserEmail || '').toLowerCase()));
 
   // Master Google Drive Root Folder ID for Option A shared uploads
   const [masterDriveFolderId, setMasterDriveFolderId] = useState('');
@@ -979,32 +982,33 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return () => { active = false; };
   }, []);
 
-  // ── LIVE PHOTO POLL (every 10s) ─────────────────────────────────────────────
-  // All devices (master, viewer, staff) always see newly uploaded photos without reload!
+  // ── LIVE PHOTO POLL (every 8s) ──────────────────────────────────────────────
+  // All devices see new photos within 8 seconds — ADDITIVE ONLY (never restores deleted photos).
   useEffect(() => {
     let active = true;
     const pollPhotos = async () => {
       try {
         const cloudPhotos = await fetchPhotosFromCloud();
         if (!active) return;
-        if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
-          setProductPhotos(prev => {
-            const merged = { ...prev };
-            let changed = false;
-            Object.entries(cloudPhotos).forEach(([key, photos]) => {
-              const localLen = (prev[key] || []).length;
-              if (photos.length !== localLen) {
-                merged[key] = photos;
-                changed = true;
-              }
-            });
-            return changed ? merged : prev;
+        if (!cloudPhotos || Object.keys(cloudPhotos).length === 0) return;
+        setProductPhotos(prev => {
+          let changed = false;
+          const merged = { ...prev };
+          Object.entries(cloudPhotos).forEach(([key, photos]) => {
+            if (!Array.isArray(photos) || photos.length === 0) return;
+            const prevPhotos = prev[key] || [];
+            // Only ADD new photos that aren't already local — never replace/shrink
+            const newUrls = photos.filter(p => !prevPhotos.some(lp => lp.url === p.url));
+            if (newUrls.length > 0) {
+              merged[key] = [...prevPhotos, ...newUrls];
+              changed = true;
+            }
           });
-        }
+          return changed ? merged : prev;
+        });
       } catch {}
     };
-    // Poll every 10 seconds
-    const interval = setInterval(pollPhotos, 10000);
+    const interval = setInterval(pollPhotos, 8000);
     return () => { active = false; clearInterval(interval); };
   }, []);
   // ── AUTO-POLL FOR APPROVAL WHEN PENDING ─────────────────────────────────────
@@ -1104,43 +1108,44 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     const photo = photos[idx];
     if (!photo) return;
     if (window.confirm(`Delete this photo from Vault?`)) {
-      await deleteProductPhoto(photo.url).catch(() => {});
+      // Delete from cloud DB first — prevents poll from restoring it
+      await deletePhotoFromCloud(key, photo.url);
       const updated = { ...productPhotos, [key]: photos.filter((_, i) => i !== idx) };
       setProductPhotos(updated);
-      saveCatalogToCloud(rawText, updated);
     }
-  }, [productPhotos, rawText]);
+  }, [productPhotos]);
 
   const handleVaultUpload = useCallback(async (key, modelTitle, files) => {
     if (!files || files.length === 0) return;
     const existing = productPhotos[key] || [];
     const newPhotos = [...existing];
 
-    setToastMessage(`Uploading ${files.length} photos to Vault...`);
+    setToastMessage(`Uploading ${files.length} photo(s) to Master Drive...`);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const angleIdx = existing.length + i;
       try {
-        let url;
-        if (googleAccessToken) {
-          url = await uploadPhotoToGoogleDriveApi(file, modelTitle, googleAccessToken, masterDriveFolderId);
-        } else {
-          url = await uploadProductPhoto(file, key, angleIdx);
-        }
+        // Always upload via backend proxy → uses master's Google Drive token
+        const url = await uploadPhotoViaBackend(file, modelTitle, key, getApiUrl(''));
         newPhotos.push({ url, label: `Photo ${angleIdx + 1}` });
       } catch (e) {
-        console.warn('Vault upload fallback:', e);
+        if (e.message === 'MASTER_TOKEN_EXPIRED') {
+          setToastMessage('🔴 Master needs to re-login to Google Drive to enable uploads!');
+          setTimeout(() => setToastMessage(''), 6000);
+          return;
+        }
+        console.warn('Vault upload error:', e);
+        setToastMessage(`⚠️ Upload failed: ${e.message}`);
+        setTimeout(() => setToastMessage(''), 4000);
       }
     }
 
+    // Backend already saved URL to DB — just update local state
     const updated = { ...productPhotos, [key]: newPhotos };
     setProductPhotos(updated);
-    // Save photos via dedicated endpoint — always persisted to cloud, no rawText dependency
-    savePhotosToCloud(updated);
-    saveCatalogToCloud(rawText, updated);
-    setToastMessage(`✅ Added ${files.length} photos to Vault!`);
-    setTimeout(() => setToastMessage(''), 3000);
+    setToastMessage(`✅ ${files.length} photo(s) uploaded — visible on all devices!`);
+    setTimeout(() => setToastMessage(''), 4000);
   }, [productPhotos, rawText, googleAccessToken]);
 
 
@@ -1242,7 +1247,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 sessionStorage.removeItem('pending_google_email');
               } catch {}
 
-              setToastMessage(`🟢 Welcome Admin ${userEmail}! Edit options unlocked.`);
+              // If MASTER logs in: save token to backend so all uploads work via proxy
+              if (isMaster) {
+                fetch(getApiUrl('/api/master-token'), {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: tokenResponse.access_token })
+                }).catch(console.warn);
+              }
+
+              setToastMessage(`🟢 Welcome ${isMaster ? 'Master' : 'Admin'} ${userEmail}! Edit options unlocked.`);
               setTimeout(() => setToastMessage(''), 4000);
             }
           }
@@ -1291,12 +1305,17 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       const angleIdx = existing.length + i;
       try {
         let url;
-        if (googleAccessToken) {
-          // Upload directly to admin's Google Drive via API (Option A Shared Master Folder)!
-          url = await uploadPhotoToGoogleDriveApi(file, p.title || p.brand, googleAccessToken, masterDriveFolderId);
-        } else {
-          // Compressed fallback storage
-          url = await uploadProductPhoto(file, stableId, angleIdx);
+        // Always use backend proxy — uploads to master's Google Drive, visible for everyone
+        try {
+          url = await uploadPhotoViaBackend(file, p.title || p.brand, stableId, getApiUrl(''));
+        } catch (proxyErr) {
+          if (proxyErr.message === 'MASTER_TOKEN_EXPIRED') {
+            setToastMessage('🔴 Master needs to re-login to Google Drive to enable uploads!');
+            setTimeout(() => setToastMessage(''), 6000);
+            setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
+            return;
+          }
+          throw proxyErr;
         }
         const label = `Photo ${angleIdx + 1}`;
         newPhotos.push({ url, label });
@@ -1310,12 +1329,12 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     }
 
     const updated = { ...productPhotos, [stableId]: newPhotos };
-    saveProductPhotos(updated);
-    // Also save directly to dedicated photos endpoint to guarantee cross-device sync
-    savePhotosToCloud(updated);
+    setProductPhotos(updated);
+    // Backend proxy already saved URL to DB — no extra save needed
     setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
     setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
-  }, [productPhotos, saveProductPhotos, googleAccessToken]);
+  }, [productPhotos, googleAccessToken]);
+
 
 
   const handleDeletePhoto = useCallback(async (p, idx) => {
@@ -1323,14 +1342,15 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     const photos = productPhotos[stableId] || [];
     const photo = photos[idx];
     if (!photo) return;
-    await deleteProductPhoto(photo.url).catch(() => {});
+    // Delete from cloud DB FIRST so poll doesn't restore it
+    await deletePhotoFromCloud(stableId, photo.url);
     const updated = { ...productPhotos, [stableId]: photos.filter((_, i) => i !== idx) };
-    saveProductPhotos(updated);
+    setProductPhotos(updated);
     setActivePhotoIdx(prev => ({
       ...prev,
       [stableId]: Math.max(0, (prev[stableId] || 0) - 1)
     }));
-  }, [productPhotos, saveProductPhotos]);
+  }, [productPhotos]);
 
   const handleAddDriveLink = useCallback((p) => {
     const inputUrl = prompt('Paste Google Drive (or direct photo) link:');

@@ -554,7 +554,15 @@ function parseWhatsAppCatalog(rawText) {
     else if (titleUpper.includes('MICROSOFT') || titleUpper.includes('SURFACE')) brand = 'SURFACE';
     else if (titleUpper.includes('MACBOOK') || titleUpper.includes('APPLE')) brand = 'MACBOOK';
 
-    const stableId = normalizeModelKey(cleanTitle);
+    const specParts = [
+      processor ? processor.toLowerCase().replace(/[^a-z0-9]/g, '') : '',
+      gen ? `${gen}th` : '',
+      ram ? `${ram}gb` : '',
+      storage ? `${storage}gb` : ''
+    ].filter(Boolean).join('_');
+
+    const modelBase = normalizeModelKey(cleanTitle);
+    const stableId = specParts ? `${modelBase}_${specParts}` : modelBase;
 
 
 
@@ -943,31 +951,24 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const getPhotos = useCallback((stableId, p = null) => {
     let local = productPhotos[stableId] || [];
 
-    // Fallback: If no direct match, search normalized model key & fuzzy model match
-    if (local.length === 0 && (p?.title || stableId)) {
-      const baseKey = p?.title ? normalizeModelKey(p.title) : stableId;
-      if (productPhotos[baseKey]) {
-        local = productPhotos[baseKey];
-      } else {
-        const targetClean = baseKey.replace(/^prod_/, '').replace(/_/g, '');
-        const foundKey = Object.keys(productPhotos).find(k => {
-          const kClean = k.replace(/^prod_/, '').replace(/_/g, '');
-          return kClean.length > 3 && (kClean.includes(targetClean) || targetClean.includes(kClean));
-        });
-        if (foundKey && productPhotos[foundKey]) {
-          local = productPhotos[foundKey];
-        }
+    const seenUrls = new Set();
+    const valid = [];
+    local.forEach(ph => {
+      if (ph && ph.url && typeof ph.url === 'string' && !ph.url.startsWith('data:') && !seenUrls.has(ph.url)) {
+        seenUrls.add(ph.url);
+        valid.push(ph);
       }
-    }
-
-    // Filter out device-local Base64 data URLs — only public Google Drive CDN URLs are valid
-    const validLocal = local.filter(ph => ph && ph.url && typeof ph.url === 'string' && !ph.url.startsWith('data:'));
-    const embedded = (p?.embeddedPhotos || []).filter(ph => ph && ph.url && typeof ph.url === 'string' && !ph.url.startsWith('data:'));
-    const combined = [...validLocal];
-    embedded.forEach(ph => {
-      if (!combined.some(item => item.url === ph.url)) combined.push(ph);
     });
-    return combined;
+
+    const embedded = (p?.embeddedPhotos || []).filter(ph => ph && ph.url && typeof ph.url === 'string' && !ph.url.startsWith('data:'));
+    embedded.forEach(ph => {
+      if (!seenUrls.has(ph.url)) {
+        seenUrls.add(ph.url);
+        valid.push(ph);
+      }
+    });
+
+    return valid;
   }, [productPhotos]);
 
   const handleVaultDelete = useCallback(async (key, idx) => {
@@ -1002,20 +1003,29 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       }
     }
 
-    const updated = { ...productPhotos, [key]: newPhotos };
+    // Deduplicate photo URLs
+    const seenUrls = new Set();
+    const uniquePhotos = [];
+    newPhotos.forEach(ph => {
+      if (ph && ph.url && !seenUrls.has(ph.url)) {
+        seenUrls.add(ph.url);
+        uniquePhotos.push(ph);
+      }
+    });
+
+    const updated = { ...productPhotos, [key]: uniquePhotos };
     setProductPhotos(updated);
     savePhotosToCloud(updated);
     setToastMessage(`✅ ${files.length} photo(s) uploaded — visible on all devices!`);
     setTimeout(() => setToastMessage(''), 4000);
-  }, [productPhotos, rawText]);
+  }, [productPhotos]);
 
   const handleAddPhotos = useCallback(async (p, files) => {
     if (!files || files.length === 0) return;
     const stableId = p.stableId || p.id;
-    const normKey = p.title ? normalizeModelKey(p.title) : null;
     setPhotoUploading(prev => ({ ...prev, [stableId]: true }));
 
-    const existing = productPhotos[stableId] || (normKey ? productPhotos[normKey] : []) || [];
+    const existing = productPhotos[stableId] || [];
     const newPhotos = [...existing];
 
     for (let i = 0; i < files.length; i++) {
@@ -1034,13 +1044,20 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       }
     }
 
-    const updated = { ...productPhotos, [stableId]: newPhotos };
-    if (normKey && normKey !== stableId) {
-      updated[normKey] = newPhotos;
-    }
+    // Deduplicate photo URLs
+    const seenUrls = new Set();
+    const uniquePhotos = [];
+    newPhotos.forEach(ph => {
+      if (ph && ph.url && !seenUrls.has(ph.url)) {
+        seenUrls.add(ph.url);
+        uniquePhotos.push(ph);
+      }
+    });
+
+    const updated = { ...productPhotos, [stableId]: uniquePhotos };
     setProductPhotos(updated);
     savePhotosToCloud(updated);
-    setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
+    setActivePhotoIdx(prev => ({ ...prev, [stableId]: uniquePhotos.length - 1 }));
     setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
   }, [productPhotos]);
 

@@ -17,7 +17,14 @@ export function filterValidPhotosMap(map) {
   const cleanMap = {};
   Object.entries(map).forEach(([key, list]) => {
     if (Array.isArray(list)) {
-      const valid = list.filter(item => item && item.url && typeof item.url === 'string' && !item.url.startsWith('data:'));
+      const seenUrls = new Set();
+      const valid = [];
+      list.forEach(item => {
+        if (item && item.url && typeof item.url === 'string' && !item.url.startsWith('data:') && !seenUrls.has(item.url)) {
+          seenUrls.add(item.url);
+          valid.push(item);
+        }
+      });
       if (valid.length > 0) cleanMap[key] = valid;
     }
   });

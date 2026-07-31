@@ -288,9 +288,10 @@ def api_upload_photo():
     except Exception:
         existing = {}
     album = existing.get(album_key, [])
-    album.append({"url": photo_url, "label": f"Photo {len(album) + 1}"})
-    existing[album_key] = album
-    db.set_catalog_setting("product_photos", json.dumps(existing))
+    if not any(isinstance(p, dict) and p.get("url") == photo_url for p in album):
+        album.append({"url": photo_url, "label": f"Photo {len(album) + 1}"})
+        existing[album_key] = album
+        db.set_catalog_setting("product_photos", json.dumps(existing))
 
 
 

@@ -185,10 +185,50 @@ def api_save_photos():
     return jsonify({"ok": True, "updatedAlbums": updated_count, "totalAlbums": len(existing)})
 
 
+@app.route("/api/photos", methods=["DELETE"])
+def api_delete_photo():
+    """Delete a specific photo from an album key in database and backup file."""
+    data = request.get_json() or {}
+    album_key = data.get("albumKey")
+    url_to_delete = data.get("url")
+
+    if not album_key or not url_to_delete:
+        return jsonify({"error": "Missing albumKey or url"}), 400
+
+    existing_str = db.get_catalog_setting("product_photos", "{}")
+    try:
+        existing = json.loads(existing_str)
+    except Exception:
+        existing = {}
+
+    if not existing or len(existing) == 0:
+        existing = load_photo_backup()
+
+    if album_key in existing:
+        # Filter out the deleted photo URL
+        existing[album_key] = [p for p in existing[album_key] if p.get("url") != url_to_delete]
+        # If the album is now empty, delete the album key
+        if len(existing[album_key]) == 0:
+            del existing[album_key]
+        
+        # Save to DB and update the backup file
+        db.set_catalog_setting("product_photos", json.dumps(existing))
+        save_photo_backup(existing)
+        
+        return jsonify({"ok": True, "message": "Photo deleted successfully", "albumSize": len(existing.get(album_key, []))})
+    
+    return jsonify({"error": "Album key not found"}), 404
+
+
 @app.route("/api/photos/clear-all", methods=["POST"])
 def api_clear_all_photos():
-    """Clear all uploaded product photos from central DB catalog settings."""
+    """Clear all uploaded product photos from central DB catalog settings and backup file."""
     db.set_catalog_setting("product_photos", "{}")
+    if os.path.exists(PHOTO_BACKUP_FILE):
+        try:
+            os.remove(PHOTO_BACKUP_FILE)
+        except Exception:
+            pass
     return jsonify({"ok": True, "message": "All product photos cleared from central database"})
 
 

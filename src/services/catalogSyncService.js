@@ -103,17 +103,19 @@ export async function fetchPhotosFromCloud() {
  * @param {string} photoUrl - The photo URL to delete
  */
 export async function deletePhotoFromCloud(albumKey, photoUrl) {
-  // Remove from localStorage cache too
+  // Remove from localStorage cache and backup too
   try {
-    const str = localStorage.getItem('product_photos_v2');
-    if (str) {
-      const photos = JSON.parse(str);
-      if (photos[albumKey]) {
-        photos[albumKey] = photos[albumKey].filter(p => p.url !== photoUrl);
-        if (photos[albumKey].length === 0) delete photos[albumKey];
-        localStorage.setItem('product_photos_v2', JSON.stringify(photos));
+    ['product_photos_v2', 'product_photos_backup_v2'].forEach(storageKey => {
+      const str = localStorage.getItem(storageKey);
+      if (str) {
+        const photos = JSON.parse(str);
+        if (photos[albumKey]) {
+          photos[albumKey] = photos[albumKey].filter(p => p.url !== photoUrl);
+          if (photos[albumKey].length === 0) delete photos[albumKey];
+          localStorage.setItem(storageKey, JSON.stringify(photos));
+        }
       }
-    }
+    });
   } catch {}
 
   try {

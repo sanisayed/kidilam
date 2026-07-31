@@ -94,11 +94,21 @@ def api_get_catalog():
 @app.route("/api/catalog", methods=["POST"])
 def api_save_catalog():
     data = request.get_json() or {}
-    if "rawText" in data and isinstance(data["rawText"], str):
+    if "rawText" in data and isinstance(data["rawText"], str) and data["rawText"].strip():
         db.set_catalog_setting("raw_text", data["rawText"])
-    if "productPhotos" in data:
-        db.set_catalog_setting("product_photos", json.dumps(data["productPhotos"]))
+    if "productPhotos" in data and isinstance(data["productPhotos"], dict):
+        existing_str = db.get_catalog_setting("product_photos", "{}")
+        try:
+            existing = json.loads(existing_str)
+        except Exception:
+            existing = {}
+        # Safely merge incoming photos with existing DB catalog photos
+        for key, photo_list in data["productPhotos"].items():
+            if photo_list and isinstance(photo_list, list) and len(photo_list) > 0:
+                existing[key] = photo_list
+        db.set_catalog_setting("product_photos", json.dumps(existing))
     return jsonify({"ok": True})
+
 
 
 @app.route("/api/admin-requests", methods=["GET"])

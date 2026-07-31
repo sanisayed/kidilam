@@ -263,3 +263,68 @@ export async function uploadPhotoToGoogleDriveApi(file, laptopTitle, accessToken
   return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
 }
 
+/**
+ * Scan Google Drive for all uploaded laptop catalog photos inside Laptop_Catalog_Photos
+ * and return a productPhotos map { [stableId]: [{ url, label }] }.
+ * Restores photos even if browser localstorage or database setting was reset!
+ * @param {string} accessToken
+ * @param {string} [masterFolderId]
+ * @returns {Promise<Object>} productPhotos map
+ */
+export async function scanAndRecoverDrivePhotos(accessToken, masterFolderId = null) {
+  if (!accessToken) return {};
+
+  let rootId = masterFolderId;
+  if (!rootId) {
+    try {
+      rootId = await getOrCreateDriveFolder('Laptop_Catalog_Photos', null, accessToken);
+    } catch {
+      return {};
+    }
+  }
+
+  const photosMap = {};
+
+  try {
+    // 1. List all subfolders inside Laptop_Catalog_Photos
+    const subfolderQuery = `'${rootId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+    const folderRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(subfolderQuery)}&fields=files(id,name)&pageSize=100`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+
+    const subfolders = folderRes.ok ? (await folderRes.json()).files || [] : [];
+    const allFolders = [{ id: rootId, name: 'root' }, ...subfolders];
+
+    for (const folder of allFolders) {
+      const imgQuery = `'${folder.id}' in parents and mimeType contains 'image/' and trashed = false`;
+      const imgRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(imgQuery)}&fields=files(id,name,createdTime)&pageSize=100`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+
+      if (imgRes.ok) {
+        const files = (await imgRes.json()).files || [];
+        files.forEach((f, idx) => {
+          makeDriveFilePublic(f.id, accessToken).catch(() => {});
+          const directUrl = `https://lh3.googleusercontent.com/d/${f.id}=w1600`;
+
+          let key = folder.name !== 'root' ? folder.name.toLowerCase() : f.name.toLowerCase().split('_')[0];
+          if (!key.startsWith('prod_')) key = `prod_${key}`;
+
+          if (!photosMap[key]) photosMap[key] = [];
+          if (!photosMap[key].some(item => item.url === directUrl)) {
+            photosMap[key].push({
+              url: directUrl,
+              label: `Photo ${photosMap[key].length + 1}`
+            });
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('scanAndRecoverDrivePhotos warning:', e);
+  }
+
+  return photosMap;
+}
+
+

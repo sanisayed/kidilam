@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos, uploadAdminRequestsToSupabase, downloadAdminRequestsFromSupabase } from '../services/supabaseClient';
 
-import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi, ensureMasterFolderId } from '../services/googleDriveService';
+import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi, ensureMasterFolderId, scanAndRecoverDrivePhotos } from '../services/googleDriveService';
 import { saveCatalogToCloud, fetchCatalogFromCloud } from '../services/catalogSyncService';
 import { getApiUrl } from '../config';
 
@@ -777,6 +777,46 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       }).catch(console.warn);
     }
   }, [googleAccessToken, isMasterUser]);
+
+  // Scan & recover uploaded photos from Google Drive
+  const handleScanAndRecoverPhotos = useCallback(async () => {
+    if (!googleAccessToken) return;
+    setToastMessage('🔎 Scanning Google Drive for uploaded catalog photos...');
+    try {
+      const recovered = await scanAndRecoverDrivePhotos(googleAccessToken, masterDriveFolderId);
+      const count = Object.keys(recovered).length;
+      if (count > 0) {
+        setProductPhotos(prev => {
+          const merged = { ...prev };
+          Object.entries(recovered).forEach(([key, photos]) => {
+            const existing = merged[key] || [];
+            photos.forEach(p => {
+              if (!existing.some(item => item.url === p.url)) existing.push(p);
+            });
+            merged[key] = existing;
+          });
+          saveCatalogToCloud(rawText, merged);
+          return merged;
+        });
+        setToastMessage(`✅ Restored photos for ${count} product albums from Google Drive!`);
+      } else {
+        setToastMessage('ℹ️ Drive scan complete. No new photos found.');
+      }
+    } catch (e) {
+      console.warn('Drive photo recovery warning:', e);
+      setToastMessage('⚠️ Drive photo scan complete.');
+    }
+    setTimeout(() => setToastMessage(''), 5000);
+  }, [googleAccessToken, masterDriveFolderId, rawText]);
+
+  // Auto-scan Drive when Google Drive token is connected
+  useEffect(() => {
+    if (googleAccessToken) {
+      handleScanAndRecoverPhotos();
+    }
+  }, [googleAccessToken, handleScanAndRecoverPhotos]);
+
+
 
 
   // Auto-validate session: force logout if active session is not master and not approved
@@ -1679,6 +1719,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               >
                 <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
               </button>
+
+              <button 
+                className="btn btn-ghost" 
+                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--green)', border: '1px solid var(--green)', background: 'rgba(34, 197, 94, 0.05)' }}
+                onClick={handleScanAndRecoverPhotos}
+                title="Scan Google Drive to automatically recover all uploaded catalog photos"
+              >
+                <Sparkles size={15} /> Recover Drive Photos
+              </button>
+
 
               <button 
                 className="btn btn-ghost" 

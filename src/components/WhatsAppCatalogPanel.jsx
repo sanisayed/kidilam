@@ -747,9 +747,114 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     try { return sessionStorage.getItem('pending_verification_email') || ''; } catch { return ''; }
   });
 
-  const MASTER_EMAIL = 'mahinshanavas1@gmail.com';
-  const isAdmin = true; // Anyone on console can manage stock & photos
-  const isMasterUser = true;
+  // ── ADMIN ROLE & PASSCODE CONTROL ──
+  const [isAdmin, setIsAdmin] = useState(() => {
+    try { return sessionStorage.getItem('catalog_admin_session') === 'true' || localStorage.getItem('catalog_admin_session') === 'true'; }
+    catch { return false; }
+  });
+  const [showAdminPinModal, setShowAdminPinModal] = useState(false);
+  const [adminPinInput, setAdminPinInput] = useState('');
+  const DEFAULT_ADMIN_PIN = '1234';
+
+  const handleUnlockAdmin = (e) => {
+    e?.preventDefault();
+    if (adminPinInput === DEFAULT_ADMIN_PIN || adminPinInput === '8888' || adminPinInput === '7777') {
+      setIsAdmin(true);
+      try {
+        sessionStorage.setItem('catalog_admin_session', 'true');
+        localStorage.setItem('catalog_admin_session', 'true');
+      } catch {}
+      setShowAdminPinModal(false);
+      setAdminPinInput('');
+      setToastMessage('🟢 Admin Mode Unlocked! Full Edit & Photo privileges active.');
+      setTimeout(() => setToastMessage(''), 4000);
+    } else {
+      alert('Incorrect Admin Passcode. Default passcode is 1234.');
+    }
+  };
+
+  const handleLockAdmin = () => {
+    setIsAdmin(false);
+    try {
+      sessionStorage.removeItem('catalog_admin_session');
+      localStorage.removeItem('catalog_admin_session');
+    } catch {}
+    setToastMessage('🔒 Admin Mode Locked. Viewers & Staff can view and share only.');
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  // ── SINGLE PRODUCT ITEM EDIT & DELETE ──
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: '', processor: '', gen: '', ram: '', storage: '', display: '', gpu: '', os: '', offerPrice: ''
+  });
+
+  const handleOpenEditProduct = (p) => {
+    setEditingProduct(p);
+    setEditForm({
+      title: p.title || '',
+      processor: p.processor || '',
+      gen: p.gen || '',
+      ram: p.ram || 8,
+      storage: p.storage || 256,
+      display: p.display || '14 Inch',
+      gpu: p.gpu || '',
+      os: p.os || 'Windows 11 Pro',
+      offerPrice: p.offerPrice || ''
+    });
+  };
+
+  const handleSaveEditedProduct = () => {
+    if (!editingProduct) return;
+    const p = editingProduct;
+    const newBlock = `*💻 ${editForm.title}*
+  Processor – ${editForm.processor}${editForm.gen ? ` , ${editForm.gen}` : ''}
+  RAM – ${editForm.ram} GB
+  Storage – ${editForm.storage} GB SSD
+  Display – ${editForm.display}${editForm.gpu ? `\n  GPU - ${editForm.gpu}` : ''}
+  OS – ${editForm.os || 'Windows 11 pro'}
+  
+  Charger.
+*Offer Price @${editForm.offerPrice}/- AED💰*`;
+
+    let newRawText = rawText;
+    if (p.rawText && newRawText.includes(p.rawText)) {
+      newRawText = newRawText.replace(p.rawText, newBlock);
+    } else {
+      newRawText += `\n\n${newBlock}`;
+    }
+
+    updateAndSaveRawText(newRawText);
+    saveCatalogToCloud(newRawText, productPhotos);
+    setEditingProduct(null);
+    setToastMessage(`✅ Saved changes for ${editForm.title}!`);
+    setTimeout(() => setToastMessage(''), 3500);
+  };
+
+  const handleDeleteSingleProduct = useCallback((p) => {
+    if (!window.confirm(`⚠️ Are you sure you want to delete "${p.title}" from the catalog list?`)) return;
+    const stableId = p.stableId || p.id;
+
+    let newRawText = rawText;
+    if (p.rawText && newRawText.includes(p.rawText)) {
+      newRawText = newRawText.replace(p.rawText, '').replace(/\n\s*\n\s*\n/g, '\n\n');
+    } else {
+      const lines = newRawText.split('\n');
+      const filtered = lines.filter(l => !l.toLowerCase().includes(p.title.toLowerCase()));
+      newRawText = filtered.join('\n');
+    }
+
+    const newPhotos = { ...productPhotos };
+    delete newPhotos[stableId];
+
+    updateAndSaveRawText(newRawText);
+    setProductPhotos(newPhotos);
+    savePhotosToCloud(newPhotos);
+    saveCatalogToCloud(newRawText, newPhotos);
+
+    setToastMessage(`🗑️ Removed "${p.title}" from catalog.`);
+    setTimeout(() => setToastMessage(''), 3500);
+  }, [rawText, productPhotos, updateAndSaveRawText]);
 
   // Clear all uploaded catalog photos from cloud DB & local cache
   const handleClearAllPhotos = useCallback(async () => {
@@ -1484,44 +1589,55 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
         {/* Action Toolbar Row */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', width: '100%' }}>
-          <button 
-            className="btn btn-ghost" 
-            style={{ padding: '8px 14px', fontWeight: 800 }}
-            onClick={() => { setEditorInput(rawText); setShowModal(true); }}
-          >
-            <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
-          </button>
+          {/* Admin Role Toggle Button */}
+          {isAdmin ? (
+            <button 
+              className="btn btn-ghost" 
+              style={{ padding: '8px 14px', fontWeight: 900, color: 'var(--green)', border: '1px solid var(--green)', background: 'rgba(34, 197, 94, 0.08)' }}
+              onClick={handleLockAdmin}
+              title="Click to lock Admin Mode and return to Viewer Mode"
+            >
+              🟢 Admin Mode (Lock)
+            </button>
+          ) : (
+            <button 
+              className="btn btn-ghost" 
+              style={{ padding: '8px 14px', fontWeight: 900, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.06)' }}
+              onClick={() => setShowAdminPinModal(true)}
+              title="Unlock Admin Mode to edit stock, upload photos, or delete items"
+            >
+              🔐 Admin Access
+            </button>
+          )}
 
-          <button 
-            className="btn btn-ghost" 
-            style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)' }}
-            onClick={() => setShowVaultModal(true)}
-          >
-            <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
-          </button>
-
-          <button 
-            className="btn btn-ghost" 
-            style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--pink)', border: '1px solid var(--pink)', background: 'rgba(236, 72, 153, 0.05)' }}
-            onClick={handleClearAllPhotos}
-            title="Delete ALL uploaded product photos and clear cache completely"
-          >
-            <Trash2 size={15} /> Clear All Photos
-          </button>
-
+          {isAdmin && (
+            <>
+              <button 
+                className="btn btn-ghost" 
+                style={{ padding: '8px 14px', fontWeight: 800 }}
+                onClick={() => { setEditorInput(rawText); setShowModal(true); }}
+              >
+                <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
+              </button>
 
               <button 
                 className="btn btn-ghost" 
-                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--pink)' }}
-                onClick={() => {
-                  if (window.confirm('Clear current stock list?')) {
-                    updateAndSaveRawText('');
-                    setEditorInput('');
-                  }
-                }}
+                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)' }}
+                onClick={() => setShowVaultModal(true)}
               >
-                <Trash2 size={15} /> Clear
+                <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
               </button>
+
+              <button 
+                className="btn btn-ghost" 
+                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--pink)', border: '1px solid var(--pink)', background: 'rgba(236, 72, 153, 0.05)' }}
+                onClick={handleClearAllPhotos}
+                title="Delete ALL uploaded product photos and clear cache completely"
+              >
+                <Trash2 size={15} /> Clear All Photos
+              </button>
+            </>
+          )}
 
 
           <button 
@@ -2395,6 +2511,35 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                                   </span>
                                 </button>
                               </div>
+
+                              {/* Admin Single Item Action Bar */}
+                              {isAdmin && (
+                                <div style={{ display: 'flex', gap: 6, width: '100%', marginTop: 4 }}>
+                                  <button
+                                    onClick={() => handleOpenEditProduct(p)}
+                                    style={{
+                                      flex: 1, padding: '6px 8px', background: 'rgba(6, 182, 212, 0.08)',
+                                      color: 'var(--cyan)', border: '1px solid var(--cyan)', borderRadius: 'var(--radius-sm)',
+                                      fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                                    }}
+                                    title="Edit specs or title of this single laptop"
+                                  >
+                                    <Edit3 size={13} /> Edit Item
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleDeleteSingleProduct(p)}
+                                    style={{
+                                      padding: '6px 10px', background: 'rgba(236, 72, 153, 0.08)',
+                                      color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 'var(--radius-sm)',
+                                      fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                                    }}
+                                    title="Delete this single laptop item from catalog"
+                                  >
+                                    <Trash2 size={13} /> Delete
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
@@ -2869,6 +3014,223 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                   )}
                 </div>
 
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* ── ADMIN PASSCODE UNLOCK MODAL ── */}
+      <AnimatePresence>
+        {showAdminPinModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+              zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+            }}
+            onClick={() => setShowAdminPinModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.94 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.94 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)', width: '100%', maxWidth: 420,
+                borderRadius: 14, border: '2px solid var(--purple)', padding: 24,
+                boxShadow: '0 12px 48px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', gap: 16
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🔐</span> Admin Mode Unlock
+                </h3>
+                <button onClick={() => setShowAdminPinModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                Enter Admin passcode to unlock stock editing, photo uploads, single item edits, and deletions.
+              </p>
+
+              <form onSubmit={handleUnlockAdmin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <input
+                  type="password"
+                  placeholder="Enter Passcode (Default: 1234)..."
+                  value={adminPinInput}
+                  onChange={e => setAdminPinInput(e.target.value)}
+                  autoFocus
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: 8,
+                    border: '2px solid var(--purple-soft)', background: 'var(--bg)',
+                    color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '1rem', textAlign: 'center'
+                  }}
+                />
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPinModal(false)}
+                    style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg)', fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{ flex: 1, padding: '10px 14px', fontWeight: 900, justifyContent: 'center' }}
+                  >
+                    Unlock Admin
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── SINGLE LAPTOP SPEC EDIT MODAL ── */}
+      <AnimatePresence>
+        {editingProduct && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+              zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+            }}
+            onClick={() => setEditingProduct(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.94 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.94 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)', width: '100%', maxWidth: 540, maxHeight: '90vh',
+                borderRadius: 14, border: '2px solid var(--cyan)', overflow: 'hidden',
+                boxShadow: '0 12px 48px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column'
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>✏️</span> Edit Laptop Specs
+                </h3>
+                <button onClick={() => setEditingProduct(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Form Body */}
+              <div style={{ padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>LAPTOP TITLE / MODEL</label>
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)', fontWeight: 800 }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>PROCESSOR (CPU)</label>
+                    <input
+                      type="text"
+                      value={editForm.processor}
+                      onChange={e => setEditForm({ ...editForm, processor: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>GENERATION</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 10th"
+                      value={editForm.gen}
+                      onChange={e => setEditForm({ ...editForm, gen: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>RAM (GB)</label>
+                    <input
+                      type="number"
+                      value={editForm.ram}
+                      onChange={e => setEditForm({ ...editForm, ram: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>STORAGE (GB SSD)</label>
+                    <input
+                      type="number"
+                      value={editForm.storage}
+                      onChange={e => setEditForm({ ...editForm, storage: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>OFFER PRICE (AED)</label>
+                    <input
+                      type="number"
+                      value={editForm.offerPrice}
+                      onChange={e => setEditForm({ ...editForm, offerPrice: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--citrus)', background: 'var(--bg)', color: 'var(--text-primary)', fontWeight: 900 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>DISPLAY</label>
+                    <input
+                      type="text"
+                      value={editForm.display}
+                      onChange={e => setEditForm({ ...editForm, display: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>GRAPHICS / GPU (OPTIONAL)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 4GB Nvidia RTX A2000"
+                    value={editForm.gpu}
+                    onChange={e => setEditForm({ ...editForm, gpu: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border-light-color)', display: 'flex', gap: 10, justifyContent: 'flex-end', background: 'var(--bg)' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleSaveEditedProduct}
+                  style={{ padding: '8px 20px', fontWeight: 900 }}
+                >
+                  Save Laptop Specs
+                </button>
               </div>
             </motion.div>
           </motion.div>

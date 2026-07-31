@@ -816,6 +816,52 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     }
   }, [googleAccessToken, handleScanAndRecoverPhotos]);
 
+  // Auto-migrate any local base64 photos to Google Drive once connected
+  useEffect(() => {
+    if (!googleAccessToken) return;
+    let active = true;
+    const migrateLocalPhotos = async () => {
+      let needsSave = false;
+      const updatedMap = JSON.parse(JSON.stringify(productPhotos));
+
+      for (const [key, photos] of Object.entries(productPhotos)) {
+        if (!active) break;
+        if (!Array.isArray(photos)) continue;
+
+        for (let i = 0; i < photos.length; i++) {
+          const ph = photos[i];
+          if (ph && ph.url && ph.url.startsWith('data:')) {
+            try {
+              const res = await fetch(ph.url);
+              const blob = await res.blob();
+              const file = new File([blob], `${key}_${i}.jpg`, { type: 'image/jpeg' });
+              
+              const driveUrl = await uploadPhotoToGoogleDriveApi(file, key, googleAccessToken, masterDriveFolderId);
+              if (driveUrl) {
+                if (!updatedMap[key]) updatedMap[key] = [];
+                updatedMap[key][i] = { ...ph, url: driveUrl };
+                needsSave = true;
+              }
+            } catch (err) {
+              console.warn(`Base64 photo migration error for ${key}:`, err);
+            }
+          }
+        }
+      }
+
+      if (needsSave && active) {
+        setProductPhotos(updatedMap);
+        saveCatalogToCloud(rawText, updatedMap);
+        setToastMessage('✨ Local cached photos backed up to Google Drive!');
+        setTimeout(() => setToastMessage(''), 4000);
+      }
+    };
+
+    migrateLocalPhotos();
+    return () => { active = false; };
+  }, [googleAccessToken, masterDriveFolderId]);
+
+
 
 
 

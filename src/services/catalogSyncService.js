@@ -207,48 +207,51 @@ export async function fetchCatalogFromCloud() {
     }
   } catch {}
 
-  // Local storage cache fallback
+  // Local storage cache fallback (ground truth on browser)
   let localText = null;
-  let localPhotos = null;
+  let localPhotos = {};
   try {
     localText = localStorage.getItem('whatsapp_catalog_raw_text');
     const photosStr = localStorage.getItem('product_photos_v2');
-    if (photosStr) localPhotos = JSON.parse(photosStr);
+    if (photosStr) localPhotos = JSON.parse(photosStr) || {};
   } catch (e) {}
 
   const rawText = cloudState?.rawText || localText;
 
-  // ADDITIVE merge only: cloud wins per-album, local kept if cloud doesn't have it
-  // This ensures deleted photos (removed from cloud) aren't restored from local cache
-  const productPhotos = {};
-  // Start with local as base
-  if (localPhotos) {
-    Object.entries(localPhotos).forEach(([k, v]) => {
-      if (Array.isArray(v) && v.length > 0) productPhotos[k] = v;
-    });
-  }
-  // Cloud catalog photos override local
+  // ADDITIVE MERGE: Preserve all local browser photos and merge cloud photos
+  const productPhotos = { ...localPhotos };
+
   if (cloudState?.productPhotos) {
     Object.entries(cloudState.productPhotos).forEach(([k, v]) => {
-      if (Array.isArray(v) && v.length > 0) productPhotos[k] = v;
-      else if (Array.isArray(v) && v.length === 0) delete productPhotos[k]; // respect cloud deletions
+      if (Array.isArray(v) && v.length > 0) {
+        const existing = productPhotos[k] || [];
+        const newCloud = v.filter(cp => !existing.some(lp => lp.url === cp.url));
+        productPhotos[k] = [...existing, ...newCloud];
+      }
     });
   }
-  // Dedicated /api/photos has highest priority (most up-to-date)
+
   if (cloudPhotos) {
     Object.entries(cloudPhotos).forEach(([k, v]) => {
-      if (Array.isArray(v) && v.length > 0) productPhotos[k] = v;
-      else if (Array.isArray(v) && v.length === 0) delete productPhotos[k]; // respect cloud deletions
+      if (Array.isArray(v) && v.length > 0) {
+        const existing = productPhotos[k] || [];
+        const newCloud = v.filter(cp => !existing.some(lp => lp.url === cp.url));
+        productPhotos[k] = [...existing, ...newCloud];
+      }
     });
   }
 
   const cleanPhotos = filterValidPhotosMap(productPhotos);
 
-  // Update local cache with merged data
+  // Save merged state back to local cache AND backend so new deployments auto-populate
   try {
     if (rawText) localStorage.setItem('whatsapp_catalog_raw_text', rawText);
     localStorage.setItem('product_photos_v2', JSON.stringify(cleanPhotos));
   } catch (e) {}
+
+  if (Object.keys(cleanPhotos).length > 0) {
+    savePhotosToCloud(cleanPhotos).catch(() => {});
+  }
 
   return { rawText, productPhotos: cleanPhotos };
 }

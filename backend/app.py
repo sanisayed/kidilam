@@ -218,8 +218,8 @@ def api_upload_photo():
 
     photo_url = None
 
-    # Check for user's custom ImgBB API Key
-    imgbb_key = db.get_catalog_setting("imgbb_api_key", "") or os.environ.get("IMGBB_API_KEY", "") or os.environ.get("VITE_IMGBB_API_KEY", "")
+    # Check for user's custom ImgBB API Key (Account: saidali-navas)
+    imgbb_key = db.get_catalog_setting("imgbb_api_key", "") or os.environ.get("IMGBB_API_KEY", "") or os.environ.get("VITE_IMGBB_API_KEY", "") or "ce23737d34f6c30a67299fbb631d2f76"
 
     # Step 1: If ImgBB API Key exists, upload directly to User's ImgBB Account!
     if imgbb_key:

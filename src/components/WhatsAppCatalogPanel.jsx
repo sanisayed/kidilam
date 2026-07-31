@@ -757,21 +757,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
 
 
-  // Auto-validate session: force logout if active session is not master and not approved
-  useEffect(() => {
-    if (googleAccessToken && googleUserEmail && googleUserEmail.toLowerCase() !== MASTER_EMAIL) {
-      const approvedList = (adminRequests.approved || []).map(e => String(e).toLowerCase());
-      if (adminRequests.approved && adminRequests.approved.length > 0 && !approvedList.includes(googleUserEmail.toLowerCase())) {
-        console.warn(`Unapproved email ${googleUserEmail} logged out`);
-        setGoogleAccessToken('');
-        setGoogleUserEmail('');
-        try {
-          sessionStorage.removeItem('google_drive_token');
-          sessionStorage.removeItem('google_drive_email');
-        } catch {}
-      }
-    }
-  }, [googleAccessToken, googleUserEmail, adminRequests.approved]);
+
 
   // Master is always mahinshanavas1@gmail.com — no env var needed
 
@@ -924,21 +910,9 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
             if (savedEmail) email = savedEmail;
           } catch {}
 
-          // Activate Admin Session & state
-          setGoogleAccessToken(token);
-          setGoogleUserEmail(email);
           setPendingVerificationEmail('');
-
-          try {
-            sessionStorage.setItem('google_drive_token', token);
-            sessionStorage.setItem('google_drive_email', email);
-            sessionStorage.removeItem('pending_verification_email');
-            sessionStorage.removeItem('pending_google_token');
-            sessionStorage.removeItem('pending_google_email');
-          } catch {}
-
           setAdminRequests({ approved: data.approved || [], pending: data.pending || [] });
-          setToastMessage(`🎉 Account Approved! Welcome Admin ${email}! Edit controls unlocked.`);
+          setToastMessage(`🎉 Account Approved! Edit controls unlocked.`);
           setTimeout(() => setToastMessage(''), 6000);
         }
       } catch {}

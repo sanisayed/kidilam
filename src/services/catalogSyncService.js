@@ -6,23 +6,43 @@
 import { getApiUrl } from '../config';
 
 /**
+ * Helper: Filter out any device-local Base64 data URLs from product photos map.
+ * Base64 URLs cannot be shared across devices and break cross-device sync.
+ * Only public Google Drive CDN URLs (https://lh3.googleusercontent.com/...) are valid.
+ * @param {Object} map
+ * @returns {Object} Cleaned photo map
+ */
+export function filterValidPhotosMap(map) {
+  if (!map || typeof map !== 'object') return {};
+  const cleanMap = {};
+  Object.entries(map).forEach(([key, list]) => {
+    if (Array.isArray(list)) {
+      const valid = list.filter(item => item && item.url && typeof item.url === 'string' && !item.url.startsWith('data:'));
+      if (valid.length > 0) cleanMap[key] = valid;
+    }
+  });
+  return cleanMap;
+}
+
+/**
  * Save only photo URL mappings to the dedicated /api/photos backend endpoint.
  * @param {Object} productPhotos - { [stableId]: [{ url, label }] }
  * @returns {Promise<boolean>}
  */
 export async function savePhotosToCloud(productPhotos) {
   if (!productPhotos || typeof productPhotos !== 'object') return false;
+  const cleanPhotos = filterValidPhotosMap(productPhotos);
 
   // Always update local cache first
   try {
-    localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
+    localStorage.setItem('product_photos_v2', JSON.stringify(cleanPhotos));
   } catch (e) {}
 
   try {
     const res = await fetch(getApiUrl('/api/photos'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productPhotos })
+      body: JSON.stringify({ productPhotos: cleanPhotos })
     });
     if (res.ok) {
       console.log('✅ Photos saved to cloud DB!');
@@ -43,11 +63,9 @@ export async function fetchPhotosFromCloud() {
     const res = await fetch(getApiUrl('/api/photos'));
     if (res.ok) {
       const data = await res.json();
-      const photos = data.productPhotos || {};
+      const photos = filterValidPhotosMap(data.productPhotos || {});
       try {
-        if (Object.keys(photos).length > 0) {
-          localStorage.setItem('product_photos_v2', JSON.stringify(photos));
-        }
+        localStorage.setItem('product_photos_v2', JSON.stringify(photos));
       } catch {}
       return photos;
     }
@@ -58,11 +76,12 @@ export async function fetchPhotosFromCloud() {
   // Fallback to localStorage
   try {
     const str = localStorage.getItem('product_photos_v2');
-    return str ? JSON.parse(str) : {};
+    return str ? filterValidPhotosMap(JSON.parse(str)) : {};
   } catch {
     return {};
   }
 }
+
 
 /**
  * Delete a specific photo URL from both local state and the cloud DB.
@@ -216,11 +235,13 @@ export async function fetchCatalogFromCloud() {
     });
   }
 
+  const cleanPhotos = filterValidPhotosMap(productPhotos);
+
   // Update local cache with merged data
   try {
     if (rawText) localStorage.setItem('whatsapp_catalog_raw_text', rawText);
-    localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
+    localStorage.setItem('product_photos_v2', JSON.stringify(cleanPhotos));
   } catch (e) {}
 
-  return { rawText, productPhotos };
+  return { rawText, productPhotos: cleanPhotos };
 }

@@ -1116,8 +1116,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       }
     }
 
-    const embedded = p?.embeddedPhotos || [];
-    const combined = [...local];
+    // Filter out device-local Base64 data URLs — only public Google Drive CDN URLs are valid
+    const validLocal = local.filter(ph => ph && ph.url && typeof ph.url === 'string' && !ph.url.startsWith('data:'));
+    const embedded = (p?.embeddedPhotos || []).filter(ph => ph && ph.url && typeof ph.url === 'string' && !ph.url.startsWith('data:'));
+    const combined = [...validLocal];
     embedded.forEach(ph => {
       if (!combined.some(item => item.url === ph.url)) combined.push(ph);
     });
@@ -1162,12 +1164,13 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       }
     }
 
-    // Backend already saved URL to DB — just update local state
+    // Save to local state and push to central DB cloud endpoint
     const updated = { ...productPhotos, [key]: newPhotos };
     setProductPhotos(updated);
+    savePhotosToCloud(updated);
     setToastMessage(`✅ ${files.length} photo(s) uploaded — visible on all devices!`);
     setTimeout(() => setToastMessage(''), 4000);
-  }, [productPhotos, rawText, googleAccessToken]);
+  }, [productPhotos, rawText]);
 
 
 
@@ -1316,9 +1319,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const handleAddPhotos = useCallback(async (p, files) => {
     if (!files || files.length === 0) return;
     const stableId = p.stableId || p.id;
+    const normKey = p.title ? normalizeModelKey(p.title) : null;
     setPhotoUploading(prev => ({ ...prev, [stableId]: true }));
 
-    const existing = productPhotos[stableId] || [];
+    const existing = productPhotos[stableId] || (normKey ? productPhotos[normKey] : []) || [];
     const newPhotos = [...existing];
 
     for (let i = 0; i < files.length; i++) {
@@ -1326,13 +1330,12 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       const angleIdx = existing.length + i;
       try {
         let url;
-        // Always use backend proxy — uploads to master's Google Drive, visible for everyone
         try {
           url = await uploadPhotoViaBackend(file, p.title || p.brand, stableId, getApiUrl(''));
         } catch (proxyErr) {
           if (proxyErr.message === 'MASTER_TOKEN_EXPIRED') {
-            setToastMessage('🔴 Master needs to re-login to Google Drive to enable uploads!');
-            setTimeout(() => setToastMessage(''), 6000);
+            setToastMessage('🔴 Upload failed: Master (mahinshanavas1@gmail.com) needs to click "🔐 Google Drive Login" first!');
+            setTimeout(() => setToastMessage(''), 7000);
             setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
             return;
           }
@@ -1341,20 +1344,23 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         const label = `Photo ${angleIdx + 1}`;
         newPhotos.push({ url, label });
       } catch (e) {
-        console.warn('Google Drive photo upload failed, using fallback:', e);
-        try {
-          const fallbackUrl = await uploadProductPhoto(file, stableId, angleIdx);
-          newPhotos.push({ url: fallbackUrl, label: `Photo ${angleIdx + 1}` });
-        } catch {}
+        console.warn('Google Drive photo upload failed:', e);
+        setToastMessage(`⚠️ Photo upload failed: ${e.message}`);
+        setTimeout(() => setToastMessage(''), 5000);
+        setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
+        return;
       }
     }
 
     const updated = { ...productPhotos, [stableId]: newPhotos };
+    if (normKey && normKey !== stableId) {
+      updated[normKey] = newPhotos;
+    }
     setProductPhotos(updated);
-    // Backend proxy already saved URL to DB — no extra save needed
+    savePhotosToCloud(updated);
     setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
     setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
-  }, [productPhotos, googleAccessToken]);
+  }, [productPhotos]);
 
 
 

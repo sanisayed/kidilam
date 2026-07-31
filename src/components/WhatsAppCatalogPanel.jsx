@@ -679,31 +679,17 @@ function convertProductsListToText(productsList) {
 }
 
 export default function WhatsAppCatalogPanel({ productsList = [] }) {
+  // ── 1. ALL STATE DECLARATIONS AT VERY TOP ──
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   const [rawText, setRawText] = useState(() => {
     const cached = localStorage.getItem('whatsapp_catalog_raw_text');
     return (cached && cached.trim().length > 0) ? cached : DEFAULT_STOCK_CATALOG;
   });
-
-  const updateAndSaveRawText = useCallback((newText) => {
-    setRawText(newText);
-    try {
-      localStorage.setItem('whatsapp_catalog_raw_text', newText);
-    } catch {}
-    saveCatalogToCloud(newText, productPhotos);
-  }, [productPhotos]);
-
-  const products = useMemo(() => parseWhatsAppCatalog(rawText), [rawText]);
-
-  // Clean Dropdown Filter States
+  const [productPhotos, setProductPhotos] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('product_photos_v2') || '{}'); }
+    catch { return {}; }
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedSeries, setSelectedSeries] = useState('ALL');
@@ -717,6 +703,51 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [selectedFeature, setSelectedFeature] = useState('ALL');
   const [showLivePreview, setShowLivePreview] = useState(true);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [editorInput, setEditorInput] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState({});
+  const [activePhotoIdx, setActivePhotoIdx] = useState({});
+  const [lightbox, setLightbox] = useState(null);
+  const [sharingId, setSharingId] = useState(null);
+  const [showVaultModal, setShowVaultModal] = useState(false);
+  const [vaultSearch, setVaultSearch] = useState('');
+  const [adminRequests, setAdminRequests] = useState({ approved: [], pending: [] });
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState(() => {
+    try { return sessionStorage.getItem('pending_verification_email') || ''; } catch { return ''; }
+  });
+  const [isAdmin, setIsAdmin] = useState(() => {
+    try { return sessionStorage.getItem('catalog_admin_session') === 'true' || localStorage.getItem('catalog_admin_session') === 'true'; }
+    catch { return false; }
+  });
+  const [showAdminPinModal, setShowAdminPinModal] = useState(false);
+  const [adminPinInput, setAdminPinInput] = useState('');
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: '', processor: '', gen: '', ram: '', storage: '', display: '', gpu: '', os: '', offerPrice: ''
+  });
+
+  const DEFAULT_ADMIN_PIN = '1234';
+
+  // ── 2. EFFECTS & DERIVED HOOKS ──
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const updateAndSaveRawText = useCallback((newText) => {
+    setRawText(newText);
+    try {
+      localStorage.setItem('whatsapp_catalog_raw_text', newText);
+    } catch {}
+    saveCatalogToCloud(newText, productPhotos);
+  }, [productPhotos]);
+
+  const products = useMemo(() => parseWhatsAppCatalog(rawText), [rawText]);
 
   const activeMoreFiltersCount = useMemo(() => {
     let count = 0;
@@ -730,40 +761,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return count;
   }, [selectedCategory, selectedGpu, selectedCpu, selectedGen, selectedRam, selectedStorage, selectedFeature]);
 
-  // Copy Feedback State
-  const [copiedId, setCopiedId] = useState(null);
-  const [toastMessage, setToastMessage] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [editorInput, setEditorInput] = useState('');
-  const [dragOver, setDragOver] = useState(false);
-
-  // ── PHOTO MANAGEMENT ────────────────────────────────────────────────────────
-  // productPhotos: { [stableId]: [{ url, label }] }
-  const [productPhotos, setProductPhotos] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('product_photos_v2') || '{}'); }
-    catch { return {}; }
-  });
-  const [photoUploading, setPhotoUploading] = useState({}); // { [stableId]: bool }
-  const [activePhotoIdx, setActivePhotoIdx] = useState({}); // { [stableId]: number }
-  const [lightbox, setLightbox] = useState(null); // { stableId, idx }
-  const [sharingId, setSharingId] = useState(null); // stableId currently being shared
-  const [showVaultModal, setShowVaultModal] = useState(false);
-  const [vaultSearch, setVaultSearch] = useState('');
-  const [adminRequests, setAdminRequests] = useState({ approved: [], pending: [] });
-  const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [pendingVerificationEmail, setPendingVerificationEmail] = useState(() => {
-    try { return sessionStorage.getItem('pending_verification_email') || ''; } catch { return ''; }
-  });
-
-  // ── ADMIN ROLE & PASSCODE CONTROL ──
-  const [isAdmin, setIsAdmin] = useState(() => {
-    try { return sessionStorage.getItem('catalog_admin_session') === 'true' || localStorage.getItem('catalog_admin_session') === 'true'; }
-    catch { return false; }
-  });
-  const [showAdminPinModal, setShowAdminPinModal] = useState(false);
-  const [adminPinInput, setAdminPinInput] = useState('');
-  const DEFAULT_ADMIN_PIN = '1234';
-
+  // ── 3. HANDLERS ──
   const handleUnlockAdmin = (e) => {
     e?.preventDefault();
     if (adminPinInput === DEFAULT_ADMIN_PIN || adminPinInput === '8888' || adminPinInput === '7777') {
@@ -791,12 +789,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  // ── SINGLE PRODUCT ITEM EDIT & DELETE ──
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [editForm, setEditForm] = useState({
-    title: '', processor: '', gen: '', ram: '', storage: '', display: '', gpu: '', os: '', offerPrice: ''
-  });
-
   const handleOpenEditProduct = (p) => {
     setEditingProduct(p);
     setEditForm({
@@ -808,7 +800,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       display: p.display || '14 Inch',
       gpu: p.gpu || '',
       os: p.os || 'Windows 11 Pro',
-      offerPrice: p.offerPrice || ''
     });
   };
 

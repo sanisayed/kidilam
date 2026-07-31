@@ -110,6 +110,28 @@ def api_save_catalog():
     return jsonify({"ok": True, "productPhotos": json.loads(db.get_catalog_setting("product_photos", "{}"))})
 
 
+PHOTO_BACKUP_FILE = os.path.join(os.path.dirname(__file__), "product_photos_backup.json")
+
+def load_photo_backup():
+    try:
+        if os.path.exists(PHOTO_BACKUP_FILE):
+            with open(PHOTO_BACKUP_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+    except Exception as e:
+        print(f"Error reading photo backup: {e}")
+    return {}
+
+def save_photo_backup(data):
+    try:
+        if data and isinstance(data, dict) and len(data) > 0:
+            with open(PHOTO_BACKUP_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"Error saving photo backup: {e}")
+
+
 @app.route("/api/photos", methods=["GET"])
 def api_get_photos():
     """Dedicated endpoint to get just the product photos map (no rawText needed)."""
@@ -118,6 +140,18 @@ def api_get_photos():
         photos = json.loads(photos_str)
     except Exception:
         photos = {}
+
+    # If DB is empty (e.g. after fresh Render deployment restart), attempt auto-restore from backup JSON
+    if not photos or len(photos) == 0:
+        backup = load_photo_backup()
+        if backup and len(backup) > 0:
+            photos = backup
+            try:
+                db.set_catalog_setting("product_photos", json.dumps(photos))
+                print(f"✅ Restored {len(photos)} photo album(s) from persistent backup file!")
+            except Exception:
+                pass
+
     return jsonify({"productPhotos": photos, "count": len(photos)})
 
 
@@ -135,13 +169,19 @@ def api_save_photos():
     except Exception:
         existing = {}
 
+    if not existing or len(existing) == 0:
+        existing = load_photo_backup()
+
     updated_count = 0
     for key, photo_list in incoming.items():
         if photo_list and isinstance(photo_list, list) and len(photo_list) > 0:
             existing[key] = photo_list
             updated_count += 1
 
-    db.set_catalog_setting("product_photos", json.dumps(existing))
+    if len(existing) > 0:
+        db.set_catalog_setting("product_photos", json.dumps(existing))
+        save_photo_backup(existing)
+
     return jsonify({"ok": True, "updatedAlbums": updated_count, "totalAlbums": len(existing)})
 
 

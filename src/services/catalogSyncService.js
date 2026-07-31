@@ -40,10 +40,16 @@ export async function savePhotosToCloud(productPhotos) {
   if (!productPhotos || typeof productPhotos !== 'object') return false;
   const cleanPhotos = filterValidPhotosMap(productPhotos);
 
-  // Always update local cache first
-  try {
-    localStorage.setItem('product_photos_v2', JSON.stringify(cleanPhotos));
-  } catch (e) {}
+  // Safely update local cache & backup — never wipe local photos with empty map
+  if (Object.keys(cleanPhotos).length > 0) {
+    try {
+      const existingStr = localStorage.getItem('product_photos_v2') || localStorage.getItem('product_photos_backup_v2');
+      const existing = existingStr ? (JSON.parse(existingStr) || {}) : {};
+      const merged = { ...existing, ...cleanPhotos };
+      localStorage.setItem('product_photos_v2', JSON.stringify(merged));
+      localStorage.setItem('product_photos_backup_v2', JSON.stringify(merged));
+    } catch (e) {}
+  }
 
   try {
     const res = await fetch(getApiUrl('/api/photos'), {

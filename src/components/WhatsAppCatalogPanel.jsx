@@ -1553,7 +1553,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
           {products.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.73rem', fontWeight: 800, color: 'var(--green)' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 8px var(--green)', display: 'inline-block' }}></span>
+                <span className="pulsing-green-dot"></span>
                 <span>Cloud Sync Active</span>
               </div>
 

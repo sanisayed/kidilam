@@ -693,6 +693,14 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return (cached && cached.trim().length > 0) ? cached : DEFAULT_STOCK_CATALOG;
   });
 
+  const updateAndSaveRawText = useCallback((newText) => {
+    setRawText(newText);
+    try {
+      localStorage.setItem('whatsapp_catalog_raw_text', newText);
+    } catch {}
+    saveCatalogToCloud(newText, productPhotos);
+  }, [productPhotos]);
+
   const products = useMemo(() => parseWhatsAppCatalog(rawText), [rawText]);
 
   // Clean Dropdown Filter States
@@ -1040,10 +1048,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   };
 
 
-  const updateAndSaveRawText = (newText) => {
-    setRawText(newText);
-    saveCatalogToCloud(newText, productPhotos);
-  };
 
 
   const saveProductPhotos = useCallback((updated) => {

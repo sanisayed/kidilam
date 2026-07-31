@@ -183,14 +183,26 @@ def api_reset_approved_list():
     return jsonify({"ok": True, "message": "Approved list reset to master only", "data": db.get_admin_requests()})
 
 
+@app.route("/api/imgbb-key", methods=["POST"])
+def api_set_imgbb_key():
+    """Store custom ImgBB API key in database catalog settings."""
+    data = request.get_json() or {}
+    key = data.get("key", "").strip()
+    if key:
+        db.set_catalog_setting("imgbb_api_key", key)
+    return jsonify({"ok": True, "hasKey": bool(key)})
+
+
 @app.route("/api/upload-photo", methods=["POST"])
 def api_upload_photo():
     """
     100% Zero-Login Image Upload Endpoint.
-    Uploads photo to high-speed public CDN, returns permanent public HTTPS image URL, and saves to DB.
-    Zero login required for staff or master!
+    Uploads photo to ImgBB (if key configured) or High-Speed Public CDN,
+    returns permanent public HTTPS image URL, and saves to DB.
     """
     import urllib.request
+    import urllib.parse
+    import base64
     import time
     import json
 
@@ -206,38 +218,68 @@ def api_upload_photo():
 
     photo_url = None
 
-    # Step 1: Upload via TmpFiles CDN (100% Free, Zero Key Required, High-Speed Multipart)
-    try:
-        boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
-        body_parts = []
-        body_parts.append(f"--{boundary}\r\n".encode())
-        body_parts.append(f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode())
-        body_parts.append(b"Content-Type: image/jpeg\r\n\r\n")
-        body_parts.append(file_bytes)
-        body_parts.append(f"\r\n--{boundary}--\r\n".encode())
-        payload = b"".join(body_parts)
+    # Check for user's custom ImgBB API Key
+    imgbb_key = db.get_catalog_setting("imgbb_api_key", "") or os.environ.get("IMGBB_API_KEY", "") or os.environ.get("VITE_IMGBB_API_KEY", "")
 
-        req = urllib.request.Request(
-            "https://tmpfiles.org/api/v1/upload",
-            data=payload,
-            headers={
-                "Content-Type": f"multipart/form-data; boundary={boundary}",
-                "Content-Length": str(len(payload))
-            },
-            method="POST"
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            res_json = json.loads(resp.read().decode('utf-8'))
-            orig_url = res_json.get("data", {}).get("url")
-            if orig_url:
-                # Convert tmpfiles.org/ID/filename to direct CDN image URL tmpfiles.org/dl/ID/filename
-                photo_url = orig_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
-    except Exception as cdn_err:
-        print(f"TmpFiles upload error: {cdn_err}")
-        photo_url = None
+    # Step 1: If ImgBB API Key exists, upload directly to User's ImgBB Account!
+    if imgbb_key:
+        try:
+            b64_data = base64.b64encode(file_bytes).decode('utf-8')
+            post_data = urllib.parse.urlencode({
+                'image': b64_data,
+                'name': filename
+            }).encode('utf-8')
+
+            req = urllib.request.Request(
+                f"https://api.imgbb.com/1/upload?key={imgbb_key}",
+                data=post_data,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                res_json = json.loads(resp.read().decode('utf-8'))
+                data = res_json.get("data", {})
+                photo_url = data.get("url") or data.get("display_url")
+        except Exception as err:
+            print(f"User ImgBB upload error: {err}")
+            photo_url = None
+
+    # Step 2: High-Speed Public CDN Fallback (TmpFiles with browser User-Agent)
+    if not photo_url:
+        try:
+            boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+            body_parts = []
+            body_parts.append(f"--{boundary}\r\n".encode())
+            body_parts.append(f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode())
+            body_parts.append(b"Content-Type: image/jpeg\r\n\r\n")
+            body_parts.append(file_bytes)
+            body_parts.append(f"\r\n--{boundary}--\r\n".encode())
+            payload = b"".join(body_parts)
+
+            req = urllib.request.Request(
+                "https://tmpfiles.org/api/v1/upload",
+                data=payload,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Content-Type": f"multipart/form-data; boundary={boundary}",
+                    "Content-Length": str(len(payload))
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                res_json = json.loads(resp.read().decode('utf-8'))
+                orig_url = res_json.get("data", {}).get("url")
+                if orig_url:
+                    photo_url = orig_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
+        except Exception as cdn_err:
+            print(f"TmpFiles upload error: {cdn_err}")
+            photo_url = None
 
     if not photo_url:
-        return jsonify({"error": "Image upload failed. Please try again."}), 500
+        return jsonify({"error": "Image upload failed. Please get your free ImgBB API key from https://api.imgbb.com/ and set it in settings."}), 500
 
     # Save the URL to the product_photos DB map immediately
     existing_str = db.get_catalog_setting("product_photos", "{}")
@@ -250,7 +292,7 @@ def api_upload_photo():
     existing[album_key] = album
     db.set_catalog_setting("product_photos", json.dumps(existing))
 
-    return jsonify({"ok": True, "url": photo_url, "albumKey": album_key})
+
 
 
 @app.route("/api/photos", methods=["DELETE"])

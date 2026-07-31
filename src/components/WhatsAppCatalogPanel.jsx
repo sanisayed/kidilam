@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Camera, ImagePlus, ZoomIn, ChevronLeft, ChevronRight
+  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Camera, ImagePlus, ZoomIn, ChevronLeft, ChevronRight, Folder
 } from 'lucide-react';
 import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos, uploadAdminRequestsToSupabase, downloadAdminRequestsFromSupabase } from '../services/supabaseClient';
 
 import { getDriveDirectImageUrl, fetchDriveImageBlob, uploadPhotoToGoogleDriveApi, ensureMasterFolderId, scanAndRecoverDrivePhotos, uploadPhotoViaBackend } from '../services/googleDriveService';
-import { saveCatalogToCloud, fetchCatalogFromCloud, savePhotosToCloud, fetchPhotosFromCloud, deletePhotoFromCloud } from '../services/catalogSyncService';
+import { saveCatalogToCloud, fetchCatalogFromCloud, savePhotosToCloud, fetchPhotosFromCloud, deletePhotoFromCloud, clearAllPhotosFromCloud } from '../services/catalogSyncService';
 import { getApiUrl } from '../config';
 
 
@@ -811,6 +811,25 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     }
     setTimeout(() => setToastMessage(''), 5000);
   }, [googleAccessToken, masterDriveFolderId, rawText]);
+
+  // Clear all uploaded catalog photos from cloud DB & local cache
+  const handleClearAllPhotos = useCallback(async () => {
+    if (window.confirm('⚠️ Are you sure you want to DELETE ALL uploaded catalog photos and clear all cache? This cannot be undone.')) {
+      await clearAllPhotosFromCloud();
+      setProductPhotos({});
+      setToastMessage('🧹 All uploaded catalog photos & cache cleared cleanly!');
+      setTimeout(() => setToastMessage(''), 4000);
+    }
+  }, []);
+
+  // Open Master's Google Drive folder directly in a new tab
+  const handleOpenMasterDriveFolder = useCallback(() => {
+    let driveUrl = 'https://drive.google.com/drive/u/0/my-drive';
+    if (masterDriveFolderId) {
+      driveUrl = `https://drive.google.com/drive/folders/${masterDriveFolderId}`;
+    }
+    window.open(driveUrl, '_blank', 'noopener,noreferrer');
+  }, [masterDriveFolderId]);
 
   // Auto-scan Drive when Google Drive token is connected
   useEffect(() => {
@@ -1828,6 +1847,24 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 title="Scan Google Drive to automatically recover all uploaded catalog photos"
               >
                 <Sparkles size={15} /> Recover Drive Photos
+              </button>
+
+              <button 
+                className="btn btn-ghost" 
+                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--cyan)', border: '1px solid var(--cyan)', background: 'rgba(6, 182, 212, 0.05)' }}
+                onClick={handleOpenMasterDriveFolder}
+                title="Open Master's Google Drive folder where uploaded photos are stored (mahinshanavas1@gmail.com)"
+              >
+                <Folder size={15} /> Open Drive Folder
+              </button>
+
+              <button 
+                className="btn btn-ghost" 
+                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--pink)', border: '1px solid var(--pink)', background: 'rgba(236, 72, 153, 0.05)' }}
+                onClick={handleClearAllPhotos}
+                title="Delete ALL uploaded product photos and clear cache completely"
+              >
+                <Trash2 size={15} /> Delete All Photos
               </button>
 
 
@@ -2954,6 +2991,29 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 <button onClick={() => setShowVaultModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                   <X size={20} />
                 </button>
+              </div>
+
+              {/* Drive Storage Location Banner & Actions */}
+              <div style={{ padding: '10px 20px', background: 'rgba(6, 182, 212, 0.08)', borderBottom: '1px solid var(--border-light-color)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                  📁 Drive Location: <strong>Laptop_Catalog_Photos</strong> under account <strong>{MASTER_EMAIL}</strong>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={handleOpenMasterDriveFolder}
+                    style={{ padding: '4px 10px', background: 'var(--cyan)', color: '#000', border: 'none', borderRadius: 6, fontSize: '0.72rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <Folder size={13} /> Open Drive Folder
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={handleClearAllPhotos}
+                      style={{ padding: '4px 10px', background: 'rgba(236, 72, 153, 0.15)', color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 6, fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                    >
+                      <Trash2 size={13} /> Clear All Photos
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Search Bar */}

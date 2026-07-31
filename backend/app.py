@@ -145,6 +145,14 @@ def api_save_photos():
     return jsonify({"ok": True, "updatedAlbums": updated_count, "totalAlbums": len(existing)})
 
 
+@app.route("/api/photos/clear-all", methods=["POST"])
+def api_clear_all_photos():
+    """Clear all uploaded product photos from central DB catalog settings."""
+    db.set_catalog_setting("product_photos", "{}")
+    return jsonify({"ok": True, "message": "All product photos cleared from central database"})
+
+
+
 
 
 

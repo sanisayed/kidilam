@@ -96,6 +96,28 @@ export async function deletePhotoFromCloud(albumKey, photoUrl) {
 }
 
 /**
+ * Clear all uploaded product photos from both local storage cache and cloud DB.
+ */
+export async function clearAllPhotosFromCloud() {
+  try {
+    localStorage.removeItem('product_photos_v2');
+  } catch {}
+
+  try {
+    await fetch(getApiUrl('/api/photos/clear-all'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    console.log('🧹 All photos cleared from cloud DB');
+    return true;
+  } catch (err) {
+    console.warn('clearAllPhotosFromCloud error:', err);
+    return false;
+  }
+}
+
+
+/**
  * Save current stock catalog raw text and photo URL mappings to central database.
  * @param {string} rawText - Raw WhatsApp catalog text
  * @param {Object} productPhotos - { [stableId]: [{ url, label }] }

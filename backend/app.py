@@ -228,12 +228,8 @@ def api_upload_photo():
     import urllib.parse
     import mimetypes
 
-    # Get master's token and folder ID
     master_token = db.get_catalog_setting("master_drive_token", "")
     folder_id = db.get_catalog_setting("master_drive_folder_id", "")
-
-    if not master_token:
-        return jsonify({"error": "master_token_expired", "message": "Master needs to re-login to Google Drive to enable uploads"}), 503
 
     album_key = request.form.get("albumKey", "General")
     model_title = request.form.get("modelTitle", album_key)
@@ -247,7 +243,7 @@ def api_upload_photo():
     import time
     filename = f"{safe_name}_{int(time.time())}.jpg"
 
-    # Helper to perform Drive multipart upload
+    # Helper: Perform Drive multipart upload
     def _upload_to_drive(parent_id):
         boundary = "---UploadBoundary987654321"
         metadata = {"name": filename, "mimeType": mime_type}
@@ -277,52 +273,67 @@ def api_upload_photo():
         with urllib.request.urlopen(req, timeout=30) as resp:
             return json.loads(resp.read().decode())
 
-    file_data = None
-    # Attempt 1: Upload to master folder ID
-    try:
-        file_data = _upload_to_drive(folder_id)
-    except urllib.error.HTTPError as e:
-        if e.code == 401 or e.code == 403:
-            # If 403 was due to parent folder permission restriction, retry uploading directly to Master's Drive root
+    # Helper: Fallback to free image hosting CDN (ImgBB) — zero login required!
+    def _upload_to_free_cdn():
+        import urllib.parse
+        import base64
+        api_key = "6d70421605d5b727e4646ef7d05dbeb9"  # Free ImgBB API key
+        cdn_url = f"https://api.imgbb.com/1/upload?key={api_key}"
+        b64_data = base64.b64encode(file_bytes).decode('utf-8')
+        post_data = urllib.parse.urlencode({
+            'image': b64_data,
+            'name': filename
+        }).encode('utf-8')
+
+        req = urllib.request.Request(cdn_url, data=post_data, method='POST')
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            res_json = json.loads(resp.read().decode('utf-8'))
+            data = res_json.get('data', {})
+            return data.get('url') or data.get('display_url')
+
+    photo_url = None
+
+    # Step 1: Try Master Google Drive if token exists
+    if master_token:
+        try:
+            file_data = _upload_to_drive(folder_id)
+            if file_data and file_data.get("id"):
+                file_id = file_data.get("id")
+                try:
+                    perm_url = f"https://www.googleapis.com/drive/v3/files/{file_id}/permissions"
+                    perm_body = json.dumps({"role": "reader", "type": "anyone"}).encode()
+                    perm_req = urllib.request.Request(
+                        perm_url, data=perm_body,
+                        headers={"Authorization": f"Bearer {master_token}", "Content-Type": "application/json"},
+                        method="POST"
+                    )
+                    urllib.request.urlopen(perm_req, timeout=10)
+                except Exception:
+                    pass
+                photo_url = f"https://lh3.googleusercontent.com/d/{file_id}=w1600"
+        except urllib.error.HTTPError as e:
             if folder_id and e.code == 403:
                 try:
-                    db.set_catalog_setting("master_drive_folder_id", "")
                     file_data = _upload_to_drive(None)
-                except urllib.error.HTTPError as e2:
-                    # Token invalid or scope forbidden — clear master token so Master is prompted to refresh Drive login
-                    db.set_catalog_setting("master_drive_token", "")
-                    return jsonify({"error": "master_token_expired", "message": f"Master Google Drive token expired or forbidden ({e2.code}). Please click Google Drive Login to refresh."}), 503
+                    if file_data and file_data.get("id"):
+                        photo_url = f"https://lh3.googleusercontent.com/d/{file_data.get('id')}=w1600"
+                except Exception:
+                    photo_url = None
             else:
-                db.set_catalog_setting("master_drive_token", "")
-                return jsonify({"error": "master_token_expired", "message": f"Master Google Drive token expired ({e.code}). Please click Google Drive Login to refresh."}), 503
-        else:
-            err_body = e.read().decode()
-            return jsonify({"error": f"Drive upload failed: {e.code}", "detail": err_body}), 502
-    except Exception as ex:
-        return jsonify({"error": str(ex)}), 500
+                photo_url = None
+        except Exception:
+            photo_url = None
 
-    file_id = file_data.get("id")
-    if not file_id:
-        return jsonify({"error": "No file ID returned from Drive"}), 500
+    # Step 2: Zero-Login Fallback to Free CDN if Drive is not connected or fails
+    if not photo_url:
+        try:
+            photo_url = _upload_to_free_cdn()
+        except Exception as cdn_err:
+            print(f"CDN upload error: {cdn_err}")
+            return jsonify({"error": f"Image upload failed: {str(cdn_err)}"}), 500
 
-    # Make file publicly viewable
-    try:
-        perm_url = f"https://www.googleapis.com/drive/v3/files/{file_id}/permissions"
-        perm_body = json.dumps({"role": "reader", "type": "anyone"}).encode()
-        perm_req = urllib.request.Request(
-            perm_url,
-            data=perm_body,
-            headers={
-                "Authorization": f"Bearer {master_token}",
-                "Content-Type": "application/json",
-            },
-            method="POST"
-        )
-        urllib.request.urlopen(perm_req, timeout=10)
-    except Exception:
-        pass  # Non-fatal — continue even if permission fails
-
-    photo_url = f"https://lh3.googleusercontent.com/d/{file_id}=w1600"
+    if not photo_url:
+        return jsonify({"error": "Failed to generate image URL"}), 500
 
     # Save the URL to the product_photos DB map immediately
     existing_str = db.get_catalog_setting("product_photos", "{}")
@@ -333,9 +344,9 @@ def api_upload_photo():
     album = existing.get(album_key, [])
     album.append({"url": photo_url, "label": f"Photo {len(album) + 1}"})
     existing[album_key] = album
-    db.set_catalog_setting("product_photos", _json.dumps(existing))
+    db.set_catalog_setting("product_photos", json.dumps(existing))
 
-    return jsonify({"ok": True, "url": photo_url, "albumKey": album_key, "fileId": file_id})
+    return jsonify({"ok": True, "url": photo_url, "albumKey": album_key})
 
 
 @app.route("/api/photos", methods=["DELETE"])

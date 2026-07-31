@@ -159,11 +159,14 @@ export async function saveCatalogToCloud(rawText, productPhotos) {
   // Always update local cache first
   try {
     if (typeof rawText === 'string') localStorage.setItem('whatsapp_catalog_raw_text', rawText);
-    if (productPhotos) localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
+    if (productPhotos && Object.keys(productPhotos).length > 0) {
+      localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
+      localStorage.setItem('product_photos_backup_v2', JSON.stringify(productPhotos));
+    }
   } catch (e) {}
 
   // Save photos via dedicated endpoint (always succeeds regardless of rawText)
-  if (productPhotos) {
+  if (productPhotos && Object.keys(productPhotos).length > 0) {
     savePhotosToCloud(productPhotos).catch(console.warn);
   }
 

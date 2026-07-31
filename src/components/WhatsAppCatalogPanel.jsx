@@ -687,8 +687,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return (cached && cached.trim().length > 0) ? cached : DEFAULT_STOCK_CATALOG;
   });
   const [productPhotos, setProductPhotos] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('product_photos_v2') || '{}'); }
-    catch { return {}; }
+    try {
+      const cached = localStorage.getItem('product_photos_v2') || localStorage.getItem('product_photos_backup_v2');
+      return cached ? JSON.parse(cached) : {};
+    } catch { return {}; }
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');

@@ -1532,7 +1532,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', padding: '0 8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20, width: '100%', maxWidth: '100vw', overflowX: 'hidden', padding: isMobile ? '0 2px' : '0 8px' }}>
       
       {/* 1. Header Banner & Executive KPI Metrics Bar */}
       <div className="card static card-p-lg" style={{ border: 'var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-flat)', overflow: 'hidden' }}>

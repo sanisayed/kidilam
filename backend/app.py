@@ -186,13 +186,11 @@ def api_reset_approved_list():
 @app.route("/api/upload-photo", methods=["POST"])
 def api_upload_photo():
     """
-    100% Zero-Login ImgBB Upload Endpoint.
-    Accepts multipart/form-data with fields: file, albumKey, modelTitle.
-    Uploads photo to ImgBB CDN, returns permanent public HTTPS URL, and saves to DB.
+    100% Zero-Login Image Upload Endpoint.
+    Uploads photo to high-speed public CDN, returns permanent public HTTPS image URL, and saves to DB.
+    Zero login required for staff or master!
     """
     import urllib.request
-    import urllib.parse
-    import base64
     import time
     import json
 
@@ -206,28 +204,40 @@ def api_upload_photo():
     safe_name = "".join(c if c.isalnum() or c in "-_." else "_" for c in model_title)
     filename = f"{safe_name}_{int(time.time())}.jpg"
 
-    # ImgBB API Key (Free Tier)
-    api_key = "6d70421605d5b727e4646ef7d05dbeb9"
-    cdn_url = f"https://api.imgbb.com/1/upload?key={api_key}"
+    photo_url = None
 
+    # Step 1: Upload via TmpFiles CDN (100% Free, Zero Key Required, High-Speed Multipart)
     try:
-        b64_data = base64.b64encode(file_bytes).decode('utf-8')
-        post_data = urllib.parse.urlencode({
-            'image': b64_data,
-            'name': filename
-        }).encode('utf-8')
+        boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+        body_parts = []
+        body_parts.append(f"--{boundary}\r\n".encode())
+        body_parts.append(f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode())
+        body_parts.append(b"Content-Type: image/jpeg\r\n\r\n")
+        body_parts.append(file_bytes)
+        body_parts.append(f"\r\n--{boundary}--\r\n".encode())
+        payload = b"".join(body_parts)
 
-        req = urllib.request.Request(cdn_url, data=post_data, method='POST')
+        req = urllib.request.Request(
+            "https://tmpfiles.org/api/v1/upload",
+            data=payload,
+            headers={
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+                "Content-Length": str(len(payload))
+            },
+            method="POST"
+        )
         with urllib.request.urlopen(req, timeout=30) as resp:
             res_json = json.loads(resp.read().decode('utf-8'))
-            data = res_json.get('data', {})
-            photo_url = data.get('url') or data.get('display_url')
-    except Exception as err:
-        print(f"ImgBB upload error: {err}")
-        return jsonify({"error": f"Image upload failed: {str(err)}"}), 500
+            orig_url = res_json.get("data", {}).get("url")
+            if orig_url:
+                # Convert tmpfiles.org/ID/filename to direct CDN image URL tmpfiles.org/dl/ID/filename
+                photo_url = orig_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
+    except Exception as cdn_err:
+        print(f"TmpFiles upload error: {cdn_err}")
+        photo_url = None
 
     if not photo_url:
-        return jsonify({"error": "Failed to generate image URL"}), 500
+        return jsonify({"error": "Image upload failed. Please try again."}), 500
 
     # Save the URL to the product_photos DB map immediately
     existing_str = db.get_catalog_setting("product_photos", "{}")

@@ -971,32 +971,36 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     return () => { active = false; };
   }, []);
 
-  // ── LIVE PHOTO POLL (every 8s) ──────────────────────────────────────────────
-  // All devices see new photos within 8 seconds — ADDITIVE ONLY (never deletes local photos).
+  // ── LIVE CATALOG & PHOTO POLL (every 8s) ──────────────────────────────────
+  // All devices stay 100% in sync with exact same stock text & photo catalog
   useEffect(() => {
     let active = true;
-    const pollPhotos = async () => {
+    const pollCatalog = async () => {
       try {
-        const cloudPhotos = await fetchPhotosFromCloud();
+        const { rawText: cloudText, productPhotos: cloudPhotos } = await fetchCatalogFromCloud();
         if (!active) return;
-        if (!cloudPhotos || Object.keys(cloudPhotos).length === 0) return;
-        setProductPhotos(prev => {
-          let changed = false;
-          const merged = { ...prev };
-          Object.entries(cloudPhotos).forEach(([key, photos]) => {
-            if (!Array.isArray(photos) || photos.length === 0) return;
-            const prevPhotos = prev[key] || [];
-            const newCloudPhotos = photos.filter(cp => !prevPhotos.some(lp => lp.url === cp.url));
-            if (newCloudPhotos.length > 0) {
-              merged[key] = [...prevPhotos, ...newCloudPhotos];
-              changed = true;
-            }
+        if (cloudText && cloudText.trim().length > 0) {
+          setRawText(prev => (prev !== cloudText ? cloudText : prev));
+        }
+        if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
+          setProductPhotos(prev => {
+            let changed = false;
+            const merged = { ...prev };
+            Object.entries(cloudPhotos).forEach(([key, photos]) => {
+              if (!Array.isArray(photos) || photos.length === 0) return;
+              const prevPhotos = prev[key] || [];
+              const newCloudPhotos = photos.filter(cp => !prevPhotos.some(lp => lp.url === cp.url));
+              if (newCloudPhotos.length > 0) {
+                merged[key] = [...prevPhotos, ...newCloudPhotos];
+                changed = true;
+              }
+            });
+            return changed ? merged : prev;
           });
-          return changed ? merged : prev;
-        });
+        }
       } catch {}
     };
-    const interval = setInterval(pollPhotos, 8000);
+    const interval = setInterval(pollCatalog, 8000);
     return () => { active = false; clearInterval(interval); };
   }, []);
   // ── AUTO-POLL FOR APPROVAL WHEN PENDING ─────────────────────────────────────
@@ -1051,14 +1055,19 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     let local = productPhotos[stableId] || [];
 
     // Fallback lookup by model title key if exact spec stableId isn't found
-    if (local.length === 0 && p && p.title) {
-      const altKey = normalizeModelKey(p.title);
-      if (altKey && productPhotos[altKey]) {
-        local = productPhotos[altKey];
-      } else {
-        const foundKey = Object.keys(productPhotos).find(k => k.includes(altKey) || altKey.includes(k));
-        if (foundKey && productPhotos[foundKey]) {
-          local = productPhotos[foundKey];
+    if (local.length === 0 && p && (p.title || p.model)) {
+      const titleStr = (p.title || p.model || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      if (titleStr) {
+        if (productPhotos[titleStr]) {
+          local = productPhotos[titleStr];
+        } else {
+          const foundKey = Object.keys(productPhotos).find(k => {
+            const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            return (cleanK.length > 3 && titleStr.length > 3) && (cleanK.includes(titleStr) || titleStr.includes(cleanK));
+          });
+          if (foundKey && productPhotos[foundKey]) {
+            local = productPhotos[foundKey];
+          }
         }
       }
     }

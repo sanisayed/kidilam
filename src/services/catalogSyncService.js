@@ -227,7 +227,10 @@ export async function fetchCatalogFromCloud() {
     if (photosStr) localPhotos = JSON.parse(photosStr) || {};
   } catch (e) {}
 
-  const rawText = cloudState?.rawText || localText;
+  // Prefer server rawText if available to keep mobile & PC 100% in sync
+  const rawText = (cloudState?.rawText && cloudState.rawText.trim().length > 0)
+    ? cloudState.rawText
+    : localText;
 
   // ADDITIVE MERGE: Preserve all local browser photos and merge cloud photos
   const productPhotos = { ...localPhotos };
@@ -258,7 +261,8 @@ export async function fetchCatalogFromCloud() {
   try {
     if (rawText) localStorage.setItem('whatsapp_catalog_raw_text', rawText);
     localStorage.setItem('product_photos_v2', JSON.stringify(cleanPhotos));
-  } catch (e) {}
+    localStorage.setItem('product_photos_backup_v2', JSON.stringify(cleanPhotos));
+  } catch {}
 
   if (Object.keys(cleanPhotos).length > 0) {
     savePhotosToCloud(cleanPhotos).catch(() => {});

@@ -683,8 +683,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [rawText, setRawText] = useState(() => {
+    // Initialize from localStorage only — NEVER use the hardcoded DEFAULT_STOCK_CATALOG
+    // The cloud fetch on mount will always override this with the server's definitive catalog
     const cached = localStorage.getItem('whatsapp_catalog_raw_text');
-    return (cached && cached.trim().length > 0) ? cached : DEFAULT_STOCK_CATALOG;
+    return (cached && cached.trim().length > 0) ? cached : '';
   });
   const [productPhotos, setProductPhotos] = useState(() => {
     try {
@@ -955,17 +957,32 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const isMobileShareSupported = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   // ── CENTRAL CLOUD SYNC ON MOUNT ──────────────────────────────────────────────
-  // Fetch latest stock catalog text & photo mappings from central Supabase Cloud DB
-  // so Mobile immediately loads all photos uploaded from Laptop!
+  // CRITICAL: The server is the SINGLE SOURCE OF TRUTH for the stock catalog text.
+  // On boot, ALWAYS replace local state with server data so ALL devices are 100% in sync.
   useEffect(() => {
     let active = true;
     fetchCatalogFromCloud().then(({ rawText: cloudText, productPhotos: cloudPhotos }) => {
       if (!active) return;
+
       if (cloudText && cloudText.trim().length > 0) {
+        // Server has catalog text — all devices take it as ground truth
         setRawText(cloudText);
+        try { localStorage.setItem('whatsapp_catalog_raw_text', cloudText); } catch {}
+      } else {
+        // Server is empty (fresh deploy) — push our local catalog UP to server so others can sync
+        const localText = localStorage.getItem('whatsapp_catalog_raw_text');
+        if (localText && localText.trim().length > 0) {
+          console.log('📤 Pushing local catalog text to empty server...');
+          setRawText(localText);
+          saveCatalogToCloud(localText, {}).catch(() => {});
+        }
       }
+
       if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
-        setProductPhotos(prev => ({ ...prev, ...cloudPhotos }));
+        setProductPhotos(prev => ({
+          ...prev,
+          ...cloudPhotos
+        }));
       }
     });
     return () => { active = false; };

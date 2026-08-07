@@ -33,3 +33,7 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://kidilam-backend.onrender.com
+      - key: VITE_SUPABASE_URL
+        value: https://viglitfnvcnzdhpunrvc.supabase.co
+      - key: VITE_SUPABASE_ANON_KEY
+        value: sb_publishable_Yq1TJCPc49WzQzyPcqLohA_tBOd5mEJ

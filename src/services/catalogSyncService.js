@@ -1,16 +1,31 @@
 // src/services/catalogSyncService.js
-// Service for central cloud syncing of stock catalog text & photo mappings across all devices.
-// Photos use dedicated /api/photos endpoint so they are always saved independent of rawText.
-// All photo uploads go through /api/upload-photo (backend proxy using master's Drive token).
+// ============================================================
+// ALL DATA GOES TO SUPABASE POSTGRESQL — PERMANENT, NEVER RESETS
+// Two tables:
+//   catalog_list   → the WhatsApp stock text (1 row)
+//   catalog_photos → each laptop's Cloudinary photo links
+// ============================================================
 
-import { getApiUrl } from '../config';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+const isSupabaseReady = !!(SUPABASE_URL && SUPABASE_KEY && !SUPABASE_URL.includes('xxxx'));
+
+function supabaseHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Prefer': 'return=representation'
+  };
+}
+
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 /**
- * Helper: Filter out any device-local Base64 data URLs from product photos map.
- * Base64 URLs cannot be shared across devices and break cross-device sync.
- * Only public Google Drive CDN URLs (https://lh3.googleusercontent.com/...) are valid.
- * @param {Object} map
- * @returns {Object} Cleaned photo map
+ * Filter out base64 data: URLs and soft-deleted photos from the photos map.
+ * Only valid Cloudinary / CDN URLs that are NOT deleted are kept.
  */
 export function filterValidPhotosMap(map) {
   if (!map || typeof map !== 'object') return {};
@@ -20,7 +35,14 @@ export function filterValidPhotosMap(map) {
       const seenUrls = new Set();
       const valid = [];
       list.forEach(item => {
-        if (item && item.url && typeof item.url === 'string' && !item.url.startsWith('data:') && !seenUrls.has(item.url)) {
+        if (
+          item &&
+          item.url &&
+          typeof item.url === 'string' &&
+          !item.url.startsWith('data:') &&
+          !item.deleted &&
+          !seenUrls.has(item.url)
+        ) {
           seenUrls.add(item.url);
           valid.push(item);
         }
@@ -31,62 +53,249 @@ export function filterValidPhotosMap(map) {
   return cleanMap;
 }
 
-/**
- * Save only photo URL mappings to the dedicated /api/photos backend endpoint.
- * @param {Object} productPhotos - { [stableId]: [{ url, label }] }
- * @returns {Promise<boolean>}
- */
-export async function savePhotosToCloud(productPhotos) {
-  if (!productPhotos || typeof productPhotos !== 'object') return false;
-  const cleanPhotos = filterValidPhotosMap(productPhotos);
 
-  // Safely update local cache & backup — never wipe local photos with empty map
-  if (Object.keys(cleanPhotos).length > 0) {
-    try {
-      const existingStr = localStorage.getItem('product_photos_v2') || localStorage.getItem('product_photos_backup_v2');
-      const existing = existingStr ? (JSON.parse(existingStr) || {}) : {};
-      const merged = { ...existing, ...cleanPhotos };
-      localStorage.setItem('product_photos_v2', JSON.stringify(merged));
-      localStorage.setItem('product_photos_backup_v2', JSON.stringify(merged));
-    } catch (e) {}
-  }
+// ─── CATALOG TEXT ─────────────────────────────────────────────────────────────
 
+export async function saveCatalogTextToSupabase(rawText) {
+  if (!isSupabaseReady || !rawText || !rawText.trim()) return false;
   try {
-    const res = await fetch(getApiUrl('/api/photos'), {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/catalog_list`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productPhotos: cleanPhotos })
+      headers: {
+        ...supabaseHeaders(),
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ id: 1, raw_text: rawText, updated_at: new Date().toISOString() })
     });
-    if (res.ok) {
-      console.log('✅ Photos saved to cloud DB!');
+    if (res.ok || res.status === 201 || res.status === 204) {
+      console.log('Catalog text saved to Supabase!');
       return true;
     }
-  } catch (err) {
-    console.warn('savePhotosToCloud error:', err);
+  } catch (e) {
+    console.warn('saveCatalogTextToSupabase error:', e);
   }
   return false;
 }
 
-/**
- * Fetch only the photo URL mappings from dedicated /api/photos endpoint.
- * @returns {Promise<Object>} productPhotos map
- */
-export async function fetchPhotosFromCloud() {
+export async function fetchCatalogTextFromSupabase() {
+  if (!isSupabaseReady) return null;
   try {
-    const res = await fetch(getApiUrl('/api/photos'));
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/catalog_list?id=eq.1&select=raw_text`, {
+      headers: supabaseHeaders()
+    });
     if (res.ok) {
-      const data = await res.json();
-      const photos = filterValidPhotosMap(data.productPhotos || {});
-      try {
-        localStorage.setItem('product_photos_v2', JSON.stringify(photos));
-      } catch {}
-      return photos;
+      const rows = await res.json();
+      if (rows && rows.length > 0 && rows[0].raw_text) return rows[0].raw_text;
     }
-  } catch (err) {
-    console.warn('fetchPhotosFromCloud error:', err);
+  } catch (e) {
+    console.warn('fetchCatalogTextFromSupabase error:', e);
+  }
+  return null;
+}
+
+
+// ─── PHOTOS ───────────────────────────────────────────────────────────────────
+
+export async function savePhotoAlbumToSupabase(albumKey, modelName, photos) {
+  if (!isSupabaseReady || !albumKey || !Array.isArray(photos)) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/catalog_photos`, {
+      method: 'POST',
+      headers: {
+        ...supabaseHeaders(),
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({
+        album_key: albumKey,
+        model_name: modelName || albumKey,
+        photos: photos,
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (res.ok || res.status === 201 || res.status === 204) {
+      console.log(`Photos for "${albumKey}" saved to Supabase!`);
+      return true;
+    }
+  } catch (e) {
+    console.warn('savePhotoAlbumToSupabase error:', e);
+  }
+  return false;
+}
+
+export async function fetchAllPhotoAlbumsFromSupabase() {
+  if (!isSupabaseReady) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/catalog_photos?select=album_key,photos`, {
+      headers: supabaseHeaders()
+    });
+    if (res.ok) {
+      const rows = await res.json();
+      const map = {};
+      rows.forEach(row => {
+        if (row.album_key && Array.isArray(row.photos)) {
+          const active = row.photos.filter(p => p && p.url && !p.deleted);
+          if (active.length > 0) map[row.album_key] = active;
+        }
+      });
+      return map;
+    }
+  } catch (e) {
+    console.warn('fetchAllPhotoAlbumsFromSupabase error:', e);
+  }
+  return null;
+}
+
+export async function softDeletePhotoInSupabase(albumKey, photoUrl) {
+  if (!isSupabaseReady || !albumKey || !photoUrl) return false;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/catalog_photos?album_key=eq.${encodeURIComponent(albumKey)}&select=photos`,
+      { headers: supabaseHeaders() }
+    );
+    if (!res.ok) return false;
+    const rows = await res.json();
+    if (!rows || rows.length === 0) return false;
+    const updatedPhotos = (rows[0].photos || []).map(p =>
+      p.url === photoUrl ? { ...p, deleted: true } : p
+    );
+    const updateRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/catalog_photos?album_key=eq.${encodeURIComponent(albumKey)}`,
+      {
+        method: 'PATCH',
+        headers: supabaseHeaders(),
+        body: JSON.stringify({ photos: updatedPhotos, updated_at: new Date().toISOString() })
+      }
+    );
+    if (updateRes.ok || updateRes.status === 204) {
+      console.log(`Photo soft-deleted from "${albumKey}" in Supabase`);
+      return true;
+    }
+  } catch (e) {
+    console.warn('softDeletePhotoInSupabase error:', e);
+  }
+  return false;
+}
+
+export async function restorePhotoInSupabase(albumKey, photoUrl = null) {
+  if (!isSupabaseReady || !albumKey) return false;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/catalog_photos?album_key=eq.${encodeURIComponent(albumKey)}&select=photos`,
+      { headers: supabaseHeaders() }
+    );
+    if (!res.ok) return false;
+    const rows = await res.json();
+    if (!rows || rows.length === 0) return false;
+    const restoredPhotos = (rows[0].photos || []).map(p => {
+      if (p.deleted && (photoUrl === null || p.url === photoUrl)) {
+        const { deleted, ...rest } = p;
+        return rest;
+      }
+      return p;
+    });
+    const updateRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/catalog_photos?album_key=eq.${encodeURIComponent(albumKey)}`,
+      {
+        method: 'PATCH',
+        headers: supabaseHeaders(),
+        body: JSON.stringify({ photos: restoredPhotos, updated_at: new Date().toISOString() })
+      }
+    );
+    return updateRes.ok || updateRes.status === 204;
+  } catch (e) {
+    console.warn('restorePhotoInSupabase error:', e);
+  }
+  return false;
+}
+
+
+// ─── COMBINED FACADE (used by WhatsAppCatalogPanel) ────────────────────────────
+
+export async function saveCatalogToCloud(rawText, productPhotos) {
+  // Always update localStorage as fast local cache
+  try {
+    if (typeof rawText === 'string') localStorage.setItem('whatsapp_catalog_raw_text', rawText);
+    if (productPhotos && Object.keys(productPhotos).length > 0) {
+      localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
+    }
+  } catch (e) {}
+
+  if (!isSupabaseReady) {
+    console.warn('Supabase not configured — data saved to localStorage only');
+    return false;
   }
 
-  // Fallback to localStorage
+  if (rawText && rawText.trim().length > 0) {
+    saveCatalogTextToSupabase(rawText).catch(console.warn);
+  }
+
+  if (productPhotos && typeof productPhotos === 'object') {
+    Object.entries(productPhotos).forEach(([albumKey, photos]) => {
+      if (Array.isArray(photos) && photos.length > 0) {
+        savePhotoAlbumToSupabase(albumKey, albumKey, photos).catch(console.warn);
+      }
+    });
+  }
+  return true;
+}
+
+export async function fetchCatalogFromCloud() {
+  let rawText = '';
+  let productPhotos = {};
+
+  if (isSupabaseReady) {
+    const [cloudText, cloudPhotos] = await Promise.all([
+      fetchCatalogTextFromSupabase(),
+      fetchAllPhotoAlbumsFromSupabase()
+    ]);
+
+    if (cloudText) {
+      rawText = cloudText;
+      try { localStorage.setItem('whatsapp_catalog_raw_text', rawText); } catch {}
+    }
+    if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
+      productPhotos = cloudPhotos;
+      try { localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos)); } catch {}
+    }
+  } else {
+    try {
+      rawText = localStorage.getItem('whatsapp_catalog_raw_text') || '';
+      const ps = localStorage.getItem('product_photos_v2');
+      productPhotos = ps ? filterValidPhotosMap(JSON.parse(ps)) : {};
+    } catch {}
+  }
+
+  return { rawText, productPhotos };
+}
+
+export async function savePhotosToCloud(productPhotos) {
+  if (!productPhotos || typeof productPhotos !== 'object') return false;
+  try {
+    if (Object.keys(productPhotos).length > 0) {
+      localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
+    }
+  } catch {}
+
+  if (!isSupabaseReady) return false;
+
+  const promises = Object.entries(productPhotos).map(([albumKey, photos]) => {
+    if (Array.isArray(photos) && photos.length > 0) {
+      return savePhotoAlbumToSupabase(albumKey, albumKey, photos);
+    }
+    return Promise.resolve(false);
+  });
+  await Promise.allSettled(promises);
+  return true;
+}
+
+export async function fetchPhotosFromCloud() {
+  if (isSupabaseReady) {
+    const photos = await fetchAllPhotoAlbumsFromSupabase();
+    if (photos) {
+      try { localStorage.setItem('product_photos_v2', JSON.stringify(photos)); } catch {}
+      return photos;
+    }
+  }
   try {
     const str = localStorage.getItem('product_photos_v2');
     return str ? filterValidPhotosMap(JSON.parse(str)) : {};
@@ -95,15 +304,8 @@ export async function fetchPhotosFromCloud() {
   }
 }
 
-
-/**
- * Delete a specific photo URL from both local state and the cloud DB.
- * This prevents the live poll from restoring deleted photos.
- * @param {string} albumKey - The productPhotos key (stableId)
- * @param {string} photoUrl - The photo URL to delete
- */
 export async function deletePhotoFromCloud(albumKey, photoUrl) {
-  // Remove from localStorage cache and backup too
+  // Remove from localStorage cache
   try {
     ['product_photos_v2', 'product_photos_backup_v2'].forEach(storageKey => {
       const str = localStorage.getItem(storageKey);
@@ -118,155 +320,14 @@ export async function deletePhotoFromCloud(albumKey, photoUrl) {
     });
   } catch {}
 
-  try {
-    await fetch(getApiUrl('/api/photos'), {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ albumKey, url: photoUrl })
-    });
-  } catch (err) {
-    console.warn('deletePhotoFromCloud error:', err);
+  // Soft-delete in Supabase (photo stays in DB with deleted:true)
+  if (isSupabaseReady) {
+    await softDeletePhotoInSupabase(albumKey, photoUrl);
   }
 }
 
-/**
- * Clear all uploaded product photos from both local storage cache and cloud DB.
- */
 export async function clearAllPhotosFromCloud() {
-  try {
-    localStorage.removeItem('product_photos_v2');
-  } catch {}
-
-  try {
-    await fetch(getApiUrl('/api/photos/clear-all'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    console.log('🧹 All photos cleared from cloud DB');
-    return true;
-  } catch (err) {
-    console.warn('clearAllPhotosFromCloud error:', err);
-    return false;
-  }
-}
-
-
-/**
- * Save current stock catalog raw text and photo URL mappings to central database.
- * @param {string} rawText - Raw WhatsApp catalog text
- * @param {Object} productPhotos - { [stableId]: [{ url, label }] }
- * @returns {Promise<boolean>}
- */
-export async function saveCatalogToCloud(rawText, productPhotos) {
-  // Always update local cache first
-  try {
-    if (typeof rawText === 'string') localStorage.setItem('whatsapp_catalog_raw_text', rawText);
-    if (productPhotos && Object.keys(productPhotos).length > 0) {
-      localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
-      localStorage.setItem('product_photos_backup_v2', JSON.stringify(productPhotos));
-    }
-  } catch (e) {}
-
-  // Save photos via dedicated endpoint (always succeeds regardless of rawText)
-  if (productPhotos && Object.keys(productPhotos).length > 0) {
-    savePhotosToCloud(productPhotos).catch(console.warn);
-  }
-
-  // Also save rawText via /api/catalog if it has content
-  if (rawText && rawText.trim().length > 0) {
-    try {
-      const res = await fetch(getApiUrl('/api/catalog'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rawText: rawText || '', productPhotos: productPhotos || {} })
-      });
-      if (res.ok) {
-        console.log('✅ Catalog saved to cloud!');
-        return true;
-      }
-    } catch (err) {
-      console.warn('saveCatalogToCloud error:', err);
-    }
-  }
-
-  return false;
-}
-
-/**
- * Fetch central stock catalog text and photo URL mappings from central database.
- * @returns {Promise<{ rawText: string|null, productPhotos: Object|null }>}
- */
-export async function fetchCatalogFromCloud() {
-  let cloudState = null;
-
-  try {
-    const res = await fetch(getApiUrl('/api/catalog'));
-    if (res.ok) {
-      cloudState = await res.json();
-    }
-  } catch (err) {
-    console.warn('fetchCatalogFromCloud error:', err);
-  }
-
-  // Also fetch photos from dedicated endpoint (most up-to-date)
-  let cloudPhotos = {};
-  try {
-    const photosRes = await fetch(getApiUrl('/api/photos'));
-    if (photosRes.ok) {
-      const photosData = await photosRes.json();
-      cloudPhotos = photosData.productPhotos || {};
-    }
-  } catch {}
-
-  // Local storage cache fallback (ground truth on browser)
-  let localText = null;
-  let localPhotos = {};
-  try {
-    localText = localStorage.getItem('whatsapp_catalog_raw_text');
-    const photosStr = localStorage.getItem('product_photos_v2');
-    if (photosStr) localPhotos = JSON.parse(photosStr) || {};
-  } catch (e) {}
-
-  // Prefer server rawText if available to keep mobile & PC 100% in sync
-  const rawText = (cloudState?.rawText && cloudState.rawText.trim().length > 0)
-    ? cloudState.rawText
-    : localText;
-
-  // ADDITIVE MERGE: Preserve all local browser photos and merge cloud photos
-  const productPhotos = { ...localPhotos };
-
-  if (cloudState?.productPhotos) {
-    Object.entries(cloudState.productPhotos).forEach(([k, v]) => {
-      if (Array.isArray(v) && v.length > 0) {
-        const existing = productPhotos[k] || [];
-        const newCloud = v.filter(cp => !existing.some(lp => lp.url === cp.url));
-        productPhotos[k] = [...existing, ...newCloud];
-      }
-    });
-  }
-
-  if (cloudPhotos) {
-    Object.entries(cloudPhotos).forEach(([k, v]) => {
-      if (Array.isArray(v) && v.length > 0) {
-        const existing = productPhotos[k] || [];
-        const newCloud = v.filter(cp => !existing.some(lp => lp.url === cp.url));
-        productPhotos[k] = [...existing, ...newCloud];
-      }
-    });
-  }
-
-  const cleanPhotos = filterValidPhotosMap(productPhotos);
-
-  // Save merged state back to local cache AND backend so new deployments auto-populate
-  try {
-    if (rawText) localStorage.setItem('whatsapp_catalog_raw_text', rawText);
-    localStorage.setItem('product_photos_v2', JSON.stringify(cleanPhotos));
-    localStorage.setItem('product_photos_backup_v2', JSON.stringify(cleanPhotos));
-  } catch {}
-
-  if (Object.keys(cleanPhotos).length > 0) {
-    savePhotosToCloud(cleanPhotos).catch(() => {});
-  }
-
-  return { rawText, productPhotos: cleanPhotos };
+  try { localStorage.removeItem('product_photos_v2'); } catch {}
+  console.warn('clearAllPhotosFromCloud: local cache cleared. Supabase DB is untouched.');
+  return true;
 }

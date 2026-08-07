@@ -183,7 +183,13 @@ def save_photo_backup(data):
 
 @app.route("/api/photos", methods=["GET"])
 def api_get_photos():
-    """Dedicated endpoint to get just the product photos map (no rawText needed)."""
+    """
+    Get product photo map. By default, filters out soft-deleted photos (deleted=True)
+    so the UI only shows active photos. Pass ?include_deleted=1 to get ALL photos including deleted ones.
+    Photos are NEVER removed from the DB — only hidden via the deleted flag.
+    """
+    include_deleted = request.args.get("include_deleted", "0") == "1"
+
     photos_str = db.get_catalog_setting("product_photos", "{}")
     try:
         photos = json.loads(photos_str)
@@ -201,7 +207,19 @@ def api_get_photos():
             except Exception:
                 pass
 
+    # Filter out soft-deleted photos unless include_deleted=1 is passed
+    if not include_deleted:
+        filtered = {}
+        for album_key, photo_list in photos.items():
+            active_photos = [p for p in photo_list if isinstance(p, dict) and not p.get("deleted", False)]
+            if active_photos:
+                filtered[album_key] = active_photos
+        return jsonify({"productPhotos": filtered, "count": len(filtered)})
+
+    # Admin view: return all photos including soft-deleted ones
     return jsonify({"productPhotos": photos, "count": len(photos)})
+
+
 
 
 @app.route("/api/photos", methods=["POST"])
@@ -236,7 +254,11 @@ def api_save_photos():
 
 @app.route("/api/photos", methods=["DELETE"])
 def api_delete_photo():
-    """Delete a specific photo from an album key in database and backup file."""
+    """
+    SOFT-DELETE: Mark a photo as deleted=True in the database.
+    The photo URL and its Cloudinary link are NEVER removed from the database.
+    This means photos can always be recovered by admin. Only hidden from the UI.
+    """
     data = request.get_json() or {}
     album_key = data.get("albumKey")
     url_to_delete = data.get("url")
@@ -254,19 +276,57 @@ def api_delete_photo():
         existing = load_photo_backup()
 
     if album_key in existing:
-        # Filter out the deleted photo URL
-        existing[album_key] = [p for p in existing[album_key] if p.get("url") != url_to_delete]
-        # If the album is now empty, delete the album key
-        if len(existing[album_key]) == 0:
-            del existing[album_key]
-        
-        # Save to DB and update the backup file
+        # SOFT DELETE: Set deleted=True on the photo entry — NEVER remove from DB
+        for photo in existing[album_key]:
+            if isinstance(photo, dict) and photo.get("url") == url_to_delete:
+                photo["deleted"] = True
+                break
+
+        # Save updated state with soft-delete flag to DB and backup file
         db.set_catalog_setting("product_photos", json.dumps(existing))
         save_photo_backup(existing)
-        
-        return jsonify({"ok": True, "message": "Photo deleted successfully", "albumSize": len(existing.get(album_key, []))})
-    
+
+        active_count = sum(1 for p in existing[album_key] if not p.get("deleted", False))
+        print(f"✅ Photo soft-deleted from album '{album_key}' (permanently stored, just hidden). Active: {active_count}")
+        return jsonify({"ok": True, "message": "Photo hidden from UI (safely kept in database)", "activeCount": active_count})
+
     return jsonify({"error": "Album key not found"}), 404
+
+
+@app.route("/api/photos/restore", methods=["POST"])
+def api_restore_photo():
+    """
+    Restore a previously soft-deleted photo — makes it visible in UI again.
+    """
+    data = request.get_json() or {}
+    album_key = data.get("albumKey")
+    url_to_restore = data.get("url")  # optional — if None, restores all in album
+
+    if not album_key:
+        return jsonify({"error": "Missing albumKey"}), 400
+
+    existing_str = db.get_catalog_setting("product_photos", "{}")
+    try:
+        existing = json.loads(existing_str)
+    except Exception:
+        existing = {}
+
+    if album_key in existing:
+        restored_count = 0
+        for photo in existing[album_key]:
+            if isinstance(photo, dict) and photo.get("deleted", False):
+                if url_to_restore is None or photo.get("url") == url_to_restore:
+                    photo["deleted"] = False
+                    restored_count += 1
+
+        db.set_catalog_setting("product_photos", json.dumps(existing))
+        save_photo_backup(existing)
+        print(f"✅ Restored {restored_count} photo(s) in album '{album_key}'")
+        return jsonify({"ok": True, "restoredCount": restored_count})
+
+    return jsonify({"error": "Album key not found"}), 404
+
+
 
 
 @app.route("/api/photos/clear-all", methods=["POST"])

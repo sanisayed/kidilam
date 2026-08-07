@@ -425,21 +425,30 @@ function parseWhatsAppCatalog(rawText) {
 
       const lower = l.toLowerCase();
 
-      // Processor — only match lines that are clearly about the CPU, not GPU lines
-      const isExplicitProcessorLine = lower.includes('processor') || lower.includes('cpu');
+      // Processor — match lines about CPU, but prioritize specific chip names over generic core count lines
+      const isExplicitProcessorLine = lower.includes('processor');
+      const isCpuKeyword = lower.includes('cpu');
       const isGpuKeywordLine = lower.includes('gpu') || lower.includes('graphics') || lower.includes('rtx') || lower.includes('radeon') || lower.includes('nvidia') || lower.includes('geforce');
-      const isChipLine = lower.includes('core i') || lower.includes('ultra') || lower.includes('ryzen') || lower.includes('apple') || lower.includes(' i9') || lower.includes(' i7') || lower.includes(' i5') || lower.includes(' i3');
+      const isChipLine = lower.includes('core i') || lower.includes('ultra') || lower.includes('ryzen') || lower.includes('apple') || lower.includes('i9') || lower.includes('i7') || lower.includes('i5') || lower.includes('i3');
 
-      if (isExplicitProcessorLine && !isGpuKeywordLine) {
-        // Line explicitly says "Processor –" or "CPU –" — always use this
-        processor = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
-      } else if (!processor && isChipLine && !isGpuKeywordLine) {
-        // Line contains chip name (core i5, ryzen etc.) but is NOT a GPU line — use if no processor found yet
-        processor = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
-      } else if (!processor && lower.includes('intel') && !isGpuKeywordLine) {
-        // Generic "intel" mention but NOT a GPU line — use as fallback
-        processor = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
+      if (!isGpuKeywordLine) {
+        const val = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
+        const valLower = val.toLowerCase();
+        const valHasChip = valLower.includes('core i') || valLower.includes('ultra') || valLower.includes('ryzen') || valLower.includes('apple') || valLower.includes('i9') || valLower.includes('i7') || valLower.includes('i5') || valLower.includes('i3');
+        const currHasChip = processor.toLowerCase().includes('core i') || processor.toLowerCase().includes('ultra') || processor.toLowerCase().includes('ryzen') || processor.toLowerCase().includes('apple') || processor.toLowerCase().includes('i9') || processor.toLowerCase().includes('i7') || processor.toLowerCase().includes('i5') || processor.toLowerCase().includes('i3');
+
+        if (valHasChip) {
+          // Specific chip model found (e.g. Ultra 7, Core i5) — always use/overwrite generic text
+          processor = val;
+        } else if (isExplicitProcessorLine && !currHasChip) {
+          // Line explicitly says "Processor –" and we don't have a specific chip name yet
+          processor = val;
+        } else if (!processor && (isCpuKeyword || lower.includes('intel'))) {
+          // Fallback if no processor set at all
+          processor = val;
+        }
       }
+
 
 
       // Generation extraction (e.g. 4th, 6th, 8th, 10th, 11th, 12th, 13th Gen)

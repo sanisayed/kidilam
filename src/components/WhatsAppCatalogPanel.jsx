@@ -2262,10 +2262,10 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
             )}
           </div>
 
-          {/* 3. Executive Live Console Split View: Left (Card Grid) + Right (Live WhatsApp Quote Box) */}
-          <div style={{ display: 'grid', gridTemplateColumns: (isMobile || !showLivePreview) ? '1fr' : '1fr 380px', gap: 20, width: '100%', alignItems: 'start' }}>
+          {/* 3. Executive Live Console View: Full-width Card Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, width: '100%', alignItems: 'start' }}>
             
-            {/* LEFT COLUMN: Laptop Cards */}
+            {/* Laptop Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Header Bar */}
               <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
@@ -2274,13 +2274,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                 </span>
 
                 <div style={{ display: 'flex', gap: 10, width: isMobile ? '100%' : 'auto' }}>
-                  <button 
-                    className="btn btn-ghost"
-                    style={{ fontSize: '0.78rem', padding: '6px 10px', flex: isMobile ? 1 : 'none', justifyContent: 'center', whiteSpace: 'nowrap' }}
-                    onClick={() => setShowLivePreview(!showLivePreview)}
-                  >
-                    <MessageSquare size={14} /> {showLivePreview ? (isMobile ? 'Hide Quote' : 'Hide Live Quote Box') : (isMobile ? 'Show Quote' : 'Show Live Quote Box')}
-                  </button>
 
                   <button 
                     className="btn btn-primary" 
@@ -2689,52 +2682,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: LIVE WHATSAPP QUOTE OUTPUT BOX */}
-            {showLivePreview && (
-              <div 
-                className="card static card-p-lg" 
-                style={{ 
-                  border: 'var(--border)', 
-                  background: 'var(--bg-card)', 
-                  boxShadow: 'var(--shadow-flat)', 
-                  position: isMobile ? 'static' : 'sticky', 
-                  top: 20, 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: 12,
-                  maxHeight: isMobile ? '400px' : 'calc(100vh - 120px)',
-                  width: '100%'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #000', paddingBottom: 8 }}>
-                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    📱 Live WhatsApp Output
-                  </h4>
-                  <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '0.74rem', fontWeight: 900 }} onClick={() => handleCopy(formattedOutputText, 'live-box')}>
-                    {copiedId === 'live-box' ? 'Copied!' : 'Copy Text'}
-                  </button>
-                </div>
 
-                <div style={{ 
-                  flex: 1, 
-                  overflowY: 'auto', 
-                  fontFamily: 'var(--font-mono)', 
-                  fontSize: '0.76rem', 
-                  lineHeight: 1.5, 
-                  background: '#0d1117', 
-                  color: '#7ee787', 
-                  padding: '12px', 
-                  borderRadius: 'var(--radius-sm)',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                  {formattedOutputText}
-                </div>
-
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>
-                  Auto-updates as you select dropdowns
-                </div>
-              </div>
-            )}
 
           </div>
         </>

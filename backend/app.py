@@ -94,15 +94,37 @@ def health_check():
     })
 
 
+CATALOG_BACKUP_FILE = os.path.join(os.path.dirname(__file__), "catalog_raw_text_backup.txt")
+PHOTO_BACKUP_FILE = os.path.join(os.path.dirname(__file__), "product_photos_backup.json")
+
 # ── Catalog & Photo Cloud Sync API ───────────────────────────────────────────
 @app.route("/api/catalog", methods=["GET"])
 def api_get_catalog():
     raw_text = db.get_catalog_setting("raw_text", "")
+    if not raw_text or not raw_text.strip():
+        if os.path.exists(CATALOG_BACKUP_FILE):
+            try:
+                with open(CATALOG_BACKUP_FILE, "r", encoding="utf-8") as f:
+                    raw_text = f.read()
+                if raw_text and raw_text.strip():
+                    db.set_catalog_setting("raw_text", raw_text)
+            except Exception:
+                pass
+
     photos_str = db.get_catalog_setting("product_photos", "{}")
     try:
         photos = json.loads(photos_str)
     except Exception:
         photos = {}
+
+    if not photos or len(photos) == 0:
+        photos = load_photo_backup()
+        if photos and len(photos) > 0:
+            try:
+                db.set_catalog_setting("product_photos", json.dumps(photos))
+            except Exception:
+                pass
+
     return jsonify({"rawText": raw_text, "productPhotos": photos})
 
 
@@ -111,18 +133,30 @@ def api_save_catalog():
     data = request.get_json() or {}
     if "rawText" in data and isinstance(data["rawText"], str) and data["rawText"].strip():
         db.set_catalog_setting("raw_text", data["rawText"])
-    if "productPhotos" in data and isinstance(data["productPhotos"], dict):
+        try:
+            with open(CATALOG_BACKUP_FILE, "w", encoding="utf-8") as f:
+                f.write(data["rawText"])
+        except Exception:
+            pass
+
+    if "productPhotos" in data and isinstance(data["productPhotos"], dict) and len(data["productPhotos"]) > 0:
         existing_str = db.get_catalog_setting("product_photos", "{}")
         try:
             existing = json.loads(existing_str)
         except Exception:
             existing = {}
-        # Safely merge incoming photos with existing DB catalog photos
+        if not existing:
+            existing = load_photo_backup()
+
         for key, photo_list in data["productPhotos"].items():
             if photo_list and isinstance(photo_list, list) and len(photo_list) > 0:
                 existing[key] = photo_list
-        db.set_catalog_setting("product_photos", json.dumps(existing))
-    return jsonify({"ok": True, "productPhotos": json.loads(db.get_catalog_setting("product_photos", "{}"))})
+
+        if existing:
+            db.set_catalog_setting("product_photos", json.dumps(existing))
+            save_photo_backup(existing)
+
+    return jsonify({"ok": True, "rawText": db.get_catalog_setting("raw_text", ""), "productPhotos": json.loads(db.get_catalog_setting("product_photos", "{}"))})
 
 
 PHOTO_BACKUP_FILE = os.path.join(os.path.dirname(__file__), "product_photos_backup.json")

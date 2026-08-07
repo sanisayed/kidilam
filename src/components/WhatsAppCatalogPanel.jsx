@@ -1408,11 +1408,17 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
       // 6. Processor / CPU
       if (selectedCpu !== 'ALL') {
-        const cpuLower = (p.processor || '').toLowerCase() + ' ' + (p.title || '').toLowerCase();
-        if (selectedCpu === 'i5' && !cpuLower.includes('i5')) return false;
-        if (selectedCpu === 'i7' && !cpuLower.includes('i7')) return false;
-        if (selectedCpu === 'Ultra 7' && !cpuLower.includes('ultra')) return false;
+        const cpuLower = ((p.processor || '') + ' ' + (p.title || '') + ' ' + (p.rawText || '')).toLowerCase();
+        if (selectedCpu === 'i3' && !cpuLower.includes('i3') && !cpuLower.includes('core 3')) return false;
+        if (selectedCpu === 'i5' && !cpuLower.includes('i5') && !cpuLower.includes('core 5')) return false;
+        if (selectedCpu === 'i7' && !cpuLower.includes('i7') && !cpuLower.includes('core 7')) return false;
+        if (selectedCpu === 'i9' && !cpuLower.includes('i9') && !cpuLower.includes('core 9')) return false;
+        if (selectedCpu === 'Ultra 5' && !cpuLower.includes('ultra 5') && !cpuLower.includes('ultra5') && !(cpuLower.includes('ultra') && cpuLower.includes('5'))) return false;
+        if (selectedCpu === 'Ultra 7' && !cpuLower.includes('ultra 7') && !cpuLower.includes('ultra7') && !(cpuLower.includes('ultra') && cpuLower.includes('7'))) return false;
+        if (selectedCpu === 'Ultra 9' && !cpuLower.includes('ultra 9') && !cpuLower.includes('ultra9') && !(cpuLower.includes('ultra') && cpuLower.includes('9'))) return false;
+        if (selectedCpu === 'Ryzen' && !cpuLower.includes('ryzen')) return false;
       }
+
 
       // 7. Generation (Exact Match)
       if (selectedGen !== 'ALL') {
@@ -1957,10 +1963,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                           <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>⚡ CPU</label>
                           <select value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)} style={dropdownStyle(selectedCpu !== 'ALL', 'var(--cyan)', '#000000')}>
                             <option value="ALL">Any CPU</option>
+                            <option value="i3">Core i3</option>
                             <option value="i5">Core i5</option>
                             <option value="i7">Core i7</option>
+                            <option value="i9">Core i9</option>
+                            <option value="Ultra 5">Ultra 5</option>
                             <option value="Ultra 7">Ultra 7</option>
+                            <option value="Ultra 9">Ultra 9</option>
+                            <option value="Ryzen">AMD Ryzen</option>
                           </select>
+
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>🎓 GEN</label>
@@ -2150,10 +2162,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                       <div style={{ position: 'relative', width: '100%' }}>
                         <select value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)} style={dropdownStyle(selectedCpu !== 'ALL', 'var(--cyan)', '#000000')}>
                           <option value="ALL">All CPUs</option>
+                          <option value="i3">Intel Core i3</option>
                           <option value="i5">Intel Core i5</option>
                           <option value="i7">Intel Core i7</option>
+                          <option value="i9">Intel Core i9</option>
+                          <option value="Ultra 5">Intel Ultra 5</option>
                           <option value="Ultra 7">Intel Ultra 7</option>
+                          <option value="Ultra 9">Intel Ultra 9</option>
+                          <option value="Ryzen">AMD Ryzen</option>
                         </select>
+
                         <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
                       </div>
                     </div>

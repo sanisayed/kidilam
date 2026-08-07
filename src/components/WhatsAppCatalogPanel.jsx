@@ -425,10 +425,22 @@ function parseWhatsAppCatalog(rawText) {
 
       const lower = l.toLowerCase();
 
-      // Processor
-      if (lower.includes('processor') || lower.includes('cpu') || lower.includes('intel') || lower.includes('ultra') || lower.includes('ryzen') || lower.includes('apple') || lower.includes('i9') || lower.includes('i7') || lower.includes('i5') || lower.includes('i3')) {
+      // Processor — only match lines that are clearly about the CPU, not GPU lines
+      const isExplicitProcessorLine = lower.includes('processor') || lower.includes('cpu');
+      const isGpuKeywordLine = lower.includes('gpu') || lower.includes('graphics') || lower.includes('rtx') || lower.includes('radeon') || lower.includes('nvidia') || lower.includes('geforce');
+      const isChipLine = lower.includes('core i') || lower.includes('ultra') || lower.includes('ryzen') || lower.includes('apple') || lower.includes(' i9') || lower.includes(' i7') || lower.includes(' i5') || lower.includes(' i3');
+
+      if (isExplicitProcessorLine && !isGpuKeywordLine) {
+        // Line explicitly says "Processor –" or "CPU –" — always use this
+        processor = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
+      } else if (!processor && isChipLine && !isGpuKeywordLine) {
+        // Line contains chip name (core i5, ryzen etc.) but is NOT a GPU line — use if no processor found yet
+        processor = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
+      } else if (!processor && lower.includes('intel') && !isGpuKeywordLine) {
+        // Generic "intel" mention but NOT a GPU line — use as fallback
         processor = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
       }
+
 
       // Generation extraction (e.g. 4th, 6th, 8th, 10th, 11th, 12th, 13th Gen)
       if (!lower.includes('display') && !lower.includes('inch') && !lower.includes('screen')) {

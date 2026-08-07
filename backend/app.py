@@ -60,6 +60,21 @@ import json
 
 db.init_db()
 
+# ── Cloudinary Permanent High-Quality Storage Setup ────────────────────────────
+try:
+    import cloudinary
+    import cloudinary.uploader
+    cloudinary.config(
+        cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME", "jtzr9tat"),
+        api_key=os.environ.get("CLOUDINARY_API_KEY", "283688916185794"),
+        api_secret=os.environ.get("CLOUDINARY_API_SECRET", "pTK_MbM4JbX7uFcgMZgTYbR2Va0"),
+        secure=True
+    )
+    print("✅ Cloudinary Permanent Storage Engine configured successfully (cloud: jtzr9tat)")
+except Exception as _c_err:
+    print(f"Warning: Cloudinary setup note: {_c_err}")
+
+
 
 @app.route("/api/health", methods=["GET"])
 def health_check():
@@ -276,15 +291,16 @@ def api_set_imgbb_key():
 @app.route("/api/upload-photo", methods=["POST"])
 def api_upload_photo():
     """
-    100% Zero-Login Image Upload Endpoint.
-    Uploads photo to ImgBB (if key configured) or High-Speed Public CDN,
-    returns permanent public HTTPS image URL, and saves to DB.
+    High-Quality Permanent Cloudinary Image Upload Endpoint.
+    Uploads photo to Cloudinary (account: jtzr9tat) at uncompressed full HD resolution,
+    returns permanent public HTTPS CDN URL, and saves to DB.
     """
     import urllib.request
     import urllib.parse
     import base64
     import time
     import json
+    import sys
 
     album_key = request.form.get("albumKey", "General")
     model_title = request.form.get("modelTitle", album_key)
@@ -292,18 +308,35 @@ def api_upload_photo():
     if not file:
         return jsonify({"error": "No file provided"}), 400
 
-    file_bytes = file.read()
-    safe_name = "".join(c if c.isalnum() or c in "-_." else "_" for c in model_title)
-    filename = f"{safe_name}_{int(time.time())}.jpg"
-
     photo_url = None
 
-    # Check for user's custom ImgBB API Key (Account: saidali-navas)
-    imgbb_key = db.get_catalog_setting("imgbb_api_key", "") or os.environ.get("IMGBB_API_KEY", "") or os.environ.get("VITE_IMGBB_API_KEY", "") or "ce23737d34f6c30a67299fbb631d2f76"
+    # Step 1: Cloudinary Uncompressed High-Quality Permanent Storage
+    try:
+        import cloudinary.uploader
+        safe_name = "".join(c if c.isalnum() or c in "-_." else "_" for c in model_title)
+        upload_result = cloudinary.uploader.upload(
+            file,
+            folder="laptop_catalog",
+            public_id=f"{safe_name}_{int(time.time())}",
+            resource_type="image",
+            quality="auto:best"
+        )
+        photo_url = upload_result.get("secure_url") or upload_result.get("url")
+        if photo_url:
+            print(f"✅ Cloudinary Permanent HD Upload Success: {photo_url}")
+    except Exception as c_err:
+        print(f"Cloudinary upload note: {c_err}")
+        photo_url = None
 
-    # Step 1: If ImgBB API Key exists, upload directly to User's ImgBB Account!
-    if imgbb_key:
+    # Step 2: Fallback to ImgBB
+    if not photo_url:
         try:
+            file.seek(0)
+            file_bytes = file.read()
+            safe_name = "".join(c if c.isalnum() or c in "-_." else "_" for c in model_title)
+            filename = f"{safe_name}_{int(time.time())}.jpg"
+            imgbb_key = db.get_catalog_setting("imgbb_api_key", "") or os.environ.get("IMGBB_API_KEY", "") or "ce23737d34f6c30a67299fbb631d2f76"
+
             b64_data = base64.b64encode(file_bytes).decode('utf-8')
             post_data = urllib.parse.urlencode({
                 'image': b64_data,
@@ -314,7 +347,7 @@ def api_upload_photo():
                 f"https://api.imgbb.com/1/upload?key={imgbb_key}",
                 data=post_data,
                 headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
                 method="POST"
@@ -324,54 +357,29 @@ def api_upload_photo():
                 data = res_json.get("data", {})
                 photo_url = data.get("url") or data.get("display_url")
         except Exception as err:
-            print(f"User ImgBB upload error: {err}")
-            photo_url = None
-
-    # Step 2: High-Speed Public CDN Fallback (TmpFiles with browser User-Agent)
-    if not photo_url:
-        try:
-            boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
-            body_parts = []
-            body_parts.append(f"--{boundary}\r\n".encode())
-            body_parts.append(f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode())
-            body_parts.append(b"Content-Type: image/jpeg\r\n\r\n")
-            body_parts.append(file_bytes)
-            body_parts.append(f"\r\n--{boundary}--\r\n".encode())
-            payload = b"".join(body_parts)
-
-            req = urllib.request.Request(
-                "https://tmpfiles.org/api/v1/upload",
-                data=payload,
-                headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "Content-Type": f"multipart/form-data; boundary={boundary}",
-                    "Content-Length": str(len(payload))
-                },
-                method="POST"
-            )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                res_json = json.loads(resp.read().decode('utf-8'))
-                orig_url = res_json.get("data", {}).get("url")
-                if orig_url:
-                    photo_url = orig_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
-        except Exception as cdn_err:
-            print(f"TmpFiles upload error: {cdn_err}")
+            print(f"Fallback upload error: {err}")
             photo_url = None
 
     if not photo_url:
-        return jsonify({"error": "Image upload failed. Please get your free ImgBB API key from https://api.imgbb.com/ and set it in settings."}), 500
+        return jsonify({"error": "Photo upload failed. Please try again."}), 500
 
-    # Save the URL to the product_photos DB map immediately
+    # Save the URL to the product_photos DB map & persistent backup file immediately
     existing_str = db.get_catalog_setting("product_photos", "{}")
     try:
         existing = json.loads(existing_str)
     except Exception:
         existing = {}
+    if not existing:
+        existing = load_photo_backup()
+
     album = existing.get(album_key, [])
     if not any(isinstance(p, dict) and p.get("url") == photo_url for p in album):
         album.append({"url": photo_url, "label": f"Photo {len(album) + 1}"})
         existing[album_key] = album
         db.set_catalog_setting("product_photos", json.dumps(existing))
+        save_photo_backup(existing)
+
+    return jsonify({"ok": True, "url": photo_url, "albumKey": album_key, "count": len(existing.get(album_key, []))})
 
 
 

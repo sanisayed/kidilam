@@ -2444,40 +2444,41 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                             )}
                           </div>
 
-                          {/* 3. SPECIFICATIONS ZONE: Single Clean Block (Pill Tags & Specs) */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 9px', borderRadius: '6px', background: 'rgba(6, 182, 212, 0.1)', color: 'var(--cyan)', border: '1px solid rgba(6, 182, 212, 0.2)', fontFamily: 'var(--font-mono)' }}>
-                                ⚡ {p.processor} {p.gen ? `(${p.gen})` : ''}
-                              </span>
-
-                              <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 9px', borderRadius: '6px', background: 'rgba(236, 72, 153, 0.1)', color: 'var(--pink)', border: '1px solid rgba(236, 72, 153, 0.2)', fontFamily: 'var(--font-mono)' }}>
-                                💾 {p.ram} GB RAM
-                              </span>
-
-                              <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 9px', borderRadius: '6px', background: 'rgba(124, 58, 237, 0.1)', color: 'var(--purple)', border: '1px solid rgba(124, 58, 237, 0.2)', fontFamily: 'var(--font-mono)' }}>
-                                💿 {p.storage} GB SSD
-                              </span>
-
-                              <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 9px', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
-                                📐 {p.display}
-                              </span>
-
-                              {p.gpu && (
-                                <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 9px', borderRadius: '6px', background: p.isDedicatedGpu ? 'rgba(249, 115, 22, 0.12)' : 'var(--bg)', color: p.isDedicatedGpu ? 'var(--orange)' : 'var(--text-secondary)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
-                                  🎮 {p.gpu}
-                                </span>
-                              )}
-
-                              <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 9px', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
-                                💻 {p.os}
-                              </span>
-
-                              <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 9px', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)', fontStyle: 'italic' }}>
-                                🔌 Charger included
-                              </span>
+                          {/* 3. SPECIFICATIONS ZONE: Clean Structured Text Block */}
+                          <div style={{ 
+                            fontSize: isMobile ? '0.78rem' : '0.83rem', 
+                            lineHeight: 1.6, 
+                            fontFamily: 'var(--font-mono)',
+                            padding: '12px 14px',
+                            background: 'var(--bg)',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border-light-color)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 4
+                          }}>
+                            <div>
+                              <strong>Processor</strong> – {p.processor} {p.gen && <span style={{ color: 'var(--purple)', fontWeight: 800 }}>({p.gen})</span>}
                             </div>
+                            <div><strong>RAM</strong> – <span style={{ color: 'var(--pink)', fontWeight: 800 }}>{p.ram} GB</span></div>
+                            <div><strong>Storage</strong> – <span style={{ color: 'var(--purple)', fontWeight: 800 }}>{p.storage} GB SSD</span></div>
+                            <div><strong>Display</strong> – {p.display}</div>
+                            {p.gpu ? (
+                              <div style={{ color: p.isDedicatedGpu ? 'var(--orange)' : 'inherit', fontWeight: p.isDedicatedGpu ? 800 : 400 }}>
+                                <strong>GPU</strong> – {p.gpu}
+                                {p.isDedicatedGpu && (
+                                  <span style={{ fontSize: '0.62rem', background: 'var(--orange)', color: '#fff', padding: '1px 5px', borderRadius: '3px', marginLeft: 6, fontWeight: 900 }}>
+                                    DEDICATED
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <div style={{ opacity: 0.7 }}><strong>GPU</strong> – Integrated Graphics</div>
+                            )}
+                            <div><strong>OS</strong> – {p.os}</div>
+                            <div style={{ opacity: 0.7, fontStyle: 'italic', fontSize: '0.76rem', marginTop: 2 }}>Charger included.</div>
                           </div>
+
 
                           {/* 4. PRICING ZONE: Strikethrough Original Price + Highlighted Offer Price */}
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, paddingTop: 10, borderTop: '1px solid var(--border-light-color)' }}>

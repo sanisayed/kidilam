@@ -2296,388 +2296,319 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
                       <button className="btn btn-primary" onClick={resetAllFilters}>Reset All Filters</button>
                     </div>
                   ) : (
-                    filteredProducts.map((p, pIdx) => (
-                      <motion.div 
-                        key={`${p.id}_${pIdx}`}
-                        layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="card static"
-                        style={{
-                          backgroundColor: 'var(--bg-card)',
-                          borderRadius: 'var(--radius-lg)',
-                          border: 'var(--border)',
-                          boxShadow: 'var(--shadow-flat)',
-                          padding: isMobile ? '16px' : '22px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          gap: 14
-                        }}
-                      >
-                        <div>
-                          {/* Category & Brand Badges */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-                            <span className={`badge ${
-                              p.brand === 'DELL' ? 'badge-cyan' :
-                              p.brand === 'HP' ? 'badge-purple' :
-                              p.brand === 'LENOVO' ? 'badge-orange' : 'badge-pink'
-                            }`}>
-                              {p.brand}
-                            </span>
+                    filteredProducts.map((p, pIdx) => {
+                      const stableId = p.stableId || p.id;
+                      const photos = getPhotos(stableId, p);
+                      const activeIdx = activePhotoIdx[stableId] || 0;
+                      const activePhoto = photos[activeIdx] || null;
+                      const isUploading = photoUploading[stableId] || false;
 
-                            <span style={{ 
-                              fontSize: '0.65rem', 
-                              fontWeight: 800, 
-                              background: p.category === 'WORKSTATION' ? 'var(--orange-soft)' : p.category === 'EXECUTIVE' ? 'var(--pink-soft)' : 'var(--bg)',
-                              color: p.category === 'WORKSTATION' ? 'var(--orange)' : p.category === 'EXECUTIVE' ? 'var(--pink)' : 'var(--text-muted)',
-                              padding: '2px 8px', 
-                              borderRadius: '4px',
-                              border: '1px solid var(--border-light-color)'
-                            }}>
-                              {p.category === 'WORKSTATION' ? '🖥️ WORKSTATION' : p.category === 'EXECUTIVE' ? '✨ EXECUTIVE' : '💼 BUSINESS'}
-                            </span>
-                          </div>
-
-                          {/* Title */}
-                          <h3 style={{ margin: '0 0 10px 0', fontSize: isMobile ? '1rem' : '1.1rem', fontWeight: 900, color: 'var(--text-primary)', display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                            <span>💻</span> {p.title}
-                          </h3>
-
-                          {/* Specs List */}
-                          <div style={{ 
-                            fontSize: isMobile ? '0.78rem' : '0.83rem', 
-                            lineHeight: 1.5, 
-                            fontFamily: 'var(--font-mono)',
-                            padding: '10px 12px',
-                            background: 'var(--bg)',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--border-light-color)',
+                      return (
+                        <motion.div 
+                          key={`${p.id}_${pIdx}`}
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="card static"
+                          style={{
+                            backgroundColor: 'var(--bg-card)',
+                            borderRadius: 'var(--radius-lg)',
+                            border: 'var(--border)',
+                            boxShadow: 'var(--shadow-flat)',
+                            padding: isMobile ? '16px' : '20px',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 4
-                          }}>
-                            <div style={{ fontWeight: 700 }}>
-                              Processor – {p.processor} {p.gen && <span style={{ color: 'var(--purple)', fontWeight: 800 }}>({p.gen})</span>}
-                            </div>
-                            <div>RAM – <strong style={{ color: 'var(--pink)' }}>{p.ram} GB</strong></div>
-                            <div>Storage – <strong style={{ color: 'var(--purple)' }}>{p.storage} GB SSD</strong></div>
-                            <div>Display – {p.display}</div>
-                            {p.gpu ? (
-                              <div style={{ 
-                                color: p.isDedicatedGpu ? 'var(--orange)' : 'var(--cyan)', 
-                                fontWeight: 800,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 6
+                            gap: 12
+                          }}
+                        >
+                          {/* 1. HEADER ZONE: Brand Badge + Category Tag + Product Title */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                              <span className={`badge ${
+                                p.brand === 'DELL' ? 'badge-cyan' :
+                                p.brand === 'HP' ? 'badge-purple' :
+                                p.brand === 'LENOVO' ? 'badge-orange' : 'badge-pink'
+                              }`}>
+                                {p.brand}
+                              </span>
+
+                              <span style={{ 
+                                fontSize: '0.65rem', 
+                                fontWeight: 800, 
+                                background: p.category === 'WORKSTATION' ? 'var(--orange-soft)' : p.category === 'EXECUTIVE' ? 'var(--pink-soft)' : 'var(--bg)',
+                                color: p.category === 'WORKSTATION' ? 'var(--orange)' : p.category === 'EXECUTIVE' ? 'var(--pink)' : 'var(--text-muted)',
+                                padding: '2px 8px', 
+                                borderRadius: '4px',
+                                border: '1px solid var(--border-light-color)'
                               }}>
-                                <span>🎮 GPU – {p.gpu}</span>
-                                {p.isDedicatedGpu && (
-                                  <span style={{ 
-                                    fontSize: '0.62rem', 
-                                    background: 'var(--orange)', 
-                                    color: '#ffffff', 
-                                    padding: '1px 5px', 
-                                    borderRadius: '3px',
-                                    fontWeight: 900
-                                  }}>
-                                    DEDICATED
-                                  </span>
+                                {p.category === 'WORKSTATION' ? '🖥️ WORKSTATION' : p.category === 'EXECUTIVE' ? '✨ EXECUTIVE' : '💼 BUSINESS'}
+                              </span>
+                            </div>
+
+                            <h3 style={{ margin: 0, fontSize: isMobile ? '1.02rem' : '1.12rem', fontWeight: 900, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>💻</span> {p.title}
+                            </h3>
+                          </div>
+
+                          {/* 2. MEDIA ZONE: Hero Photo / Upload Placeholder + Current Price Badge Overlay */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {activePhoto ? (
+                              <div
+                                style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000', cursor: 'zoom-in', aspectRatio: '16/9' }}
+                                onClick={() => setLightbox({ stableId, idx: activeIdx })}
+                              >
+                                <img
+                                  src={activePhoto.url}
+                                  alt={activePhoto.label}
+                                  onError={(e) => {
+                                    const src = e?.target?.src;
+                                    if (src && src.includes('lh3.googleusercontent.com/d/')) {
+                                      const fileId = src.split('/d/')[1]?.split('=')[0];
+                                      if (fileId) e.target.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                                    }
+                                  }}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                />
+
+                                {/* Floating Top Right Price Tag */}
+                                <div style={{
+                                  position: 'absolute', top: 8, right: 8,
+                                  fontSize: '0.82rem', fontWeight: 900,
+                                  background: 'var(--citrus)', color: '#000000',
+                                  padding: '3px 8px', borderRadius: '6px',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.5)', border: '1px solid #000'
+                                }}>
+                                  AED {p.offerPrice}/-
+                                </div>
+
+                                <span style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>
+                                  {activeIdx + 1} / {photos.length}
+                                </span>
+                                {/* Prev/Next arrows */}
+                                {photos.length > 1 && (
+                                  <>
+                                    <button
+                                      onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx - 1 + photos.length) % photos.length })); }}
+                                      style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                    ><ChevronLeft size={14} /></button>
+                                    <button
+                                      onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx + 1) % photos.length })); }}
+                                      style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                    ><ChevronRight size={14} /></button>
+                                  </>
                                 )}
                               </div>
                             ) : (
-                              <div style={{ opacity: 0.5, fontSize: '0.76rem' }}>
-                                GPU – Integrated Graphics
+                              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.02)', gap: 6, color: 'var(--text-muted)' }}>
+                                <Camera size={28} strokeWidth={1.5} />
+                                <span style={{ fontSize: '0.73rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>No photos uploaded</span>
+
+                                {/* Floating Top Right Price Tag */}
+                                <div style={{
+                                  position: 'absolute', top: 8, right: 8,
+                                  fontSize: '0.82rem', fontWeight: 900,
+                                  background: 'var(--citrus)', color: '#000000',
+                                  padding: '3px 8px', borderRadius: '6px', border: '1px solid #000'
+                                }}>
+                                  AED {p.offerPrice}/-
+                                </div>
                               </div>
                             )}
-                            <div>OS – {p.os}</div>
-                            <div style={{ opacity: 0.7, fontStyle: 'italic', fontSize: '0.74rem', marginTop: 2 }}>Charger included.</div>
-                          </div>
-                        </div>
 
-                        {/* Price Tag */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, paddingTop: 10, borderTop: '1px solid var(--border-light-color)' }}>
-                          {p.originalPrice ? (
-                            <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-                              AED {p.originalPrice}
-                            </span>
-                          ) : <span />}
-
-                          <div style={{ 
-                            fontSize: isMobile ? '0.86rem' : '0.96rem', 
-                            fontWeight: 900, 
-                            background: 'var(--citrus)',
-                            color: '#000000',
-                            padding: '5px 10px',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '2px solid #000'
-                          }}>
-                            Offer Price @{p.offerPrice}/- AED 💰
-                          </div>
-                        </div>
-
-                        {/* ── MULTI-ANGLE PHOTO GALLERY ── */}
-                        {(() => {
-                          const stableId = p.stableId || p.id;
-                          const photos = getPhotos(stableId, p);
-                          const activeIdx = activePhotoIdx[stableId] || 0;
-                          const activePhoto = photos[activeIdx] || null;
-                          const isUploading = photoUploading[stableId] || false;
-
-                          return (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                              {/* 1. HERO PHOTO PREVIEW AT TOP OF CARD */}
-                              {activePhoto ? (
-                                <div
-                                  style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000', cursor: 'zoom-in', aspectRatio: '16/9' }}
-                                  onClick={() => setLightbox({ stableId, idx: activeIdx })}
-                                >
-                                  <img
-                                    src={activePhoto.url}
-                                    alt={activePhoto.label}
-                                    onError={(e) => {
-                                      const src = e?.target?.src;
-                                      if (src && src.includes('lh3.googleusercontent.com/d/')) {
-                                        const fileId = src.split('/d/')[1]?.split('=')[0];
-                                        if (fileId) e.target.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                                      }
-                                    }}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                  />
-
-                                  {/* Floating Top Left Brand Badge */}
-                                  <span className={`badge ${
-                                    p.brand === 'DELL' ? 'badge-cyan' :
-                                    p.brand === 'HP' ? 'badge-purple' :
-                                    p.brand === 'LENOVO' ? 'badge-orange' : 'badge-pink'
-                                  }`} style={{ position: 'absolute', top: 8, left: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-                                    {p.brand}
-                                  </span>
-
-                                  {/* Floating Top Right Price Tag */}
-                                  <div style={{
-                                    position: 'absolute', top: 8, right: 8,
-                                    fontSize: '0.82rem', fontWeight: 900,
-                                    background: 'var(--citrus)', color: '#000000',
-                                    padding: '3px 8px', borderRadius: '6px',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.5)', border: '1px solid #000'
-                                  }}>
-                                    AED {p.offerPrice}/-
-                                  </div>
-
-                                  <span style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>
-                                    {activeIdx + 1} / {photos.length}
-                                  </span>
-                                  {/* Prev/Next arrows */}
-                                  {photos.length > 1 && (
-                                    <>
+                            {/* Thumbnail Strip */}
+                            {photos.length > 0 && (
+                              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+                                {photos.map((ph, i) => (
+                                  <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
+                                    <img
+                                      src={ph.url}
+                                      alt={ph.label}
+                                      onClick={() => setActivePhotoIdx(prev => ({ ...prev, [stableId]: i }))}
+                                      style={{
+                                        width: 52, height: 38, objectFit: 'cover', borderRadius: 6, cursor: 'pointer',
+                                        border: activeIdx === i ? '2px solid var(--purple)' : '1px solid var(--border-light-color)',
+                                        opacity: activeIdx === i ? 1 : 0.65, transition: 'all 0.15s'
+                                      }}
+                                    />
+                                    {isAdmin && (
                                       <button
-                                        onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx - 1 + photos.length) % photos.length })); }}
-                                        style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                      ><ChevronLeft size={14} /></button>
-                                      <button
-                                        onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx + 1) % photos.length })); }}
-                                        style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                      ><ChevronRight size={14} /></button>
-                                    </>
-                                  )}
-                                </div>
-                              ) : (
-                                <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.02)', gap: 6, color: 'var(--text-muted)' }}>
-                                  <Camera size={28} strokeWidth={1.5} />
-                                  <span style={{ fontSize: '0.73rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>No photos uploaded</span>
-
-                                  {/* Floating Top Left Brand Badge */}
-                                  <span className={`badge ${
-                                    p.brand === 'DELL' ? 'badge-cyan' :
-                                    p.brand === 'HP' ? 'badge-purple' :
-                                    p.brand === 'LENOVO' ? 'badge-orange' : 'badge-pink'
-                                  }`} style={{ position: 'absolute', top: 8, left: 8 }}>
-                                    {p.brand}
-                                  </span>
-
-                                  {/* Floating Top Right Price Tag */}
-                                  <div style={{
-                                    position: 'absolute', top: 8, right: 8,
-                                    fontSize: '0.82rem', fontWeight: 900,
-                                    background: 'var(--citrus)', color: '#000000',
-                                    padding: '3px 8px', borderRadius: '6px', border: '1px solid #000'
-                                  }}>
-                                    AED {p.offerPrice}/-
+                                        onClick={() => handleDeletePhoto(p, i)}
+                                        style={{ position: 'absolute', top: -5, right: -5, background: 'var(--pink)', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '0.6rem', fontWeight: 900 }}
+                                        title="Delete this photo"
+                                      >✕</button>
+                                    )}
                                   </div>
-                                </div>
-                              )}
-
-                              {/* Thumbnail Strip */}
-                              {photos.length > 0 && (
-                                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-                                  {photos.map((ph, i) => (
-                                    <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
-                                      <img
-                                        src={ph.url}
-                                        alt={ph.label}
-                                        onClick={() => setActivePhotoIdx(prev => ({ ...prev, [stableId]: i }))}
-                                        style={{
-                                          width: 52, height: 38, objectFit: 'cover', borderRadius: 6, cursor: 'pointer',
-                                          border: activeIdx === i ? '2px solid var(--purple)' : '1px solid var(--border-light-color)',
-                                          opacity: activeIdx === i ? 1 : 0.65, transition: 'all 0.15s'
-                                        }}
-                                      />
-                                      {isAdmin && (
-                                        <button
-                                          onClick={() => handleDeletePhoto(p, i)}
-                                          style={{ position: 'absolute', top: -5, right: -5, background: 'var(--pink)', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '0.6rem', fontWeight: 900 }}
-                                          title="Delete this photo"
-                                        >✕</button>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-
-                              {/* 2. LAPTOP TITLE & CATEGORY BADGE */}
-                              <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                  <h3 style={{ margin: 0, fontSize: isMobile ? '1.02rem' : '1.1rem', fontWeight: 900, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <span>💻</span> {p.title}
-                                  </h3>
-                                </div>
-
-                                {/* 3. COMPACT MINIMALIST SPEC TAG PILLS */}
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                                  <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'rgba(6, 182, 212, 0.1)', color: 'var(--cyan)', border: '1px solid rgba(6, 182, 212, 0.2)', fontFamily: 'var(--font-mono)' }}>
-                                    ⚡ {p.processor} {p.gen ? `(${p.gen})` : ''}
-                                  </span>
-
-                                  <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'rgba(236, 72, 153, 0.1)', color: 'var(--pink)', border: '1px solid rgba(236, 72, 153, 0.2)', fontFamily: 'var(--font-mono)' }}>
-                                    💾 {p.ram} GB RAM
-                                  </span>
-
-                                  <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'rgba(124, 58, 237, 0.1)', color: 'var(--purple)', border: '1px solid rgba(124, 58, 237, 0.2)', fontFamily: 'var(--font-mono)' }}>
-                                    💿 {p.storage} GB SSD
-                                  </span>
-
-                                  {p.gpu && (
-                                    <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: p.isDedicatedGpu ? 'rgba(249, 115, 22, 0.12)' : 'var(--bg)', color: p.isDedicatedGpu ? 'var(--orange)' : 'var(--text-secondary)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
-                                      🎮 {p.gpu}
-                                    </span>
-                                  )}
-
-                                  <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
-                                    📐 {p.display}
-                                  </span>
-                                </div>
+                                ))}
                               </div>
+                            )}
+                          </div>
 
-                              {/* Photo Upload (Admin Only) */}
-                              {isAdmin && (
-                                <label style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                  padding: '8px 0', border: '1.5px dashed var(--purple-soft)', borderRadius: 'var(--radius-sm)',
-                                  cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 800,
-                                  color: 'var(--purple)', background: 'rgba(124, 58, 237, 0.04)',
-                                  opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s', width: '100%'
-                                }}>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    style={{ display: 'none' }}
-                                    disabled={isUploading}
-                                    onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
-                                  />
-                                  <ImagePlus size={15} />
-                                  {isUploading ? 'Uploading to Drive...' : photos.length === 0 ? '📷 Add Photos' : `📷 Add More (${photos.length})`}
-                                </label>
+                          {/* 3. SPECIFICATIONS ZONE: Single Clean Block (Pill Tags & Specs) */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                              <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 9px', borderRadius: '6px', background: 'rgba(6, 182, 212, 0.1)', color: 'var(--cyan)', border: '1px solid rgba(6, 182, 212, 0.2)', fontFamily: 'var(--font-mono)' }}>
+                                ⚡ {p.processor} {p.gen ? `(${p.gen})` : ''}
+                              </span>
+
+                              <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 9px', borderRadius: '6px', background: 'rgba(236, 72, 153, 0.1)', color: 'var(--pink)', border: '1px solid rgba(236, 72, 153, 0.2)', fontFamily: 'var(--font-mono)' }}>
+                                💾 {p.ram} GB RAM
+                              </span>
+
+                              <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 9px', borderRadius: '6px', background: 'rgba(124, 58, 237, 0.1)', color: 'var(--purple)', border: '1px solid rgba(124, 58, 237, 0.2)', fontFamily: 'var(--font-mono)' }}>
+                                💿 {p.storage} GB SSD
+                              </span>
+
+                              <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 9px', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
+                                📐 {p.display}
+                              </span>
+
+                              {p.gpu && (
+                                <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 9px', borderRadius: '6px', background: p.isDedicatedGpu ? 'rgba(249, 115, 22, 0.12)' : 'var(--bg)', color: p.isDedicatedGpu ? 'var(--orange)' : 'var(--text-secondary)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
+                                  🎮 {p.gpu}
+                                </span>
                               )}
 
-                              {/* 4. DUAL ACTION BUTTONS (Copy Text & Share) */}
-                              <div style={{ display: 'flex', gap: 8, width: '100%', marginTop: 2 }}>
-                                <button 
-                                  className="btn btn-primary" 
-                                  style={{ 
-                                    flex: 1, 
-                                    fontSize: '0.83rem', 
-                                    fontWeight: 900,
-                                    justifyContent: 'center',
-                                    background: copiedId === p.id ? 'var(--green)' : 'var(--citrus)',
-                                    color: '#000000',
-                                    padding: '10px 8px',
-                                    borderRadius: '8px'
+                              <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 9px', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)' }}>
+                                💻 {p.os}
+                              </span>
+
+                              <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 9px', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border-light-color)', fontFamily: 'var(--font-mono)', fontStyle: 'italic' }}>
+                                🔌 Charger included
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 4. PRICING ZONE: Strikethrough Original Price + Highlighted Offer Price */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, paddingTop: 10, borderTop: '1px solid var(--border-light-color)' }}>
+                            {p.originalPrice ? (
+                              <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                                AED {p.originalPrice}
+                              </span>
+                            ) : <span />}
+
+                            <div style={{ 
+                              fontSize: isMobile ? '0.88rem' : '0.98rem', 
+                              fontWeight: 900, 
+                              background: 'var(--citrus)',
+                              color: '#000000',
+                              padding: '5px 12px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: '2px solid #000'
+                            }}>
+                              Offer Price @{p.offerPrice}/- AED 💰
+                            </div>
+                          </div>
+
+                          {/* 5. ACTION BAR (FOOTER): Add Photos, Copy Text, Share, Edit, Delete */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                            {/* Photo Upload Button (Admin Only) */}
+                            {isAdmin && (
+                              <label style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                padding: '8px 0', border: '1.5px dashed var(--purple-soft)', borderRadius: 'var(--radius-sm)',
+                                cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 800,
+                                color: 'var(--purple)', background: 'rgba(124, 58, 237, 0.04)',
+                                opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s', width: '100%'
+                              }}>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  style={{ display: 'none' }}
+                                  disabled={isUploading}
+                                  onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
+                                />
+                                <ImagePlus size={15} />
+                                {isUploading ? 'Uploading to Drive...' : photos.length === 0 ? '📷 Add Photos' : `📷 Add More (${photos.length})`}
+                              </label>
+                            )}
+
+                            {/* Action Buttons (Copy Text & Share) */}
+                            <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                              <button 
+                                className="btn btn-primary" 
+                                style={{ 
+                                  flex: 1, 
+                                  fontSize: '0.83rem', 
+                                  fontWeight: 900,
+                                  justifyContent: 'center',
+                                  background: copiedId === p.id ? 'var(--green)' : 'var(--citrus)',
+                                  color: '#000000',
+                                  padding: '10px 8px',
+                                  borderRadius: '8px'
+                                }}
+                                onClick={() => handleCopy(p.rawText, p.id)}
+                              >
+                                {copiedId === p.id ? <Check size={15} /> : <Copy size={15} />}
+                                <span>{copiedId === p.id ? 'Copied!' : '📋 Copy Text'}</span>
+                              </button>
+
+                              <button
+                                className="btn btn-secondary"
+                                style={{
+                                  flex: 1,
+                                  padding: '10px 12px',
+                                  fontSize: '0.83rem',
+                                  fontWeight: 900,
+                                  justifyContent: 'center',
+                                  borderRadius: '8px',
+                                  opacity: sharingId === (p.stableId || p.id) ? 0.7 : 1
+                                }}
+                                disabled={sharingId === (p.stableId || p.id)}
+                                onClick={() => handleSmartShare(p)}
+                              >
+                                {sharingId === (p.stableId || p.id) ? (
+                                  <span>⏳</span>
+                                ) : isMobileShareSupported ? (
+                                  <Share2 size={15} />
+                                ) : (
+                                  <Copy size={15} />
+                                )}
+                                <span>
+                                  {sharingId === (p.stableId || p.id)
+                                    ? 'Sharing...'
+                                    : isMobileShareSupported
+                                      ? photos.length > 0 ? `📲 Share ${photos.length} Photo${photos.length > 1 ? 's' : ''}` : '📲 Share'
+                                      : photos.length === 1
+                                        ? '📋 Copy Photo + Text'
+                                        : photos.length > 1
+                                          ? `📋 Copy + ${photos.length} Photos`
+                                          : '📋 Copy'}
+                                </span>
+                              </button>
+                            </div>
+
+                            {/* Admin Controls (Edit & Delete) */}
+                            {isAdmin && (
+                              <div style={{ display: 'flex', gap: 6, width: '100%', marginTop: 2 }}>
+                                <button
+                                  onClick={() => handleOpenEditProduct(p)}
+                                  style={{
+                                    flex: 1, padding: '6px 8px', background: 'rgba(6, 182, 212, 0.08)',
+                                    color: 'var(--cyan)', border: '1px solid var(--cyan)', borderRadius: 'var(--radius-sm)',
+                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
                                   }}
-                                  onClick={() => handleCopy(p.rawText, p.id)}
                                 >
-                                  {copiedId === p.id ? <Check size={15} /> : <Copy size={15} />}
-                                  <span>{copiedId === p.id ? 'Copied!' : '📋 Copy Text'}</span>
+                                  <Edit3 size={13} /> Edit Item
                                 </button>
 
                                 <button
-                                  className="btn btn-secondary"
+                                  onClick={() => handleDeleteSingleProduct(p)}
                                   style={{
-                                    flex: 1,
-                                    padding: '10px 12px',
-                                    fontSize: '0.83rem',
-                                    fontWeight: 900,
-                                    justifyContent: 'center',
-                                    borderRadius: '8px',
-                                    opacity: sharingId === (p.stableId || p.id) ? 0.7 : 1
+                                    padding: '6px 10px', background: 'rgba(236, 72, 153, 0.08)',
+                                    color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 'var(--radius-sm)',
+                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
                                   }}
-                                  disabled={sharingId === (p.stableId || p.id)}
-                                  onClick={() => handleSmartShare(p)}
                                 >
-                                  {sharingId === (p.stableId || p.id) ? (
-                                    <span>⏳</span>
-                                  ) : isMobileShareSupported ? (
-                                    <Share2 size={15} />
-                                  ) : (
-                                    <Copy size={15} />
-                                  )}
-                                  <span>
-                                    {sharingId === (p.stableId || p.id)
-                                      ? 'Sharing...'
-                                      : isMobileShareSupported
-                                        ? photos.length > 0 ? `📲 Share ${photos.length} Photo${photos.length > 1 ? 's' : ''}` : '📲 Share'
-                                        : photos.length === 1
-                                          ? '📋 Copy Photo + Text'
-                                          : photos.length > 1
-                                            ? `📋 Copy + ${photos.length} Photos`
-                                            : '📋 Copy'}
-                                  </span>
+                                  <Trash2 size={13} /> Delete
                                 </button>
                               </div>
-
-                              {/* Admin Single Item Action Bar */}
-                              {isAdmin && (
-                                <div style={{ display: 'flex', gap: 6, width: '100%', marginTop: 2 }}>
-                                  <button
-                                    onClick={() => handleOpenEditProduct(p)}
-                                    style={{
-                                      flex: 1, padding: '6px 8px', background: 'rgba(6, 182, 212, 0.08)',
-                                      color: 'var(--cyan)', border: '1px solid var(--cyan)', borderRadius: 'var(--radius-sm)',
-                                      fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
-                                    }}
-                                  >
-                                    <Edit3 size={13} /> Edit Item
-                                  </button>
-
-                                  <button
-                                    onClick={() => handleDeleteSingleProduct(p)}
-                                    style={{
-                                      padding: '6px 10px', background: 'rgba(236, 72, 153, 0.08)',
-                                      color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 'var(--radius-sm)',
-                                      fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
-                                    }}
-                                  >
-                                    <Trash2 size={13} /> Delete
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </motion.div>
-                    ))
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })
                   )}
               </div>
             </div>

@@ -2015,239 +2015,235 @@ export default function WhatsAppCatalogPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 24, width: '100%', maxWidth: '100%', overflowX: 'hidden', padding: isMobile ? '0' : '0 8px', boxSizing: 'border-box' }}>
       
-      {/* 1. Header Banner: Pixelvine Royal Purple with Golden Amber Accents (Reference Image Theme) */}
+      {/* 1. Header Banner: Minimalist Pixelvine Royal Purple Bar */}
       <div style={{
-        borderRadius: isMobile ? '18px' : '24px',
-        background: 'linear-gradient(135deg, #2e1065 0%, #311b92 50%, #432874 100%)',
-        boxShadow: '0 12px 36px -6px rgba(49, 27, 146, 0.28), 0 4px 12px rgba(15, 23, 42, 0.05)',
+        borderRadius: isMobile ? '16px' : '20px',
+        background: 'linear-gradient(135deg, #2e1065 0%, #311b92 60%, #432874 100%)',
+        boxShadow: '0 6px 20px -4px rgba(49, 27, 146, 0.22)',
         color: '#ffffff',
-        padding: isMobile ? '18px 14px' : '32px 36px',
+        padding: isMobile ? '12px 14px' : '16px 22px',
         position: 'relative',
         overflow: 'hidden',
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box'
       }}>
-        {/* Subtle decorative dot pattern inspired by reference image */}
+        {/* Subtle decorative dot pattern */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-          opacity: 0.7,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+          opacity: 0.5,
           pointerEvents: 'none'
         }} />
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          {/* Reference Image Pill: GIVEAWAY / LIVE CATALOG */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
-            <span style={{
-              background: '#fbbf24',
-              color: '#000000',
-              fontWeight: 800,
-              fontSize: '0.74rem',
-              padding: '6px 14px',
-              borderRadius: '9999px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              letterSpacing: '0.04em',
-              boxShadow: '0 4px 14px rgba(251, 191, 36, 0.35)'
-            }}>
-              <Sparkles size={13} color="#000000" fill="#000000" />
-              LIVE STOCK 16-09-2026
-            </span>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 10 }}>
+          {/* Top Row: Live Stock Pill + Stats + Synced Indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{
+                background: '#fbbf24',
+                color: '#000000',
+                fontWeight: 800,
+                fontSize: isMobile ? '0.64rem' : '0.7rem',
+                padding: '3px 9px',
+                borderRadius: '9999px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                letterSpacing: '0.02em'
+              }}>
+                <Sparkles size={11} color="#000000" fill="#000000" />
+                16-09-2026
+              </span>
+
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'rgba(255, 255, 255, 0.1)',
+                padding: '3px 10px',
+                borderRadius: '9999px',
+                fontSize: isMobile ? '0.66rem' : '0.72rem',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)'
+              }}>
+                <span>Stock: <strong style={{ color: '#fbbf24', fontWeight: 800 }}>{stats.total}</strong></span>
+                <span style={{ opacity: 0.3 }}>•</span>
+                <span>Workstations: <strong style={{ color: '#fb923c', fontWeight: 800 }}>{stats.workstationCount}</strong></span>
+              </div>
+            </div>
 
             {/* Cloud Sync Status */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.74rem', fontWeight: 700, color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.08)', padding: '5px 12px', borderRadius: '9999px', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.12)' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.85)',
+              background: 'rgba(255,255,255,0.08)',
+              padding: '3px 8px',
+              borderRadius: '9999px'
+            }}>
               <span className="pulsing-green-dot" />
-              <span>Cloud Synced</span>
+              <span>Synced</span>
             </div>
           </div>
 
-          {/* Reference Image Headline */}
-          <h2 style={{
-            margin: '0 0 10px 0',
-            fontSize: isMobile ? '1.4rem' : '2.35rem',
-            fontWeight: 800,
-            lineHeight: 1.2,
-            letterSpacing: '-0.03em',
-            color: '#ffffff'
-          }}>
-            Filter & Share <span style={{ color: '#fbbf24' }}>Executive & Workstation Quotes</span>
-          </h2>
-
-          <p style={{
-            margin: '0 0 18px 0',
-            fontSize: isMobile ? '0.82rem' : '1.02rem',
-            color: 'rgba(255, 255, 255, 0.82)',
-            maxWidth: '680px',
-            lineHeight: 1.55
-          }}>
-            Instant laptop matching with full specs, multi-photo attachments, and verified offer pricing for direct customer WhatsApp chat.
-          </p>
-
-          {/* Quick Metrics Bar */}
+          {/* Main Title & Action Row */}
           <div style={{
             display: 'flex',
-            flexWrap: 'wrap',
             alignItems: 'center',
-            gap: isMobile ? 8 : 12,
-            marginBottom: 18,
-            padding: isMobile ? '10px 12px' : '12px 18px',
-            background: 'rgba(255, 255, 255, 0.07)',
-            borderRadius: '14px',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            width: '100%',
-            maxWidth: '100%',
-            boxSizing: 'border-box'
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 8
           }}>
-            <div style={{ fontSize: isMobile ? '0.78rem' : '0.84rem', fontWeight: 600 }}>
-              Total Stock: <strong style={{ color: '#fbbf24', fontWeight: 800 }}>{stats.total}</strong>
-            </div>
-            <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.2)' }} />
-            <div style={{ fontSize: isMobile ? '0.78rem' : '0.84rem', fontWeight: 600 }}>
-              Matched: <strong style={{ color: '#38bdf8', fontWeight: 800 }}>{stats.matched}</strong>
-            </div>
-            <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.2)' }} />
-            <div style={{ fontSize: isMobile ? '0.78rem' : '0.84rem', fontWeight: 600 }}>
-              Workstations: <strong style={{ color: '#fb923c', fontWeight: 800 }}>{stats.workstationCount}</strong>
-            </div>
-          </div>
+            <h2 style={{
+              margin: 0,
+              fontSize: isMobile ? '0.98rem' : '1.35rem',
+              fontWeight: 800,
+              lineHeight: 1.25,
+              letterSpacing: '-0.02em',
+              color: '#ffffff'
+            }}>
+              Executive & Workstation <span style={{ color: '#fbbf24' }}>Stock Quotes</span>
+            </h2>
 
-          {/* Action Toolbar Inside Hero */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-            {isAdmin ? (
-              <button 
-                style={{
-                  background: 'rgba(34, 197, 94, 0.2)',
-                  border: '1px solid rgba(34, 197, 94, 0.5)',
-                  color: '#4ade80',
-                  padding: '9px 18px',
-                  borderRadius: '9999px',
-                  fontWeight: 700,
-                  fontSize: '0.82rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s'
-                }}
-                onClick={handleLockAdmin}
-                title="Lock Admin Mode"
-              >
-                <Unlock size={14} /> Admin Active (Lock)
-              </button>
-            ) : (
-              <button 
-                style={{
-                  background: 'rgba(255, 255, 255, 0.12)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  color: '#ffffff',
-                  padding: '9px 18px',
-                  borderRadius: '9999px',
-                  fontWeight: 700,
-                  fontSize: '0.82rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(8px)',
-                  transition: 'all 0.15s'
-                }}
-                onClick={() => setShowAdminPinModal(true)}
-              >
-                <Lock size={14} /> Admin Access
-              </button>
-            )}
+            {/* Compact Action Pills */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              flexWrap: 'wrap',
+              width: isMobile ? '100%' : 'auto'
+            }}>
+              {isAdmin ? (
+                <>
+                  <button 
+                    style={{
+                      background: 'rgba(34, 197, 94, 0.2)',
+                      border: '1px solid rgba(34, 197, 94, 0.4)',
+                      color: '#4ade80',
+                      padding: '5px 11px',
+                      borderRadius: '9999px',
+                      fontWeight: 700,
+                      fontSize: '0.72rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer'
+                    }}
+                    onClick={handleLockAdmin}
+                    title="Lock Admin Mode"
+                  >
+                    <Unlock size={12} /> Admin
+                  </button>
 
-            {isAdmin && (
-              <>
-                <button 
-                  style={{
-                    background: '#ffffff',
-                    color: '#311b92',
-                    border: 'none',
-                    padding: '9px 18px',
-                    borderRadius: '9999px',
-                    fontWeight: 800,
-                    fontSize: '0.82rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                  }}
-                  onClick={() => { setEditorInput(rawText); setShowModal(true); }}
-                >
-                  <Edit3 size={14} /> {rawText ? 'Edit Stock List' : 'Paste List'}
-                </button>
+                  <button 
+                    style={{
+                      background: '#ffffff',
+                      color: '#311b92',
+                      border: 'none',
+                      padding: '5px 12px',
+                      borderRadius: '9999px',
+                      fontWeight: 800,
+                      fontSize: '0.72rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
+                    }}
+                    onClick={() => { setEditorInput(rawText); setShowModal(true); }}
+                  >
+                    <Edit3 size={12} /> Edit
+                  </button>
 
+                  <button 
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.12)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255, 255, 255, 0.18)',
+                      padding: '5px 11px',
+                      borderRadius: '9999px',
+                      fontWeight: 700,
+                      fontSize: '0.72rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setShowVaultModal(true)}
+                  >
+                    <Camera size={12} /> Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
+                  </button>
+
+                  <button 
+                    style={{
+                      background: 'rgba(244, 63, 94, 0.15)',
+                      color: '#fda4af',
+                      border: '1px solid rgba(244, 63, 94, 0.25)',
+                      padding: '5px 9px',
+                      borderRadius: '9999px',
+                      fontWeight: 700,
+                      fontSize: '0.72rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer'
+                    }}
+                    onClick={handleClearAllPhotos}
+                    title="Clear photo cache"
+                  >
+                    <Trash2 size={11} /> Clear
+                  </button>
+                </>
+              ) : (
                 <button 
                   style={{
                     background: 'rgba(255, 255, 255, 0.12)',
-                    color: '#ffffff',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
-                    padding: '9px 18px',
+                    color: '#ffffff',
+                    padding: '5px 12px',
                     borderRadius: '9999px',
                     fontWeight: 700,
-                    fontSize: '0.82rem',
-                    display: 'flex',
+                    fontSize: '0.72rem',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 6,
-                    cursor: 'pointer'
+                    gap: 4,
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(6px)'
                   }}
-                  onClick={() => setShowVaultModal(true)}
+                  onClick={() => setShowAdminPinModal(true)}
                 >
-                  <Camera size={14} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
+                  <Lock size={12} /> Admin
                 </button>
+              )}
 
-                <button 
-                  style={{
-                    background: 'rgba(244, 63, 94, 0.15)',
-                    color: '#fda4af',
-                    border: '1px solid rgba(244, 63, 94, 0.3)',
-                    padding: '9px 16px',
-                    borderRadius: '9999px',
-                    fontWeight: 700,
-                    fontSize: '0.82rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    cursor: 'pointer'
-                  }}
-                  onClick={handleClearAllPhotos}
-                >
-                  <Trash2 size={13} /> Clear Photos
-                </button>
-              </>
-            )}
-
-            <button 
-              style={{
-                background: '#fbbf24',
-                color: '#000000',
-                border: 'none',
-                padding: '9px 22px',
-                borderRadius: '9999px',
-                fontWeight: 800,
-                fontSize: '0.84rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-                cursor: 'pointer',
-                marginLeft: isMobile ? 0 : 'auto',
-                width: isMobile ? '100%' : 'auto',
-                justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(251, 191, 36, 0.35)',
-                transition: 'all 0.15s'
-              }}
-              onClick={() => handleCopy(formattedOutputText, 'top-all')}
-            >
-              {copiedId === 'top-all' ? <Check size={15} /> : <Copy size={15} />}
-              <span>{copiedId === 'top-all' ? 'Copied to Clipboard!' : 'Copy Filtered Quotes'}</span>
-            </button>
+              <button 
+                style={{
+                  background: '#fbbf24',
+                  color: '#000000',
+                  border: 'none',
+                  padding: '5px 14px',
+                  borderRadius: '9999px',
+                  fontWeight: 800,
+                  fontSize: '0.74rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  cursor: 'pointer',
+                  marginLeft: isMobile ? 'auto' : 'auto',
+                  boxShadow: '0 2px 8px rgba(251, 191, 36, 0.3)'
+                }}
+                onClick={() => handleCopy(formattedOutputText, 'top-all')}
+              >
+                {copiedId === 'top-all' ? <Check size={12} /> : <Copy size={12} />}
+                <span>{copiedId === 'top-all' ? 'Copied' : 'Copy Quotes'}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

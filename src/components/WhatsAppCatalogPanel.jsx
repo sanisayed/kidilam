@@ -1243,6 +1243,7 @@ export default function WhatsAppCatalogPanel() {
       display: p.display || '14 Inch',
       gpu: p.gpu || '',
       os: p.os || 'Windows 11 Pro',
+      offerPrice: p.offerPrice || ''
     });
   };
 
@@ -1276,6 +1277,7 @@ export default function WhatsAppCatalogPanel() {
   const handleDeleteSingleProduct = useCallback((p) => {
     if (!window.confirm(`⚠️ Are you sure you want to delete "${p.title}" from the catalog list?`)) return;
     const stableId = p.stableId || p.id;
+    const matchKey = findMatchingAlbumKey(p, productPhotos);
 
     let newRawText = rawText;
     if (p.rawText && newRawText.includes(p.rawText)) {
@@ -1288,6 +1290,7 @@ export default function WhatsAppCatalogPanel() {
 
     const newPhotos = { ...productPhotos };
     delete newPhotos[stableId];
+    if (matchKey) delete newPhotos[matchKey];
 
     updateAndSaveRawText(newRawText);
     setProductPhotos(newPhotos);
@@ -1443,20 +1446,14 @@ export default function WhatsAppCatalogPanel() {
         if (cloudText && cloudText.trim().length > 0 && !cloudText.includes('09-09-2026')) {
           setRawText(prev => (prev !== cloudText ? cloudText : prev));
         }
-        if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
+        if (cloudPhotos && typeof cloudPhotos === 'object') {
           setProductPhotos(prev => {
-            let changed = false;
-            const merged = { ...prev };
-            Object.entries(cloudPhotos).forEach(([key, photos]) => {
-              if (!Array.isArray(photos) || photos.length === 0) return;
-              const prevPhotos = prev[key] || [];
-              const newCloudPhotos = photos.filter(cp => !prevPhotos.some(lp => lp.url === cp.url));
-              if (newCloudPhotos.length > 0) {
-                merged[key] = [...prevPhotos, ...newCloudPhotos];
-                changed = true;
-              }
-            });
-            return changed ? merged : prev;
+            const prevStr = JSON.stringify(prev);
+            const cloudStr = JSON.stringify(cloudPhotos);
+            if (prevStr !== cloudStr) {
+              return cloudPhotos;
+            }
+            return prev;
           });
         }
       } catch {}
@@ -1538,8 +1535,18 @@ export default function WhatsAppCatalogPanel() {
     if (window.confirm(`Delete this photo from Vault?`)) {
       // Delete from cloud DB first — prevents poll from restoring it
       await deletePhotoFromCloud(key, photo.url);
-      const updated = { ...productPhotos, [key]: photos.filter((_, i) => i !== idx) };
-      setProductPhotos(updated);
+      setProductPhotos(prev => {
+        const next = {};
+        Object.entries(prev).forEach(([k, list]) => {
+          if (Array.isArray(list)) {
+            const filtered = list.filter(item => item && item.url !== photo.url);
+            if (filtered.length > 0) next[k] = filtered;
+          }
+        });
+        return next;
+      });
+      setToastMessage('🗑️ Photo deleted from Vault.');
+      setTimeout(() => setToastMessage(''), 3000);
     }
   }, [productPhotos]);
 
@@ -1585,7 +1592,7 @@ export default function WhatsAppCatalogPanel() {
     const stableId = p.stableId || p.id;
     setPhotoUploading(prev => ({ ...prev, [stableId]: true }));
 
-    const existing = productPhotos[stableId] || [];
+    const existing = getPhotos(stableId, p);
     const newPhotos = [...existing];
 
     for (let i = 0; i < files.length; i++) {
@@ -1619,7 +1626,9 @@ export default function WhatsAppCatalogPanel() {
     savePhotosToCloud(updated);
     setActivePhotoIdx(prev => ({ ...prev, [stableId]: uniquePhotos.length - 1 }));
     setPhotoUploading(prev => ({ ...prev, [stableId]: false }));
-  }, [productPhotos]);
+    setToastMessage(`✅ ${files.length} photo(s) uploaded successfully!`);
+    setTimeout(() => setToastMessage(''), 3500);
+  }, [productPhotos, getPhotos]);
 
 
 
@@ -1632,31 +1641,56 @@ export default function WhatsAppCatalogPanel() {
 
 
   const handleDeletePhoto = useCallback(async (p, idx) => {
-    if (!window.confirm('Delete this photo?')) return;
+    if (!window.confirm('Are you sure you want to delete this photo?')) return;
     const stableId = p.stableId || p.id;
-    let targetKey = stableId;
-    let photos = productPhotos[stableId] || [];
+    const photos = getPhotos(stableId, p);
+    const photo = photos[idx];
+    if (!photo) return;
 
-    // Resolve target key using strict fingerprint matching
-    if (photos.length === 0 && p && (p.title || p.model)) {
+    let targetKey = stableId;
+    if (p && (p.title || p.model)) {
       const matchKey = findMatchingAlbumKey(p, productPhotos);
       if (matchKey && productPhotos[matchKey] && productPhotos[matchKey].length > 0) {
         targetKey = matchKey;
-        photos = productPhotos[matchKey];
       }
     }
 
-    const photo = photos[idx];
-    if (!photo) return;
-    // Delete from cloud DB FIRST so poll doesn't restore it
+    // 1. Delete from cloud DB & all localStorage keys first
     await deletePhotoFromCloud(targetKey, photo.url);
-    const updated = { ...productPhotos, [targetKey]: photos.filter((_, i) => i !== idx) };
-    setProductPhotos(updated);
-    setActivePhotoIdx(prev => ({
-      ...prev,
-      [stableId]: Math.max(0, (prev[stableId] || 0) - 1)
-    }));
-  }, [productPhotos]);
+
+    // 2. Remove photo.url from ALL keys in React state
+    setProductPhotos(prev => {
+      const next = {};
+      Object.entries(prev).forEach(([k, list]) => {
+        if (Array.isArray(list)) {
+          const filtered = list.filter(item => item && item.url !== photo.url);
+          if (filtered.length > 0) next[k] = filtered;
+        }
+      });
+      return next;
+    });
+
+    // 3. Update active index
+    setActivePhotoIdx(prev => {
+      const current = prev[stableId] || 0;
+      const remaining = photos.length - 1;
+      return {
+        ...prev,
+        [stableId]: remaining <= 0 ? 0 : Math.min(current, remaining - 1)
+      };
+    });
+
+    // 4. Update or close Lightbox if this photo was open
+    setLightbox(prev => {
+      if (!prev || prev.stableId !== stableId) return prev;
+      const remaining = photos.length - 1;
+      if (remaining <= 0) return null;
+      return { ...prev, idx: Math.min(prev.idx, remaining - 1) };
+    });
+
+    setToastMessage('🗑️ Photo deleted.');
+    setTimeout(() => setToastMessage(''), 3000);
+  }, [productPhotos, getPhotos]);
 
   // Smart Share: Mobile = navigator.share all photos + text. PC = clipboard or download.
   const handleSmartShare = useCallback(async (p) => {
@@ -3193,103 +3227,165 @@ export default function WhatsAppCatalogPanel() {
                                 </div>
                               )}
 
-                              {isAdmin && (
-                                <div style={{ position: 'relative' }}>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setOpenAdminMenuId(prev => prev === stableId ? null : stableId);
-                                    }}
-                                    style={{
-                                      width: 28, height: 28, borderRadius: '50%',
-                                      background: 'rgba(255, 255, 255, 0.95)',
-                                      backdropFilter: 'blur(8px)',
-                                      WebkitBackdropFilter: 'blur(8px)',
-                                      border: '1px solid rgba(226, 232, 240, 0.8)',
-                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                      cursor: 'pointer', color: '#1e293b', padding: 0,
-                                      boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
-                                    }}
-                                    title="Admin actions"
-                                  >
-                                    <MoreVertical size={15} />
-                                  </button>
-
-                                  {/* 3-Dot Dropdown Menu */}
-                                  {isMenuOpen && (
-                                    <div 
-                                      onClick={e => e.stopPropagation()}
-                                      style={{
-                                        position: 'absolute', top: 34, right: 0,
-                                        background: '#ffffff', borderRadius: '12px',
-                                        border: '1px solid #e2e8f0',
-                                        boxShadow: '0 10px 25px -5px rgba(15,23,42,0.18)',
-                                        padding: 4, minWidth: 150, zIndex: 30,
-                                        display: 'flex', flexDirection: 'column', gap: 2
-                                      }}
-                                    >
-                                      <label style={{
-                                        display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
-                                        borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#334155',
-                                        cursor: 'pointer', transition: 'background 0.15s'
-                                      }}
-                                      onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                      >
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          multiple
-                                          style={{ display: 'none' }}
-                                          disabled={isUploading}
-                                          onChange={e => {
-                                            setOpenAdminMenuId(null);
-                                            if (e.target.files) handleAddPhotos(p, Array.from(e.target.files));
-                                          }}
-                                        />
-                                        <ImagePlus size={14} color="#6d28d9" />
-                                        <span>Add Photos</span>
-                                      </label>
-
-                                      <button
-                                        onClick={() => {
-                                          setOpenAdminMenuId(null);
-                                          handleOpenEditProduct(p);
-                                        }}
-                                        style={{
-                                          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
-                                          borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#2563eb',
-                                          background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
-                                          cursor: 'pointer'
-                                        }}
-                                        onMouseEnter={e => e.currentTarget.style.background = '#eff6ff'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                      >
-                                        <Edit3 size={14} color="#2563eb" />
-                                        <span>Edit Specs</span>
-                                      </button>
-
-                                      <button
-                                        onClick={() => {
-                                          setOpenAdminMenuId(null);
-                                          handleDeleteSingleProduct(p);
-                                        }}
-                                        style={{
-                                          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
-                                          borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#dc2626',
-                                          background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
-                                          cursor: 'pointer'
-                                        }}
-                                        onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                      >
-                                        <Trash2 size={14} color="#dc2626" />
-                                        <span>Delete Laptop</span>
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
+                              {isAdmin && photos.length === 1 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeletePhoto(p, 0);
+                                  }}
+                                  style={{
+                                    width: 28, height: 28, borderRadius: '50%',
+                                    background: 'rgba(239, 68, 68, 0.92)',
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', color: '#ffffff', padding: 0,
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.12)'
+                                  }}
+                                  title="Delete photo from laptop"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
                               )}
+
+                              <div style={{ position: 'relative' }}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenAdminMenuId(prev => prev === stableId ? null : stableId);
+                                  }}
+                                  style={{
+                                    width: 28, height: 28, borderRadius: '50%',
+                                    background: 'rgba(255, 255, 255, 0.95)',
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(226, 232, 240, 0.8)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', color: '#1e293b', padding: 0,
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
+                                  }}
+                                  title={isAdmin ? "Admin actions" : "Card options"}
+                                >
+                                  <MoreVertical size={15} />
+                                </button>
+
+                                {/* 3-Dot Dropdown Menu */}
+                                {isMenuOpen && (
+                                  <div 
+                                    onClick={e => e.stopPropagation()}
+                                    style={{
+                                      position: 'absolute', top: 34, right: 0,
+                                      background: '#ffffff', borderRadius: '12px',
+                                      border: '1px solid #e2e8f0',
+                                      boxShadow: '0 10px 25px -5px rgba(15,23,42,0.18)',
+                                      padding: 4, minWidth: 165, zIndex: 30,
+                                      display: 'flex', flexDirection: 'column', gap: 2
+                                    }}
+                                  >
+                                    {isAdmin ? (
+                                      <>
+                                        <label style={{
+                                          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                                          borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#334155',
+                                          cursor: 'pointer', transition: 'background 0.15s'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            style={{ display: 'none' }}
+                                            disabled={isUploading}
+                                            onChange={e => {
+                                              setOpenAdminMenuId(null);
+                                              if (e.target.files) handleAddPhotos(p, Array.from(e.target.files));
+                                            }}
+                                          />
+                                          <ImagePlus size={14} color="#6d28d9" />
+                                          <span>Add Photos</span>
+                                        </label>
+
+                                        {photos.length > 0 && (
+                                          <button
+                                            onClick={() => {
+                                              setOpenAdminMenuId(null);
+                                              handleDeletePhoto(p, activeIdx);
+                                            }}
+                                            style={{
+                                              display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                                              borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#dc2626',
+                                              background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
+                                              cursor: 'pointer'
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
+                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                          >
+                                            <Trash2 size={14} color="#dc2626" />
+                                            <span>Delete Current Photo</span>
+                                          </button>
+                                        )}
+
+                                        <button
+                                          onClick={() => {
+                                            setOpenAdminMenuId(null);
+                                            handleOpenEditProduct(p);
+                                          }}
+                                          style={{
+                                            display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                                            borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#2563eb',
+                                            background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
+                                            cursor: 'pointer'
+                                          }}
+                                          onMouseEnter={e => e.currentTarget.style.background = '#eff6ff'}
+                                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                          <Edit3 size={14} color="#2563eb" />
+                                          <span>Edit Specs</span>
+                                        </button>
+
+                                        <button
+                                          onClick={() => {
+                                            setOpenAdminMenuId(null);
+                                            handleDeleteSingleProduct(p);
+                                          }}
+                                          style={{
+                                            display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                                            borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#dc2626',
+                                            background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
+                                            cursor: 'pointer'
+                                          }}
+                                          onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
+                                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                          <Trash2 size={14} color="#dc2626" />
+                                          <span>Delete Laptop</span>
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          setOpenAdminMenuId(null);
+                                          setShowAdminPinModal(true);
+                                        }}
+                                        style={{
+                                          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
+                                          borderRadius: '8px', fontSize: '0.76rem', fontWeight: 700, color: '#311b92',
+                                          background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
+                                          cursor: 'pointer'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = '#f3f0ff'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        <Lock size={14} color="#311b92" />
+                                        <span>Unlock Admin (PIN)</span>
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -3754,6 +3850,38 @@ export default function WhatsAppCatalogPanel() {
               <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: 0.5 }}>
                 {photo.label} — {lightbox.idx + 1} / {photos.length}
               </div>
+
+              {/* Admin Delete Action in Lightbox */}
+              {isAdmin && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const targetProduct = (products || []).find(pr => (pr.stableId || pr.id) === lightbox.stableId);
+                    if (targetProduct) {
+                      await handleDeletePhoto(targetProduct, lightbox.idx);
+                    }
+                  }}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.92)',
+                    border: 'none',
+                    color: '#ffffff',
+                    borderRadius: '9999px',
+                    padding: '6px 18px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    backdropFilter: 'blur(6px)',
+                    boxShadow: '0 2px 10px rgba(239, 68, 68, 0.35)',
+                    transition: 'all 0.15s'
+                  }}
+                  title="Delete this photo from catalog"
+                >
+                  <Trash2 size={14} /> Delete Photo
+                </button>
+              )}
 
               {/* Prev/Next */}
               {photos.length > 1 && (

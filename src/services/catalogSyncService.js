@@ -6,6 +6,8 @@
 //   catalog_photos → each laptop's Cloudinary photo links
 // ============================================================
 
+import { getApiUrl } from '../config';
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
@@ -146,20 +148,54 @@ export async function fetchAllPhotoAlbumsFromSupabase() {
 }
 
 export async function softDeletePhotoInSupabase(albumKey, photoUrl) {
-  if (!isSupabaseReady || !albumKey || !photoUrl) return false;
+  if (!isSupabaseReady || !photoUrl) return false;
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/catalog_photos?album_key=eq.${encodeURIComponent(albumKey)}&select=photos`,
-      { headers: supabaseHeaders() }
-    );
-    if (!res.ok) return false;
-    const rows = await res.json();
-    if (!rows || rows.length === 0) return false;
-    const updatedPhotos = (rows[0].photos || []).map(p =>
-      p.url === photoUrl ? { ...p, deleted: true } : p
+    let matchedRow = null;
+    let targetAlbumKey = albumKey;
+
+    // 1. Try direct lookup by albumKey if provided
+    if (targetAlbumKey) {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/catalog_photos?album_key=eq.${encodeURIComponent(targetAlbumKey)}&select=album_key,photos`,
+        { headers: supabaseHeaders() }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows && rows.length > 0 && Array.isArray(rows[0].photos) && rows[0].photos.some(p => p && p.url === photoUrl)) {
+          matchedRow = rows[0];
+        }
+      }
+    }
+
+    // 2. Global search fallback: find the exact album row containing this photo URL
+    if (!matchedRow) {
+      const allRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/catalog_photos?select=album_key,photos`,
+        { headers: supabaseHeaders() }
+      );
+      if (allRes.ok) {
+        const allRows = await allRes.json();
+        for (const row of allRows) {
+          if (Array.isArray(row.photos) && row.photos.some(p => p && p.url === photoUrl)) {
+            matchedRow = row;
+            targetAlbumKey = row.album_key;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!matchedRow) {
+      console.warn('softDeletePhotoInSupabase: No album row found containing photoUrl:', photoUrl);
+      return false;
+    }
+
+    // Mark as deleted in Supabase so fetchAllPhotoAlbums filters it out permanently
+    const updatedPhotos = (matchedRow.photos || []).map(p =>
+      p && p.url === photoUrl ? { ...p, deleted: true } : p
     );
     const updateRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/catalog_photos?album_key=eq.${encodeURIComponent(albumKey)}`,
+      `${SUPABASE_URL}/rest/v1/catalog_photos?album_key=eq.${encodeURIComponent(targetAlbumKey)}`,
       {
         method: 'PATCH',
         headers: supabaseHeaders(),
@@ -167,7 +203,7 @@ export async function softDeletePhotoInSupabase(albumKey, photoUrl) {
       }
     );
     if (updateRes.ok || updateRes.status === 204) {
-      console.log(`Photo soft-deleted from "${albumKey}" in Supabase`);
+      console.log(`✅ Photo soft-deleted from "${targetAlbumKey}" in Supabase`);
       return true;
     }
   } catch (e) {
@@ -305,25 +341,46 @@ export async function fetchPhotosFromCloud() {
 }
 
 export async function deletePhotoFromCloud(albumKey, photoUrl) {
-  // Remove from localStorage cache
+  // 1. Remove from localStorage cache across ALL keys in both storage keys
   try {
     ['product_photos_v2', 'product_photos_backup_v2'].forEach(storageKey => {
       const str = localStorage.getItem(storageKey);
       if (str) {
         const photos = JSON.parse(str);
-        if (photos[albumKey]) {
-          photos[albumKey] = photos[albumKey].filter(p => p.url !== photoUrl);
-          if (photos[albumKey].length === 0) delete photos[albumKey];
+        let changed = false;
+        Object.keys(photos).forEach(k => {
+          if (Array.isArray(photos[k])) {
+            const before = photos[k].length;
+            photos[k] = photos[k].filter(p => p && p.url !== photoUrl);
+            if (photos[k].length !== before) {
+              changed = true;
+              if (photos[k].length === 0) delete photos[k];
+            }
+          }
+        });
+        if (changed) {
           localStorage.setItem(storageKey, JSON.stringify(photos));
         }
       }
     });
-  } catch {}
+  } catch (e) {
+    console.warn('deletePhotoFromCloud localStorage error:', e);
+  }
 
-  // Soft-delete in Supabase (photo stays in DB with deleted:true)
+  // 2. Soft-delete in Supabase (marks deleted: true so fetchAllPhotoAlbums filters it out permanently)
   if (isSupabaseReady) {
     await softDeletePhotoInSupabase(albumKey, photoUrl);
   }
+
+  // 3. Notify Flask backend if reachable
+  try {
+    const backendUrl = getApiUrl('/api/photos');
+    fetch(backendUrl, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ albumKey, url: photoUrl })
+    }).catch(() => {});
+  } catch {}
 }
 
 export async function clearAllPhotosFromCloud() {

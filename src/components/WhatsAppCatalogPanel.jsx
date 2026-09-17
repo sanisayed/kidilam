@@ -15,27 +15,36 @@ import { getApiUrl } from '../config';
 
 
 /* =========================================================
-   LIVE OFFICIAL CATALOG TEMPLATE (09-09-2026 UPDATED)
+   LIVE OFFICIAL CATALOG TEMPLATE (16-09-2026 UPDATED)
    ========================================================= */
 
-const DEFAULT_STOCK_CATALOG = ` 💻 *LAPTOP PRICE LIST 09-09-2026*
+const DEFAULT_STOCK_CATALOG = `💻 *LAPTOP PRICE LIST 16-09-2026*
 
-━━━━━━━━━━━━━━━
-*💻 Dell Latitude 5490*
-  Processor – Intel core  i5 
-  7 th Generation
-  RAM – 8 GB RAM
+*💻 Dell Latitude 5290 2 IN 1*
+  Processor – Intel Core i5-8th
+  RAM – 8 GB DDR4
   Storage – 256 GB SSD
-  Display –  14 Inch Full HD 
+  Display –  12.5 inch , Touch screen ,HD
+  
+  Charger.
+@~1299/- Aed~
+*Offer price @899/- AED* 💰*
+━━━━━━━━━━━━━━━
+*💻 Dell Latitude 5510*
+  Processor – Intel core  i7
+  10 th Generation
+  RAM – 16 GB RAM  
+  Storage – 256 GB SSD
+  Display –  13.3 Inch , Touch
+  Ports  – USB, HDMI, Audio
   Connectivity -  Wi-Fi & Bluetooth
-  Ports -  USB, HDMI, LAN & Audio
   Keyboard: Backlit Keyboard 
-  GPU -integrated UHD
+  GPU - integrated UHD
   OS –  Windows 11 pro
   
   Charger.
-Price@~999/-AED~
-**Offer Price @699/- AED* 💰
+Price@~1499/-AED~
+*Offer Price @999/- AED💰*
 ━━━━━━━━━━━━━━━
 *💻 Dell Latitude 7410*
   Processor – Intel core  i7
@@ -53,52 +62,20 @@ Price@~999/-AED~
 Price@~1599/-AED~
 **Offer Price @1199/- AED* 💰
 ━━━━━━━━━━━━━━━
-*💻 Dell Latitude 7400*
-  Processor – Intel core  i5
-  8 th Generation
-  RAM – 8 GB RAM  
-  Storage – 256 GB SSD
-  Display –  14 Inch 
-  Ports: USB, HDMI, Audio 
-  Connectivity -  Wi-Fi & Bluetooth
-  Keyboard: Backlit Keyboard 
-  GPU - integrated UHD
-  OS –  Windows 11 pro
-  
-  Charger.
-Price@~999/-AED~
-*Offer Price @749/- AED💰*
-━━━━━━━━━━━━━━━
-
-*💻 Dell Latitude 7420*
-  Processor – Intel Core i5-11th
-  RAM – 16GB
-  Storage – 256 GB SSD
+*💻 Dell Latitude 7430*
+  Processor – Intel Core i7-12th
+  RAM – 32GB DDR4
+  Storage – 512 GB SSD
   Display –  14 Inch 
   Connectivity: Wi-Fi & Bluetooth
-  Ports -  USB-C | Thunderbolt  |  USB-A | HDMI | microSD | Audio.
+  Ports - USB-C / Thunderbolt, USB-A, HDMI & Audio Jack
   Keyboard: Backlit Keyboard 
   GPU - Intel®️ Iris Xe Graphics
   OS –  Windows 11 pro
   
   Charger.
-@~1599/- Aed~
-*Offer price @1299/- AED* 💰
-━━━━━━━━━━━━━━━
-*💻 Dell Latitude 5290 2 IN 1*
-  Processor – Intel Core i5-8th
-  RAM – 8 GB DDR4
-  Storage – 256 GB SSD
-  Display –  12.5 inch , Touch screen ,HD
-  Connectivity -  Wi-Fi & Bluetooth
-  Ports - USB 3.1, USB-C, microSD, Audio
-  Keyboard Type: Detachable Backlit Keyboard
-  GPU - Intel UHD Graphics
-  OS –  Windows 11 pro
-  
-  Charger.
-@~1299/- Aed~
-*Offer price @899/- AED* 💰*
+@~2099/- Aed~
+*Offer price @1799/- AED* 💰
 ━━━━━━━━━━━━━━━
 *💻 Dell Latitude 5420*
   Processor – Intel Core i5-11th
@@ -113,7 +90,67 @@ Price@~999/-AED~
   
   Charger.
 @~1499/- Aed~
-*Offer price @1099/- AED* 💰*
+*Offer price @1099/- AED* 💰
+━━━━━━━━━━━━━━━
+*💻 Dell Latitude 5320*
+  Processor – Intel Core i7-11th
+  RAM – 16GB
+  Storage – 256 GB SSD
+  Display –  13.3 Inch 
+  Connectivity: Wi-Fi & Bluetooth
+  Ports -  Ports – USB, HDMI, Audio & USB Type-C
+  Keyboard: Backlit Keyboard 
+  GPU - Intel®️ Iris Xe Graphics
+  OS –  Windows 11 pro
+  
+  Charger.
+@~1499/- Aed~
+*Offer price @1199/- AED* 💰
+━━━━━━━━━━━━━━━
+*💻 Dell Latitude 5320*
+  Processor – Intel Core i7-11th
+  RAM – 16GB
+  Storage – 256 GB SSD
+  Display –  13.3 Inch , Touch
+  Connectivity: Wi-Fi & Bluetooth
+  Ports -  Ports – USB, HDMI, Audio & USB Type-C
+  Keyboard: Backlit Keyboard 
+  GPU - Intel®️ Iris Xe Graphics
+  OS –  Windows 11 pro
+  
+  Charger.
+@~1599/- Aed~
+*Offer price @1249/- AED* 💰
+━━━━━━━━━━━━━━━
+*💻 Dell Latitude 7430*
+  Processor – Intel Core i7-12th
+  RAM – 16GB DDR4
+  Storage – 512 GB SSD
+  Display –  14 Inch 
+  Connectivity: Wi-Fi & Bluetooth
+  Ports - USB-C / Thunderbolt, USB-A, HDMI & Audio Jack
+  Keyboard: Backlit Keyboard 
+  GPU - Intel®️ Iris Xe Graphics
+  OS –  Windows 11 pro
+  
+  Charger.
+@~1999/- Aed~
+*Offer price @1699/- AED* 💰
+━━━━━━━━━━━━━━━
+*💻 Dell Latitude 7430*
+  Processor – Intel Core i7-12th
+  RAM – 32GB DDR4
+  Storage – 512 GB SSD
+  Display –  14 Inch 
+  Connectivity: Wi-Fi & Bluetooth
+  Ports - USB-C / Thunderbolt, USB-A, HDMI & Audio Jack
+  Keyboard: Backlit Keyboard 
+  GPU - Intel®️ Iris Xe Graphics
+  OS –  Windows 11 pro
+  
+  Charger.
+@~2099/- Aed~
+*Offer price @1799/- AED* 💰
 ━━━━━━━━━━━━━━━
 *💻 Dell Alienware M17 R2*
 Processor – Intel Core i7
@@ -129,23 +166,6 @@ OS –  Windows 11 pro
 Charger.
   @~3199/- Aed~
  *Offer Price @2799/- AED💰*
-━━━━━━━━━━━━━━━
-*💻 DELL LATITUDE G5 5500*
- Processor – Intel Core i7, 10 Th
- RAM – 16 GB RAM , DDR4
- Storage – 512 GB  SSD
- GPU-  integrated UHD
- Graphics - Nvidia 6 GB GPU 
- Refresh Rate - 144 HZ
- Display –  15.6 Inch
- Connectivity -  Wi-Fi & Bluetooth
- Ports - Ports: USB, HDMI, Audio & LAN
- Keyboard: Backlit Keyboard with Numeric Keypad
-OS –  Windows 11 pro
-Charger.
-
-  @~2699 AED~/- 
- *Offer Price @2099/- AED💰*
 ━━━━━━━━━━━━━━━
 *DELL PRECISION*
 
@@ -167,66 +187,6 @@ Charger.
 ━━━━━━━━━━━━━━━
 *HP SERIES*
 
-💻 *HP Elitebook 630 G11*
-  Processor – Ultra 7
-  RAM – 32 GB DDR5
-  Storage – 512 GB SSD
-  Display –  13.3 Inch
-  GPU- Intel iris XE
-  Connectivity: Wi-Fi & Bluetooth 
-  Ports - USB | USB-C | HDMI | Audio Jack 
-  Keyboard -  Backlit Keyboard
-  OS –  Windows 11 pro
-  Charger.
-
- @~2999 AED~/-
-*Offer Price @2599/- AED* 💰
-━━━━━━━━━━━━━━━
-💻 *HP Elitebook 830 G11*
-  Processor – Ultra 7
-  RAM – 16 GB DDR5
-  Storage – 512 GB SSD
-  Display –  13.3 Inch
-  GPU- Intel iris XE
-  Connectivity: Wi-Fi & Bluetooth 
-  Ports -  USB | USB-C | HDMI | Audio Jack 
-  Keyboard - Backlit Keyboard
-  OS –  Windows 11 pro
-  Charger.
-
- @~2699 AED~/-
-*Offer Price @2399/- AED* 💰
-━━━━━━━━━━━━━━━
-*💻 HP ELITE X2 G4 2 IN 1* 
- Processor – Intel core i5 
- 11 th Generation
- RAM – 8 GB RAM
- Storage – 256 GB SSD
- Display –  12.5 inch  , Touch, Detachable keyboard
- Connectivity: Wi-Fi & Bluetooth 
- Ports: USB | USB-C | Audio Jack 
- GPU- Intel iris XE
- OS –  Windows 11 pro
- Charger.
-
-@~AED1599/-~ 
- *Offer Price @1299/- AED💰*
-━━━━━━━━━━━━━━━
-*💻 HP PROBOOK 640 G4*
-  Processor – Intel core i7 - 8 th
-  RAM –16  GB RAM
-  Storage – 512GB SSD
-  Display –  14 Inch 
-  Connectivity: Wi-Fi & Bluetooth 
-  Ports: USB, USB-C, HDMI, VGA,  Audio, SD Card
-  Keyboard: Backlit Keyboard 
-  GPU- Intel UHD Graphics
-  OS –  Windows 11 pro
-  Charger.
-
-  @~1299/- AED~
-*Offer Price @899/- AED💰*
-━━━━━━━━━━━━━━━
 *💻 HP ELITE X2 1013 G3* 
  Processor – Intel core i5 
  8 th Generation
@@ -242,39 +202,118 @@ Charger.
 @~AED1299/-~ 
  *Offer Price @899/- AED💰*
 ━━━━━━━━━━━━━━━
+*💻 HP ELITEBOOK 850 G6* 
+ Processor – Intel core i7
+ 8 th Generation
+ RAM – 8 GB RAM
+ Storage – 256 GB SSD
+ Display –  15.6 inch
+ Connectivity: Wi-Fi & Bluetooth 
+ Ports: USB-A, USB-C, HDMI & RJ-45
+ GPU-  Intel UHD Graphics
+ OS –  Windows 11 pro
+ Charger.
+
+@~AED1399/-~ 
+ *Offer Price @999/- AED💰*
+━━━━━━━━━━━━━━━
+*💻 HP ZBOOK 14 U G6*
+  Processor – Intel core i7 - 8 th
+  RAM –16  GB RAM , DDR4
+  Storage – 512GB SSD
+  Display –  14 Inch 
+  Graphics - 4 GB Graphics
+  Connectivity: Wi-Fi & Bluetooth 
+  Ports: USB-A, USB-C, HDMI & Audio Jack
+  Keyboard: Backlit Keyboard 
+  GPU- Intel UHD Graphics
+  OS –  Windows 11 pro
+  Charger.
+
+  @~1799/- AED~
+**Offer Price @1499/- AED💰*
+━━━━━━━━━━━━━━━
+💻 *HP Elitebook 630 G11*
+  Processor – Ultra 7
+  RAM – 32 GB DDR5
+  Storage – 512 GB SSD
+  Display –  13.3 Inch
+  GPU- Intel iris XE
+  Connectivity: Wi-Fi & Bluetooth 
+  Ports - USB | USB-C | HDMI | Audio Jack 
+  Keyboard -  Backlit Keyboard
+  OS –  Windows 11 pro
+  Charger.
+
+ @~2999 AED~/-
+*Offer Price @2599/- AED* 💰
+━━━━━━━━━━━━━━━
+💻 *HP ZBOOK FURRY G9*
+  Processor – Intelcore i7 , 12 th
+  RAM – 16 GB DDR5     
+  Storage – 512 GB SSD
+  Display –  16 Inch
+  GPU- Intel iris XE
+  Graphics - 8 GB GPU 
+  Connectivity: Wi-Fi & Bluetooth 
+  Ports -USB, USB-C / Thunderbolt, HDMI, Audio 
+  Keyboard -  Backlit Keyboard
+  OS –  Windows 11 pro
+  Charger.
+
+ @~3599AED~/-
+*Offer Price @3199/- AED* 💰
+━━━━━━━━━━━━━━━
 
 *LENOVO THINKPAD SERIES*
 
-
-💻 *LENOVO THINKPAD T14 GEN 4*
-Processor – Intel Core i7
-13 th Generation
-RAM – 16 GB RAM , DDR5
-Storage –512 GB  SSD
-Display –  14 Inch 
-Graphics:  Intel iris XE
-Connectivity: Wi-Fi & Bluetooth 
-Ports: USB-A, USB-C/Thunderbolt 4, HDMI,  Audio
-Keyboard: Backlit Keyboard
-OS –  Windows 11 pro
-Charger.
- @~AED2499/-~ 
- *Offer Price @2099/- AED💰*
+*💻 LENOVO THINKPAD T470S*
+  Processor – Intel core  i5
+  7 th Generation
+  RAM – 8 GB 
+  Storage – 256 GB SSD
+  Display –  14 Inch , HD
+  Graphics:  integrated UHD
+ Connectivity: Wi-Fi & Bluetooth 
+ Ports: USB, USB-C, HDMI, Mini DisplayPort, , Audio, SD Card
+ Keyboard: Backlit Keyboard
+  OS –  Windows 11 pro
+  
+  Charger.
+ @~AED 999/-~ 
+**Offer Price @599/- AED💰*
 ━━━━━━━━━━━━━━━
-💻 *LENOVO THINKPAD P14S*
-Processor – i7- 10th
-RAM – 16 GB RAM , DDR4
-Storage –512 GB  SSD
-Display –  14
-Graphics- 2 GB GPU
-GPU - integrated UHD
-Connectivity: Wi-Fi & Bluetooth 
- Ports:  USB-A, USB-C, Thunderbolt , HDMI , Audio
- Keyboard: Backlit Keyboard 
-OS –  Windows 11 pro
-Charger.
- @~AED 1999/-~ 
- *Offer Price @1699/- AED💰*
+*💻 LENOVO THINKPAD T490**
+  Processor – Intel core  i7
+  8 th Generation
+  RAM – 16 GB 
+  Storage – 256 GB SSD
+  Display –  14 Inch
+  Graphics:  integrated UHD
+ Connectivity: Wi-Fi & Bluetooth 
+ Ports: USB, USB-C/Thunderbolt , HDMI, Audio
+ Keyboard: Backlit Keyboard
+  OS –  Windows 11 pro
+  
+  Charger.
+ @~AED 1299/-~ 
+*Offer Price @999/- AED💰*
+━━━━━━━━━━━━━━━
+*💻 LENOVO THINKPAD T490*
+  Processor – Intel core  i5
+  8 th Generation
+  RAM – 16 GB 
+  Storage – 256 GB SSD
+  Display –  14 Inch
+  Graphics:  integrated UHD
+ Connectivity: Wi-Fi & Bluetooth 
+ Ports: USB, USB-C/Thunderbolt , HDMI, Audio
+ Keyboard: Backlit Keyboard
+  OS –  Windows 11 pro
+  
+  Charger.
+ @~AED 1299/-~ 
+*Offer Price @899/- AED💰*
 ━━━━━━━━━━━━━━━
 *💻 LENOVO THINKPAD L15 GEN 1*
   Processor – Intel core  i5
@@ -292,69 +331,37 @@ Charger.
 @~AED 1499/-~ 
 *Offer Price @1199/- AED💰*
 ━━━━━━━━━━━━━━━
-*💻 LENOVO THINKPAD L15*
-  Processor – Intel core  i3
-  10 th Generation
-  RAM – 8 GB
-  Storage – 256 GB SSD
-  Display –  15.6 Inch
-  GPU - integrated UHD
-  Connectivity: Wi-Fi & Bluetooth 
-  Ports: USB-A, USB-C, HDMI, Audio, microSD
-  Keyboard: Full-Size Keyboard with Numeric Keypad
-  OS –  Windows 11 pro
-  
-  Charger.
-@~AED 1399/-~ 
-*Offer Price @1099/- AED💰*
-━━━━━━━━━━━━━━━
-💻 *LENOVO THINKPAD X1 CARBON GEN 7*
- Processor – Intel Core i7
- 8 th Generation
- RAM – 16 GB RAM
- Storage –512 GB  SSD
- Display –  14 Inch 
- Connectivity: Wi-Fi & Bluetooth 
- GPU - integrated UHD
- Ports: USB-C/Thunderbolt / USB-A/ HDMI/ Audio
- Keyboard: Backlit Keyboard 
-OS –  Windows 11 pro
-Charger.
-
- @~AED 1599/-~ 
- *Offer Price @1299/- AED💰*
-━━━━━━━━━━━━━━━
-💻 *LENOVO THINKPAD T14S*
- Processor – Intel Core i7
- 10 th Generation
- RAM – 16 GB RAM , DDR4
- Storage –512 GB  SSD
- Display –  14 Inch 
- Connectivity: Wi-Fi & Bluetooth 
- GPU - integrated UHD
- Ports: USB-A, USB-C/Thunderbolt , HDMI, Audio
- Keyboard: Backlit Keyboard 
-OS –  Windows 11 pro
-Charger.
-
- @~AED 1699/-~ 
- *Offer Price @1399/- AED💰*
-━━━━━━━━━━━━━━━
-*💻 LENOVO THINKPAD L14 GEN 1*
+*💻 LENOVO THINKPAD L13*
   Processor – Intel core  i7
   10 th Generation
-  RAM – 8 GB 
-  Storage – 256 GB SSD
-  Display –  14 Inch
+  RAM – 16 GB , DDR4
+  Storage – 512 GB SSD
+  Display –  13.3 Inch
   Graphics:  integrated UHD
  Connectivity: Wi-Fi & Bluetooth 
- Ports: USB, USB-C, HDMI, Audio, microSD
+ Ports: USB | USB-C | HDMI | Audio Jack 
  Keyboard: Backlit Keyboard
   OS –  Windows 11 pro
   
   Charger.
- @~AED 1299/-~ 
-*Offer Price @999/- AED💰*
+ @~AED 1599/-~ 
+*Offer Price @1199/- AED💰*
+━━━━━━━━━━━━━━━
+💻 *LENOVO THINKPAD X13 YOGA 2 IN 1*
+ Processor – Intel Core i5
+ 10 th Generation
+ RAM – 16 GB RAM
+ Storage –256 GB  SSD
+ Display –  13.3 Inch 
+ Connectivity: Wi-Fi & Bluetooth 
+ GPU -  Intel iris XE
+ Ports:  USB-C,  USB-A, HDMI, Audio Jack, MicroSD Card Reader
+ Keyboard: Backlit Keyboard 
+OS –  Windows 11 pro
+Charger.
+
+ @~AED 1499/-~ 
+ *Offer Price @1199/- AED💰*
 ━━━━━━━━━━━━━━━
 *💻 LENOVO THINKPAD T14 GEN 1*
   Processor – Intel core  i7
@@ -372,6 +379,55 @@ Charger.
  @~AED 1599/-~ 
 *Offer Price @1299/- AED💰*
 ━━━━━━━━━━━━━━━
+*💻 LENOVO THINKPAD T14 GEN2*
+  Processor – Intel core  i5
+  11 th Generation
+  RAM – 16 GB 
+  Storage – 512 GB SSD
+  Display –  14 Inch
+  Graphics:  Intel iris XE
+ Connectivity: Wi-Fi & Bluetooth 
+ Ports:  USB, USB Type-C, HDMI, Audio
+ Keyboard: Backlit Keyboard
+  OS –  Windows 11 pro
+  
+  Charger.
+ @~AED 1599/-~ 
+**Offer Price @1299/- AED💰*
+
+━━━━━━━━━━━━━━━
+💻 *LENOVO THINKPAD T14S*
+ Processor – Intel Core i7
+ 10 th Generation
+ RAM – 16 GB RAM , DDR4
+ Storage –512 GB  SSD
+ Display –  14 Inch 
+ Connectivity: Wi-Fi & Bluetooth 
+ GPU - integrated UHD
+ Ports: USB-A, USB-C/Thunderbolt , HDMI, Audio
+ Keyboard: Backlit Keyboard 
+OS –  Windows 11 pro
+Charger.
+
+ @~AED 1699/-~ 
+ *Offer Price @1399/- AED💰*
+━━━━━━━━━━━━━━━
+*💻 LENOVO THINKPAD T14 GEN2*
+  Processor – Intel core  i7
+  11 th Generation
+  RAM – 16 GB 
+  Storage – 512 GB SSD
+  Display –  14 Inch
+  Graphics:  Intel iris XE
+ Connectivity: Wi-Fi & Bluetooth 
+ Ports: USB, HDMI, Audio & USB Type-C 
+ Keyboard: Backlit Keyboard
+  OS –  Windows 11 pro
+  
+  Charger.
+ @~AED 1799/-~ 
+*Offer Price @1499/- AED💰*
+━━━━━━━━━━━━━━━
 *💻 LENOVO THINKPAD X1 CARBON GEN 8**
   Processor – Intel core  i7
   10 th Generation
@@ -388,85 +444,53 @@ Charger.
  @~AED 1899/-~
 *Offer Price @1599/- AED💰*
 ━━━━━━━━━━━━━━━
-*💻 LENOVO THINKPAD T490*
-  Processor – Intel core  i7
-  8 th Generation
-  RAM – 16 GB 
-  Storage – 256 GB SSD
-  Display –  14 Inch
-  Graphics:  integrated UHD
- Connectivity: Wi-Fi & Bluetooth 
- Ports: USB, USB-C/Thunderbolt , HDMI, Audio
- Keyboard: Backlit Keyboard
-  OS –  Windows 11 pro
-  
-  Charger.
- @~AED 1299/-~ 
-*Offer Price @999/- AED💰*
+💻 *LENOVO THINKPAD P14S*
+Processor – i7- 10th
+RAM – 16 GB RAM , DDR4
+Storage –512 GB  SSD
+Display –  14
+Graphics- 2 GB GPU
+GPU - integrated UHD
+Connectivity: Wi-Fi & Bluetooth 
+ Ports:  USB-A, USB-C, Thunderbolt , HDMI , Audio
+ Keyboard: Backlit Keyboard 
+OS –  Windows 11 pro
+Charger.
+ @~AED 1999/-~ 
+ **Offer Price @1699/- AED💰*
 ━━━━━━━━━━━━━━━
-*💻 LENOVO THINKPAD T490*
-  Processor – Intel core  i5
-  8 th Generation
-  RAM – 16 GB 
-  Storage – 256 GB SSD
-  Display –  14 Inch
-  Graphics:  integrated UHD
- Connectivity: Wi-Fi & Bluetooth 
- Ports: USB, USB-C/Thunderbolt , HDMI, Audio
- Keyboard: Backlit Keyboard
-  OS –  Windows 11 pro
-  
-  Charger.
- @~AED 1299/-~ 
-*Offer Price @899/- AED💰*
-━━━━━━━━━━━━━━━
-*💻 LENOVO THINKPAD T470S*
-  Processor – Intel core  i5
-  7 th Generation
-  RAM – 8 GB 
-  Storage – 256 GB SSD
-  Display –  14 Inch , HD
-  Graphics:  integrated UHD
- Connectivity: Wi-Fi & Bluetooth 
- Ports: USB, USB-C, HDMI, Mini DisplayPort, , Audio, SD Card
- Keyboard: Backlit Keyboard
-  OS –  Windows 11 pro
-  
-  Charger.
- @~AED 999/-~ 
-*Offer Price @599/- AED💰*
-━━━━━━━━━━━━━━━
-*💻 LENOVO THINKPAD T480*
-  Processor – Intel core  i5
-  8 th Generation
-  RAM – 8 GB 
-  Storage – 256 GB SSD
-  Display –  14 Inch , HD
-  Graphics:  integrated UHD
- Connectivity: Wi-Fi & Bluetooth 
- Ports: USB, USB-C/Thunderbolt , HDMI, Audio, SD Card
- Keyboard: Backlit Keyboard
-  OS –  Windows 11 pro
-  
-  Charger.
- @~AED 1399/-~ 
-*Offer Price @899/- AED💰*
-━━━━━━━━━━━━━━━
-*💻 LENOVO THINKPAD L13*
+*💻 LENOVO THINKPAD P1 GEN 3*
   Processor – Intel core  i7
   10 th Generation
   RAM – 16 GB , DDR4
   Storage – 512 GB SSD
-  Display –  13.3 Inch
-  Graphics:  integrated UHD
- Connectivity: Wi-Fi & Bluetooth 
- Ports: USB | USB-C | HDMI | Audio Jack 
- Keyboard: Backlit Keyboard
+  Display –  15.6 Inch ,touch
+  GPU - Intel iris Xe
+  Graphics- 4 GB Graphics 
+  Connectivity: Wi-Fi & Bluetooth 
+  Ports:USB-C, USB-A,HDMI,Mini D
+  Keyboard: Full-Size Keyboard with Numeric Keypad
   OS –  Windows 11 pro
   
   Charger.
- @~AED 1599/-~ 
-*Offer Price @1199/- AED💰*
+@~AED 2599/-~ 
+*Offer Price @2199/- AED💰*
+━━━━━━━━━━━━━━━
+*💻 LENOVO THINKPAD X1 CARBON GEN 10**
+  Processor – Intel core  i7
+  12 th Generation
+  RAM – 32 GB , DDR5
+  Storage – 512 GB SSD
+  GPU - Intel iris Xe
+  Display –  14 Inch
+  Connectivity: Wi-Fi & Bluetooth 
+  Ports:  Thunderbolt 4, USB-A, HDMI & Audio Jack
+  Keyboard: Backlit Keyboard 
+  OS –  Windows 11 pro
+  
+  Charger.
+ @~AED 2699/-~
+*Offer Price @2399/- AED💰*
 ━━━━━━━━━━━━━━━
 *💻 Lenovo ideapad 3 chromebook* 
  4 GB RAM
@@ -495,20 +519,6 @@ Charger
   Charger.
 @~1399/- Aed~
 *Offer price @999/- AED*
-━━━━━━━━━━━━━━━
-*💻 Microsoft Surface pro 8  2 in 1* 
-  Processor – Intel Core i5-11th
-  RAM – 16 GB
-  Storage – 256 GB SSD
-  Display –  12.5 Inch Touch  detachable Keyboard
-  Connectivity: Wi-Fi & Bluetooth 
-  Ports: USB-C / Thunderbolt | Audio Jack
-  GPU-intel iris XE
-  OS –  Windows 11 pro
-  
-  Charger.
-@~2399/- Aed~
-*Offer price @1999/- AED*
 ━━━━━━━━━━━━━━━
 *💻 Microsoft Surface Go 2  2 in 1* 
   Processor – Intel pentium
@@ -638,18 +648,26 @@ function parseWhatsAppCatalog(rawText) {
   const finalizeBlock = (blockLines) => {
     if (blockLines.length === 0) return;
 
-    // Filter out pure separator lines like ━━━━━ from block
-    const cleanLines = blockLines
-      .map(l => l.trim())
-      .filter(l => l && !/^[━─=\-_*#]{4,}$/.test(l));
-
+    // Filter out pure separator lines like ━━━━━ from block ends/internal
+    const cleanLines = blockLines.filter(l => !/^[━─=\-_*#]{4,}$/.test(l.trim()));
     if (cleanLines.length === 0) return;
 
-    const fullBlockText = cleanLines.join('\n').trim();
+    // The raw text as pasted, preserving original indentation and internal blank lines:
+    let firstNonEmpty = 0;
+    while (firstNonEmpty < cleanLines.length && !cleanLines[firstNonEmpty].trim()) {
+      firstNonEmpty++;
+    }
+    let lastNonEmpty = cleanLines.length - 1;
+    while (lastNonEmpty >= 0 && !cleanLines[lastNonEmpty].trim()) {
+      lastNonEmpty--;
+    }
+    if (firstNonEmpty > lastNonEmpty) return;
+
+    const fullBlockText = cleanLines.slice(firstNonEmpty, lastNonEmpty + 1).join('\n').trim();
     if (!fullBlockText) return;
 
-    // Title line: line with 💻 or first line
-    let titleLine = cleanLines.find(l => l.includes('💻')) || cleanLines[0];
+    // Title line: line with 💻 or first non-empty line
+    let titleLine = cleanLines.slice(firstNonEmpty).find(l => l.includes('💻')) || cleanLines[firstNonEmpty];
     let cleanTitle = titleLine
       .replace(/[*💻•]/g, '')
       .replace(/\s+/g, ' ')
@@ -669,9 +687,12 @@ function parseWhatsAppCatalog(rawText) {
     let offerPrice = 0;
     let embeddedPhotos = [];
 
-    cleanLines.forEach(l => {
+    cleanLines.slice(firstNonEmpty).forEach(rawL => {
+      const l = rawL.trim();
+      if (!l) return;
+
       // Do not treat product title line as a spec line
-      if (l === titleLine || (l.includes('💻') && l.replace(/[*💻•]/g, '').trim() === cleanTitle)) {
+      if (l === titleLine.trim() || (l.includes('💻') && l.replace(/[*💻•]/g, '').trim() === cleanTitle)) {
         return;
       }
       const lower = l.toLowerCase();
@@ -701,6 +722,7 @@ function parseWhatsAppCatalog(rawText) {
       if (!lower.includes('display') && !lower.includes('inch') && !lower.includes('screen')) {
         const m = l.match(/(\d+)\s*(?:th|Th|st|nd|rd)?\s*(?:Gen|Generation)/i) || 
                   l.match(/i[3579]\s*-\s*(\d+)/i) || 
+                  l.match(/(?:core\s*i[3579]|intelcore\s*i[3579]|i[3579])[\s,\-]+(\d{1,2})\s*(?:th|Th)?\b/i) ||
                   l.match(/(\d+)\s*(?:th|Th)\b/i);
         if (m) {
           const num = parseInt(m[1], 10);
@@ -831,13 +853,24 @@ function parseWhatsAppCatalog(rawText) {
       else os = 'Windows 11 Pro';
     }
 
-    // Clean stable ID generation (no 10thgenth bug)
+    // Clean display processor: strip trailing gen suffixes like ", 11th", "-8th", "- 8 th", ", 12 th", ", 10 Th"
+    const displayProcessor = processor
+      .replace(/[,–-]\s*\d+\s*(?:th|Th|st|nd|rd)\s*(?:gen|generation)?\s*$/i, '')
+      .replace(/\s+\d+\s*(?:th|Th|st|nd|rd)\s*(?:gen|generation)?\s*$/i, '')
+      .replace(/-\s*\d+\s*(?:th|Th)\s*$/i, '')
+      .replace(/,\s*\d+\s*(?:th|Th)\s*$/i, '')
+      .trim();
+
+    // Clean stable ID generation with touch & price differentiation for sibling models
     const genNum = gen ? gen.replace(/\D/g, '') : '';
+    const cleanProcId = (displayProcessor || processor).toLowerCase().replace(/[^a-z0-9]/g, '');
     const specParts = [
-      processor ? processor.toLowerCase().replace(/[^a-z0-9]/g, '') : '',
+      cleanProcId,
       genNum ? `${genNum}th` : '',
       ram ? `${ram}gb` : '',
-      storage ? `${storage}gb` : ''
+      storage ? `${storage}gb` : '',
+      isTouch ? 'touch' : '',
+      offerPrice ? `${offerPrice}` : ''
     ].filter(Boolean).join('_');
 
     const modelBase = normalizeModelKey(cleanTitle);
@@ -850,7 +883,8 @@ function parseWhatsAppCatalog(rawText) {
       brand,
       category,
       group: currentGroup,
-      processor,
+      processor: displayProcessor || processor,
+      rawProcessor: processor,
       gen,
       ram: ram || 8,
       storage: storage || 256,
@@ -897,31 +931,35 @@ function parseWhatsAppCatalog(rawText) {
   };
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+    const line = lines[i];
+    const trimmed = line.trim();
 
     // Divider line check
-    if (/^[━─=\-_*#]{4,}$/.test(line)) {
-      continue;
-    }
-
-    // Skip global list title
-    if (isHeaderLine(line)) {
-      continue;
-    }
-
-    // Category / Group header
-    if (isGroupHeaderLine(line)) {
+    if (/^[━─=\-_*#]{4,}$/.test(trimmed)) {
       if (currentBlock.length > 0) {
         finalizeBlock(currentBlock);
         currentBlock = [];
       }
-      currentGroup = line.replace(/\*/g, '').trim();
+      continue;
+    }
+
+    // Skip global list title
+    if (isHeaderLine(trimmed)) {
+      continue;
+    }
+
+    // Category / Group header
+    if (isGroupHeaderLine(trimmed)) {
+      if (currentBlock.length > 0) {
+        finalizeBlock(currentBlock);
+        currentBlock = [];
+      }
+      currentGroup = trimmed.replace(/\*/g, '').trim();
       continue;
     }
 
     // Product start line
-    if (isProductStartLine(line)) {
+    if (isProductStartLine(trimmed)) {
       if (currentBlock.length > 0) {
         finalizeBlock(currentBlock);
         currentBlock = [];
@@ -944,11 +982,11 @@ function parseWhatsAppCatalog(rawText) {
    ========================================================= */
 
 function convertProductsListToText(productsList) {
-  if (!productsList || productsList.length === 0) return EXAMPLE_TEMPLATE;
+  if (!productsList || productsList.length === 0) return DEFAULT_STOCK_CATALOG;
 
   const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
   const validProds = productsList.filter(p => p && (p.model || p.name || p.title));
-  if (validProds.length === 0) return EXAMPLE_TEMPLATE;
+  if (validProds.length === 0) return DEFAULT_STOCK_CATALOG;
 
   const brandGroups = {};
   validProds.forEach(p => {
@@ -987,10 +1025,11 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [rawText, setRawText] = useState(() => {
-    // Initialize from localStorage only — NEVER use the hardcoded DEFAULT_STOCK_CATALOG
-    // The cloud fetch on mount will always override this with the server's definitive catalog
     const cached = localStorage.getItem('whatsapp_catalog_raw_text');
-    return (cached && cached.trim().length > 0) ? cached : '';
+    if (cached && cached.trim().length > 0 && !cached.includes('09-09-2026')) {
+      return cached;
+    }
+    return DEFAULT_STOCK_CATALOG;
   });
   const [productPhotos, setProductPhotos] = useState(() => {
     try {
@@ -1268,18 +1307,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     fetchCatalogFromCloud().then(({ rawText: cloudText, productPhotos: cloudPhotos }) => {
       if (!active) return;
 
-      if (cloudText && cloudText.trim().length > 0) {
+      if (cloudText && cloudText.trim().length > 0 && !cloudText.includes('09-09-2026')) {
         // Server has catalog text — all devices take it as ground truth
         setRawText(cloudText);
         try { localStorage.setItem('whatsapp_catalog_raw_text', cloudText); } catch {}
       } else {
-        // Server is empty (fresh deploy) — push our local catalog UP to server so others can sync
-        const localText = localStorage.getItem('whatsapp_catalog_raw_text');
-        if (localText && localText.trim().length > 0) {
-          console.log('📤 Pushing local catalog text to empty server...');
-          setRawText(localText);
-          saveCatalogToCloud(localText, {}).catch(() => {});
-        }
+        // Server is empty or has old 09-09-2026 catalog — push 16-09-2026 catalog UP to server
+        console.log('📤 Upgrading to 16-09-2026 catalog text...');
+        setRawText(DEFAULT_STOCK_CATALOG);
+        try { localStorage.setItem('whatsapp_catalog_raw_text', DEFAULT_STOCK_CATALOG); } catch {}
+        saveCatalogToCloud(DEFAULT_STOCK_CATALOG, cloudPhotos || {}).catch(() => {});
       }
 
       if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
@@ -1300,7 +1337,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       try {
         const { rawText: cloudText, productPhotos: cloudPhotos } = await fetchCatalogFromCloud();
         if (!active) return;
-        if (cloudText && cloudText.trim().length > 0) {
+        if (cloudText && cloudText.trim().length > 0 && !cloudText.includes('09-09-2026')) {
           setRawText(prev => (prev !== cloudText ? cloudText : prev));
         }
         if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
@@ -1536,13 +1573,30 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
 
 
   const handleDeletePhoto = useCallback(async (p, idx) => {
+    if (!window.confirm('Delete this photo?')) return;
     const stableId = p.stableId || p.id;
-    const photos = productPhotos[stableId] || [];
+    let targetKey = stableId;
+    let photos = productPhotos[stableId] || [];
+
+    // Fallback key lookup if photos were auto-linked from base model key
+    if (photos.length === 0 && p && (p.title || p.model)) {
+      const cleanTitle = (p.title || p.model || '').trim();
+      const baseKey = normalizeModelKey(cleanTitle);
+      const noPrefixBase = baseKey.replace(/^prod_/, '');
+      if (productPhotos[baseKey] && productPhotos[baseKey].length > 0) {
+        targetKey = baseKey;
+        photos = productPhotos[baseKey];
+      } else if (productPhotos[noPrefixBase] && productPhotos[noPrefixBase].length > 0) {
+        targetKey = noPrefixBase;
+        photos = productPhotos[noPrefixBase];
+      }
+    }
+
     const photo = photos[idx];
     if (!photo) return;
     // Delete from cloud DB FIRST so poll doesn't restore it
-    await deletePhotoFromCloud(stableId, photo.url);
-    const updated = { ...productPhotos, [stableId]: photos.filter((_, i) => i !== idx) };
+    await deletePhotoFromCloud(targetKey, photo.url);
+    const updated = { ...productPhotos, [targetKey]: photos.filter((_, i) => i !== idx) };
     setProductPhotos(updated);
     setActivePhotoIdx(prev => ({
       ...prev,
@@ -3019,7 +3073,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, flexWrap: 'wrap', gap: 10 }}>
-                <button className="btn btn-ghost" style={{ fontSize: '0.78rem' }} onClick={() => { updateAndSaveRawText(EXAMPLE_TEMPLATE); setEditorInput(EXAMPLE_TEMPLATE); }}>
+                <button className="btn btn-ghost" style={{ fontSize: '0.78rem' }} onClick={() => { updateAndSaveRawText(DEFAULT_STOCK_CATALOG); setEditorInput(DEFAULT_STOCK_CATALOG); }}>
                   <Sparkles size={13} /> Load Sample Template
                 </button>
 

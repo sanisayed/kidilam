@@ -9,10 +9,7 @@ import {
   ArrowRight, 
   Terminal, 
   Cpu, 
-  Zap, 
-  Sparkles,
-  Sun,
-  Moon
+  Sparkles
 } from 'lucide-react';
 import { apiService } from '../services/api';
 

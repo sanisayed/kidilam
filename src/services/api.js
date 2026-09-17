@@ -6,7 +6,7 @@ async function safeJsonParse(response) {
   if (text && text.trim().length > 0) {
     try {
       return JSON.parse(text);
-    } catch (e) {
+    } catch {
       console.warn('Response is not valid JSON:', text.substring(0, 100));
       return { error: `Server error (${response.status})` };
     }
@@ -53,7 +53,7 @@ export const apiService = {
           password: password,
         }),
       });
-    } catch (netErr) {
+    } catch {
       throw new Error(`Network Connection Failed (${getApiUrl('/api/auth/login')})`);
     }
 
@@ -86,7 +86,7 @@ export const apiService = {
           password,
         }),
       });
-    } catch (netErr) {
+    } catch {
       throw new Error(`Network Connection Failed (${getApiUrl('/api/auth/register')})`);
     }
 

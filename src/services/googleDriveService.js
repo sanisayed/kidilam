@@ -303,7 +303,7 @@ export async function scanAndRecoverDrivePhotos(accessToken, masterFolderId = nu
 
       if (imgRes.ok) {
         const files = (await imgRes.json()).files || [];
-        files.forEach((f, idx) => {
+        files.forEach((f) => {
           makeDriveFilePublic(f.id, accessToken).catch(() => {});
           const directUrl = `https://lh3.googleusercontent.com/d/${f.id}=w1600`;
 

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import productsSeed from '../services/products_seed.json';
 import WhatsAppCatalogPanel from './WhatsAppCatalogPanel';
 
-export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeTheme, currentTheme }) {
+export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
@@ -10,21 +9,6 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Products list loaded from products_seed
-  const [productsList] = useState(() => {
-    return productsSeed.map(p => {
-      const skuDigits = String(p.dta || '').replace(/\D/g, '');
-      const simulatedQty = skuDigits ? (parseInt(skuDigits, 10) % 80 + 3) : 15;
-      return {
-        code: p.dta,
-        name: p.model,
-        brand: p.brand,
-        qty: simulatedQty,
-        price: p.price || 1200
-      };
-    });
-  });
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-main)', color: 'var(--text-primary)', maxWidth: '100vw', overflowX: 'hidden' }}>
@@ -74,7 +58,7 @@ export default function Dashboard({ user, onLogout, isStrapiOnline, onChangeThem
 
       {/* Main WhatsApp Application */}
       <main style={{ padding: isMobile ? '8px 4px 60px 4px' : '16px', maxWidth: '1600px', margin: '0 auto', width: '100%', overflowX: 'hidden' }}>
-        <WhatsAppCatalogPanel productsList={productsList} />
+        <WhatsAppCatalogPanel />
       </main>
     </div>
   );

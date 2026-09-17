@@ -32,12 +32,28 @@ class ErrorBoundary extends Component {
             <pre style={{ background: '#090d16', padding: 12, borderRadius: 6, color: '#ff4d4d', fontSize: '0.78rem', overflowX: 'auto', border: '1px solid #2d3748', whiteSpace: 'pre-wrap' }}>
               {this.state.error && this.state.error.toString()}
             </pre>
-            <button 
-              onClick={() => { try { localStorage.clear(); sessionStorage.clear(); } catch {} window.location.reload(); }}
-              style={{ marginTop: 16, width: '100%', padding: '12px', background: '#22c55e', color: '#000', border: 'none', borderRadius: 8, fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer' }}
-            >
-              🔄 Reset Cache & Reload Page
-            </button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button 
+                onClick={() => window.location.reload()}
+                style={{ flex: 1, padding: '12px', background: '#22c55e', color: '#000', border: 'none', borderRadius: 8, fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer' }}
+              >
+                🔄 Reload Page
+              </button>
+              <button 
+                onClick={() => {
+                  try {
+                    // Clear transient session keys without deleting product photos or catalog
+                    sessionStorage.clear();
+                    localStorage.removeItem('catalog_admin_session');
+                    localStorage.removeItem('pending_verification_email');
+                  } catch {}
+                  window.location.reload();
+                }}
+                style={{ flex: 1, padding: '12px', background: '#334155', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+              >
+                🧹 Clear Temp Cache
+              </button>
+            </div>
           </div>
         </div>
       );

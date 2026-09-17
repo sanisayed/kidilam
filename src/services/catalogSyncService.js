@@ -188,7 +188,7 @@ export async function restorePhotoInSupabase(albumKey, photoUrl = null) {
     if (!rows || rows.length === 0) return false;
     const restoredPhotos = (rows[0].photos || []).map(p => {
       if (p.deleted && (photoUrl === null || p.url === photoUrl)) {
-        const { deleted, ...rest } = p;
+        const { deleted: _deleted, ...rest } = p;
         return rest;
       }
       return p;
@@ -218,7 +218,7 @@ export async function saveCatalogToCloud(rawText, productPhotos) {
     if (productPhotos && Object.keys(productPhotos).length > 0) {
       localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
     }
-  } catch (e) {}
+  } catch {}
 
   if (!isSupabaseReady) {
     console.warn('Supabase not configured — data saved to localStorage only');

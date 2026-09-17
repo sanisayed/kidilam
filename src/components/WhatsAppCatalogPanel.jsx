@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, Layers, Cpu, Monitor, Zap, CheckCircle2, MessageSquare, Briefcase, ChevronDown, Camera, ImagePlus, ZoomIn, ChevronLeft, ChevronRight, Folder
+  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, ChevronDown, Camera, ImagePlus, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { uploadProductPhoto, deleteProductPhoto, urlToBlob, fetchFromGoogleDrive, getDriveDirectUrl, listProductPhotos, uploadAdminRequestsToSupabase, downloadAdminRequestsFromSupabase } from '../services/supabaseClient';
-
+import { urlToBlob } from '../services/supabaseClient';
 import { uploadPhotoToImgBB } from '../services/imgbbService';
-import { saveCatalogToCloud, fetchCatalogFromCloud, savePhotosToCloud, fetchPhotosFromCloud, deletePhotoFromCloud, clearAllPhotosFromCloud } from '../services/catalogSyncService';
+import { saveCatalogToCloud, fetchCatalogFromCloud, savePhotosToCloud, deletePhotoFromCloud, clearAllPhotosFromCloud } from '../services/catalogSyncService';
 import { getApiUrl } from '../config';
 
 
@@ -669,7 +668,8 @@ function parseWhatsAppCatalog(rawText) {
     // Title line: line with 💻 or first non-empty line
     let titleLine = cleanLines.slice(firstNonEmpty).find(l => l.includes('💻')) || cleanLines[firstNonEmpty];
     let cleanTitle = titleLine
-      .replace(/[*💻•]/g, '')
+      .replaceAll('💻', '')
+      .replace(/[*•]/gu, '')
       .replace(/\s+/g, ' ')
       .trim();
 
@@ -692,7 +692,7 @@ function parseWhatsAppCatalog(rawText) {
       if (!l) return;
 
       // Do not treat product title line as a spec line
-      if (l === titleLine.trim() || (l.includes('💻') && l.replace(/[*💻•]/g, '').trim() === cleanTitle)) {
+      if (l === titleLine.trim() || (l.includes('💻') && l.replaceAll('💻', '').replace(/[*•]/gu, '').trim() === cleanTitle)) {
         return;
       }
       const lower = l.toLowerCase();
@@ -701,7 +701,6 @@ function parseWhatsAppCatalog(rawText) {
       const isExplicitProcessorLine = lower.includes('processor');
       const isCpuKeyword = lower.includes('cpu');
       const isGpuKeywordLine = lower.includes('gpu') || lower.includes('graphics') || lower.includes('rtx') || lower.includes('radeon') || lower.includes('nvidia') || lower.includes('geforce');
-      const isChipLine = lower.includes('core i') || lower.includes('intelcore') || lower.includes('ultra') || lower.includes('ryzen') || lower.includes('apple m') || lower.includes('m1') || lower.includes('pentium') || lower.includes('celeron') || lower.includes('i9') || lower.includes('i7') || lower.includes('i5') || lower.includes('i3');
 
       if (!isGpuKeywordLine) {
         const val = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
@@ -722,7 +721,7 @@ function parseWhatsAppCatalog(rawText) {
       if (!lower.includes('display') && !lower.includes('inch') && !lower.includes('screen')) {
         const m = l.match(/(\d+)\s*(?:th|Th|st|nd|rd)?\s*(?:Gen|Generation)/i) || 
                   l.match(/i[3579]\s*-\s*(\d+)/i) || 
-                  l.match(/(?:core\s*i[3579]|intelcore\s*i[3579]|i[3579])[\s,\-]+(\d{1,2})\s*(?:th|Th)?\b/i) ||
+                  l.match(/(?:core\s*i[3579]|intelcore\s*i[3579]|i[3579])[\s,-]+(\d{1,2})\s*(?:th|Th)?\b/i) ||
                   l.match(/(\d+)\s*(?:th|Th)\b/i);
         if (m) {
           const num = parseInt(m[1], 10);
@@ -904,7 +903,7 @@ function parseWhatsAppCatalog(rawText) {
   };
 
   const isHeaderLine = (l) => {
-    const lower = l.toLowerCase().replace(/[*💻•]/g, '').trim();
+    const lower = l.replaceAll('💻', '').replace(/[*•]/gu, '').toLowerCase().trim();
     return lower.includes('laptop price list') || lower.includes('product list') || lower.includes('stock list') || /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\s*updated/i.test(lower);
   };
 
@@ -981,46 +980,24 @@ function parseWhatsAppCatalog(rawText) {
    FULL-WIDTH EXECUTIVE WHATSAPP CATALOG PANEL
    ========================================================= */
 
-function convertProductsListToText(productsList) {
-  if (!productsList || productsList.length === 0) return DEFAULT_STOCK_CATALOG;
-
-  const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
-  const validProds = productsList.filter(p => p && (p.model || p.name || p.title));
-  if (validProds.length === 0) return DEFAULT_STOCK_CATALOG;
-
-  const brandGroups = {};
-  validProds.forEach(p => {
-    const brand = (p.brand || 'GENERAL').trim().toUpperCase();
-    if (!brandGroups[brand]) brandGroups[brand] = [];
-    brandGroups[brand].push(p);
+// Helper: Convert image blob to PNG blob for clipboard copy
+function convertBlobToPng(blob) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(resolve, 'image/png');
+    };
+    img.src = url;
   });
-
-  let result = `*BUYOLOGY LIVE STOCK CATALOG*\n*${todayStr} - Live Updated*\n\n`;
-  const sortedBrands = Object.keys(brandGroups).sort();
-  
-  sortedBrands.forEach(brand => {
-    result += `*${brand} SERIES*\n\n`;
-    brandGroups[brand].slice(0, 50).forEach(item => {
-      const model = item.model || item.name || item.title || 'Laptop';
-      const parts = model.split('|').map(s => s.trim());
-      const title = parts[0] || model;
-      const price = item.price && parseFloat(item.price) > 0 ? Math.round(parseFloat(item.price)) : 999;
-      const origPrice = Math.round(price * 1.35);
-
-      result += `💻 *${title}*\n`;
-      parts.slice(1).forEach(pt => {
-        result += `  ${pt}\n`;
-      });
-      result += `  Charger included.\n`;
-      result += `Price@~${origPrice}/-AED~\n`;
-      result += `*Offer Price @${price}/- AED* 💰\n\n`;
-    });
-  });
-
-  return result.trim();
 }
 
-export default function WhatsAppCatalogPanel({ productsList = [] }) {
+export default function WhatsAppCatalogPanel() {
   // ── 1. ALL STATE DECLARATIONS AT VERY TOP ──
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -1048,7 +1025,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   const [selectedStorage, setSelectedStorage] = useState('ALL');
   const [selectedGpu, setSelectedGpu] = useState('ALL');
   const [selectedFeature, setSelectedFeature] = useState('ALL');
-  const [showLivePreview, setShowLivePreview] = useState(true);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
@@ -1077,7 +1053,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     title: '', processor: '', gen: '', ram: '', storage: '', display: '', gpu: '', os: '', offerPrice: ''
   });
 
-  const DEFAULT_ADMIN_PIN = '1234';
+  const DEFAULT_ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN || '1234';
 
   // ── 2. EFFECTS & DERIVED HOOKS ──
   useEffect(() => {
@@ -1111,7 +1087,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   // ── 3. HANDLERS ──
   const handleUnlockAdmin = (e) => {
     e?.preventDefault();
-    if (adminPinInput === DEFAULT_ADMIN_PIN || adminPinInput === '8888' || adminPinInput === '7777') {
+    if (adminPinInput === DEFAULT_ADMIN_PIN) {
       setIsAdmin(true);
       try {
         sessionStorage.setItem('catalog_admin_session', 'true');
@@ -1122,7 +1098,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       setToastMessage('🟢 Admin Mode Unlocked! Full Edit & Photo privileges active.');
       setTimeout(() => setToastMessage(''), 4000);
     } else {
-      alert('Incorrect Admin Passcode. Default passcode is 1234.');
+      alert('Incorrect Admin Passcode. Please check your credentials.');
     }
   };
 
@@ -1240,9 +1216,16 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
   }, []);
 
   useEffect(() => {
-    refreshAdminRequests();
-    const interval = setInterval(refreshAdminRequests, 4000);
-    return () => clearInterval(interval);
+    let active = true;
+    const poll = async () => {
+      if (active) await refreshAdminRequests();
+    };
+    poll();
+    const interval = setInterval(poll, 4000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [refreshAdminRequests]);
 
   const handleAdminAction = async (action, email) => {
@@ -1374,15 +1357,12 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
         const targetEmail = pendingVerificationEmail.toLowerCase().trim();
 
         if (approvedList.includes(targetEmail)) {
-          // Master approved us! Restore pending token & email to log in automatically
-          let token = '';
-          let email = pendingVerificationEmail;
+          // Master approved us! Unlock admin session automatically
           try {
-            token = sessionStorage.getItem('pending_google_token') || sessionStorage.getItem('google_drive_token') || 'approved_staff_session';
-            const savedEmail = sessionStorage.getItem('pending_google_email');
-            if (savedEmail) email = savedEmail;
+            sessionStorage.setItem('catalog_admin_session', 'true');
+            localStorage.setItem('catalog_admin_session', 'true');
           } catch {}
-
+          setIsAdmin(true);
           setPendingVerificationEmail('');
           setAdminRequests({ approved: data.approved || [], pending: data.pending || [] });
           setToastMessage(`🎉 Account Approved! Edit controls unlocked.`);
@@ -1398,16 +1378,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     setPendingVerificationEmail('');
     try { sessionStorage.removeItem('pending_verification_email'); } catch {}
   };
-
-
-
-
-  const saveProductPhotos = useCallback((updated) => {
-    setProductPhotos(updated);
-    saveCatalogToCloud(rawText, updated);
-  }, [rawText]);
-
-
 
   const getPhotos = useCallback((stableId, p = null) => {
     let local = productPhotos[stableId] || [];
@@ -1604,24 +1574,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
     }));
   }, [productPhotos]);
 
-  const handleAddDriveLink = useCallback((p) => {
-    const inputUrl = prompt('Paste Google Drive (or direct photo) link:');
-    if (!inputUrl || !inputUrl.trim()) return;
-    const directUrl = getDriveDirectImageUrl(inputUrl.trim());
-    if (!directUrl) {
-      alert('Invalid URL. Please paste a valid Google Drive or image link.');
-      return;
-    }
-    const stableId = p.stableId || p.id;
-    const existing = productPhotos[stableId] || [];
-    const newPhotos = [...existing, { url: directUrl, label: `Drive Angle ${existing.length + 1}` }];
-    const updated = { ...productPhotos, [stableId]: newPhotos };
-    saveProductPhotos(updated);
-    setActivePhotoIdx(prev => ({ ...prev, [stableId]: newPhotos.length - 1 }));
-    setToastMessage('✅ Google Drive photo attached to laptop!');
-    setTimeout(() => setToastMessage(''), 3000);
-  }, [productPhotos, saveProductPhotos]);
-
   // Smart Share: Mobile = navigator.share all photos + text. PC = clipboard or download.
   const handleSmartShare = useCallback(async (p) => {
     const stableId = p.stableId || p.id;
@@ -1661,7 +1613,7 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
           pngBlob = await fetchDriveImageBlob(photos[0].url);
         } catch {
           const blob = await urlToBlob(photos[0].url);
-          pngBlob = blob.type === 'image/png' ? blob : await convertToPng(blob);
+          pngBlob = blob.type === 'image/png' ? blob : await convertBlobToPng(blob);
         }
 
         await navigator.clipboard.write([
@@ -1710,22 +1662,6 @@ export default function WhatsAppCatalogPanel({ productsList = [] }) {
       setSharingId(null);
     }
   }, [getPhotos, isMobileShareSupported]);
-
-
-  // Convert image blob to PNG blob
-  const convertToPng = (blob) => new Promise((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
-      canvas.toBlob(resolve, 'image/png');
-    };
-    img.src = url;
-  });
 
   // Filter products cleanly with 100% exact spec matching
   const filteredProducts = useMemo(() => {

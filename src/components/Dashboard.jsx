@@ -12,7 +12,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)', color: 'var(--text-primary)', maxWidth: '100vw', overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-main)', color: 'var(--text-primary)', width: '100%', maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}>
       {/* Streamlined Pixelvine White Header */}
       <header style={{
         display: 'flex',
@@ -20,11 +20,13 @@ export default function Dashboard() {
         justifyContent: 'space-between',
         alignItems: 'center',
         gap: 12,
-        padding: isMobile ? '12px 16px' : '14px 32px',
+        padding: isMobile ? '10px 14px' : '14px 32px',
         background: '#ffffff',
         borderBottom: '1px solid #e2e8f0',
         boxShadow: '0 1px 4px rgba(15, 23, 42, 0.04)',
-        maxWidth: '100vw',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
         overflowX: 'hidden',
         position: 'sticky',
         top: 0,
@@ -89,7 +91,7 @@ export default function Dashboard() {
       </header>
 
       {/* Main WhatsApp Application */}
-      <main style={{ padding: isMobile ? '12px 8px 70px 8px' : '20px 24px', maxWidth: '1600px', margin: '0 auto', width: '100%', overflowX: 'hidden' }}>
+      <main style={{ padding: isMobile ? '10px 8px 75px 8px' : '20px 24px', maxWidth: '1600px', margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
         <WhatsAppCatalogPanel />
       </main>
     </div>

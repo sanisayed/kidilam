@@ -1897,17 +1897,20 @@ export default function WhatsAppCatalogPanel() {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 24, width: '100%', maxWidth: '100vw', overflowX: 'hidden', padding: isMobile ? '0 2px' : '0 8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 24, width: '100%', maxWidth: '100%', overflowX: 'hidden', padding: isMobile ? '0' : '0 8px', boxSizing: 'border-box' }}>
       
       {/* 1. Header Banner: Pixelvine Royal Purple with Golden Amber Accents (Reference Image Theme) */}
       <div style={{
-        borderRadius: '24px',
+        borderRadius: isMobile ? '18px' : '24px',
         background: 'linear-gradient(135deg, #2e1065 0%, #311b92 50%, #432874 100%)',
         boxShadow: '0 12px 36px -6px rgba(49, 27, 146, 0.28), 0 4px 12px rgba(15, 23, 42, 0.05)',
         color: '#ffffff',
-        padding: isMobile ? '20px 18px' : '32px 36px',
+        padding: isMobile ? '18px 14px' : '32px 36px',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
       }}>
         {/* Subtle decorative dot pattern inspired by reference image */}
         <div style={{
@@ -1949,9 +1952,9 @@ export default function WhatsAppCatalogPanel() {
           {/* Reference Image Headline */}
           <h2 style={{
             margin: '0 0 10px 0',
-            fontSize: isMobile ? '1.55rem' : '2.35rem',
+            fontSize: isMobile ? '1.4rem' : '2.35rem',
             fontWeight: 800,
-            lineHeight: 1.15,
+            lineHeight: 1.2,
             letterSpacing: '-0.03em',
             color: '#ffffff'
           }}>
@@ -1959,8 +1962,8 @@ export default function WhatsAppCatalogPanel() {
           </h2>
 
           <p style={{
-            margin: '0 0 22px 0',
-            fontSize: isMobile ? '0.86rem' : '1.02rem',
+            margin: '0 0 18px 0',
+            fontSize: isMobile ? '0.82rem' : '1.02rem',
             color: 'rgba(255, 255, 255, 0.82)',
             maxWidth: '680px',
             lineHeight: 1.55
@@ -1973,24 +1976,27 @@ export default function WhatsAppCatalogPanel() {
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
-            gap: 12,
-            marginBottom: 20,
-            padding: '12px 18px',
+            gap: isMobile ? 8 : 12,
+            marginBottom: 18,
+            padding: isMobile ? '10px 12px' : '12px 18px',
             background: 'rgba(255, 255, 255, 0.07)',
             borderRadius: '14px',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)'
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box'
           }}>
-            <div style={{ fontSize: '0.84rem', fontWeight: 600 }}>
-              Total Stock: <strong style={{ color: '#fbbf24', fontWeight: 800 }}>{stats.total} Laptops</strong>
+            <div style={{ fontSize: isMobile ? '0.78rem' : '0.84rem', fontWeight: 600 }}>
+              Total Stock: <strong style={{ color: '#fbbf24', fontWeight: 800 }}>{stats.total}</strong>
             </div>
-            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.2)' }} />
-            <div style={{ fontSize: '0.84rem', fontWeight: 600 }}>
-              Showing: <strong style={{ color: '#38bdf8', fontWeight: 800 }}>{stats.matched} Available</strong>
+            <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.2)' }} />
+            <div style={{ fontSize: isMobile ? '0.78rem' : '0.84rem', fontWeight: 600 }}>
+              Matched: <strong style={{ color: '#38bdf8', fontWeight: 800 }}>{stats.matched}</strong>
             </div>
-            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.2)' }} />
-            <div style={{ fontSize: '0.84rem', fontWeight: 600 }}>
-              Workstations: <strong style={{ color: '#fb923c', fontWeight: 800 }}>{stats.workstationCount} GPUs</strong>
+            <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.2)' }} />
+            <div style={{ fontSize: isMobile ? '0.78rem' : '0.84rem', fontWeight: 600 }}>
+              Workstations: <strong style={{ color: '#fb923c', fontWeight: 800 }}>{stats.workstationCount}</strong>
             </div>
           </div>
 
@@ -2220,20 +2226,23 @@ export default function WhatsAppCatalogPanel() {
             borderRadius: '18px',
             border: '1px solid #e2e8f0',
             boxShadow: '0 4px 20px -2px rgba(15,23,42,0.05)',
-            padding: isMobile ? '14px' : '20px',
+            padding: isMobile ? '12px 10px' : '20px',
             display: 'flex',
             flexDirection: 'column',
-            gap: 16,
-            width: '100%'
+            gap: 14,
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             
             {/* Responsive Filter Console (Clean Mobile 1-Tap Toggle + Desktop 1-Row Bar) */}
             {isMobile ? (
               /* MOBILE MINIMALISTIC FILTER BAR */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
                 {/* 1. Mobile Search Bar & Quick Chips */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
-                  <div style={{ position: 'relative', width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+                  <div style={{ position: 'relative', width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
                     <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.45, color: '#311b92' }} />
                     <input 
                       type="text" 
@@ -2246,6 +2255,8 @@ export default function WhatsAppCatalogPanel() {
                         fontSize: '0.88rem',
                         height: '44px',
                         width: '100%',
+                        maxWidth: '100%',
+                        boxSizing: 'border-box',
                         borderRadius: '12px',
                         background: '#f8fafc',
                         border: '1px solid #e2e8f0',
@@ -2264,7 +2275,7 @@ export default function WhatsAppCatalogPanel() {
                   </div>
 
                   {/* Horizontal 1-Tap Quick Filter Chips Bar */}
-                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', width: '100%', maxWidth: '100%', minWidth: 0, paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', boxSizing: 'border-box' }}>
                     {[
                       { label: 'All Laptops', icon: <Laptop size={13} />, isSelected: selectedBrand === 'ALL' && selectedCategory === 'ALL' && selectedGpu === 'ALL' && selectedCpu === 'ALL', action: () => resetAllFilters() },
                       { label: 'Workstations', icon: <Layers size={13} />, isSelected: selectedCategory === 'WORKSTATION', action: () => setSelectedCategory(selectedCategory === 'WORKSTATION' ? 'ALL' : 'WORKSTATION') },
@@ -2467,8 +2478,8 @@ export default function WhatsAppCatalogPanel() {
                       </div>
 
                       {/* Memory RAM & SSD Grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
                           <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
                             <Zap size={12} color="#2563eb" /> RAM
                           </label>
@@ -2480,7 +2491,7 @@ export default function WhatsAppCatalogPanel() {
                             <option value="32">32 GB</option>
                           </select>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
                           <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
                             <HardDrive size={12} color="#059669" /> SSD
                           </label>
@@ -2495,8 +2506,8 @@ export default function WhatsAppCatalogPanel() {
                       </div>
 
                       {/* CPU & Generation Grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
                           <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
                             <Cpu size={12} color="#311b92" /> CPU
                           </label>
@@ -2858,12 +2869,12 @@ export default function WhatsAppCatalogPanel() {
           </div>
 
           {/* 3. Executive Live Console View: Full-width Card Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, width: '100%', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: isMobile ? 12 : 20, width: '100%', maxWidth: '100%', alignItems: 'start', boxSizing: 'border-box' }}>
             
             {/* Laptop Cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
               {/* Header Bar */}
-              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 10, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
                 <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#334155' }}>
                   Matched Stock: <span style={{ color: '#311b92', fontSize: '1.15rem', fontWeight: 800 }}>{filteredProducts.length}</span> Laptops
                 </span>
@@ -2896,7 +2907,7 @@ export default function WhatsAppCatalogPanel() {
               </div>
 
                 {/* Grid of Laptop Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(310px, 1fr))', gap: isMobile ? 12 : 18 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'repeat(auto-fill, minmax(310px, 1fr))', gap: isMobile ? 12 : 18, width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
                   {filteredProducts.length === 0 ? (
                     <div style={{
                       gridColumn: '1 / -1',
@@ -2946,16 +2957,20 @@ export default function WhatsAppCatalogPanel() {
                             borderRadius: '18px',
                             border: '1px solid #e2e8f0',
                             boxShadow: '0 4px 20px -2px rgba(15,23,42,0.06)',
-                            padding: isMobile ? '16px' : '20px',
+                            padding: isMobile ? '14px 12px' : '20px',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 14,
-                            transition: 'all 0.2s'
+                            gap: 12,
+                            transition: 'all 0.2s',
+                            width: '100%',
+                            maxWidth: '100%',
+                            boxSizing: 'border-box',
+                            overflow: 'hidden'
                           }}
                         >
                           {/* 1. HEADER ZONE: Brand Badge + Category Tag + Product Title */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, width: '100%' }}>
                               <span style={{
                                 padding: '3px 10px',
                                 borderRadius: '9999px',
@@ -2996,9 +3011,9 @@ export default function WhatsAppCatalogPanel() {
                               </span>
                             </div>
 
-                            <h3 style={{ margin: 0, fontSize: isMobile ? '1.02rem' : '1.1rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.35 }}>
+                            <h3 style={{ margin: 0, fontSize: isMobile ? '0.98rem' : '1.1rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.35, minWidth: 0, wordBreak: 'break-word', width: '100%' }}>
                               <Laptop size={18} color="#311b92" strokeWidth={2.2} style={{ flexShrink: 0 }} />
-                              <span>{p.title}</span>
+                              <span style={{ minWidth: 0, wordBreak: 'break-word' }}>{p.title}</span>
                             </h3>
                           </div>
 
@@ -3073,7 +3088,7 @@ export default function WhatsAppCatalogPanel() {
 
                             {/* Thumbnail Strip */}
                             {photos.length > 0 && (
-                              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+                              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, width: '100%', minWidth: 0, boxSizing: 'border-box', scrollbarWidth: 'none' }}>
                                 {photos.map((ph, i) => (
                                   <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
                                     <img
@@ -3102,34 +3117,44 @@ export default function WhatsAppCatalogPanel() {
                           {/* 3. SPECIFICATIONS ZONE: Clean Lucide Spec Chips Grid */}
                           <div style={{ 
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(2, 1fr)',
-                            gap: 8,
-                            padding: '12px',
+                            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                            gap: isMobile ? 6 : 8,
+                            padding: isMobile ? '10px 8px' : '12px',
                             background: '#f8fafc',
                             borderRadius: '12px',
                             border: '1px solid #e2e8f0',
-                            fontSize: '0.78rem'
+                            fontSize: isMobile ? '0.74rem' : '0.78rem',
+                            width: '100%',
+                            maxWidth: '100%',
+                            boxSizing: 'border-box',
+                            minWidth: 0
                           }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#334155', minWidth: 0, overflow: 'hidden' }}>
                               <Cpu size={14} color="#311b92" style={{ flexShrink: 0 }} />
-                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>
                                 <strong>{p.processor}</strong> {p.gen && <span style={{ color: '#64748b' }}>({p.gen})</span>}
                               </span>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#334155', minWidth: 0, overflow: 'hidden' }}>
                               <Zap size={14} color="#2563eb" style={{ flexShrink: 0 }} />
-                              <span><strong>{p.ram} GB</strong> RAM</span>
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>
+                                <strong>{p.ram} GB</strong> RAM
+                              </span>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#334155', minWidth: 0, overflow: 'hidden' }}>
                               <HardDrive size={14} color="#059669" style={{ flexShrink: 0 }} />
-                              <span><strong>{p.storage} GB</strong> SSD</span>
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>
+                                <strong>{p.storage} GB</strong> SSD
+                              </span>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#334155', minWidth: 0, overflow: 'hidden' }}>
                               <Tablet size={14} color="#7c3aed" style={{ flexShrink: 0 }} />
-                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{p.display || 'HD Screen'}</span>
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>
+                                {p.display || 'HD Screen'}
+                              </span>
                             </div>
 
                             {p.gpu ? (
@@ -3137,7 +3162,9 @@ export default function WhatsAppCatalogPanel() {
                                 gridColumn: '1 / -1',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 6,
+                                gap: 5,
+                                minWidth: 0,
+                                overflow: 'hidden',
                                 color: p.isDedicatedGpu ? '#b45309' : '#475569',
                                 fontWeight: p.isDedicatedGpu ? 700 : 500,
                                 background: p.isDedicatedGpu ? '#fffbeb' : 'transparent',
@@ -3145,28 +3172,28 @@ export default function WhatsAppCatalogPanel() {
                                 borderRadius: '6px'
                               }}>
                                 <Zap size={14} color={p.isDedicatedGpu ? '#f59e0b' : '#94a3b8'} style={{ flexShrink: 0 }} />
-                                <span>{p.gpu}</span>
+                                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>{p.gpu}</span>
                                 {p.isDedicatedGpu && (
-                                  <span style={{ fontSize: '0.62rem', background: '#f59e0b', color: '#000000', padding: '1px 6px', borderRadius: '9999px', fontWeight: 800, marginLeft: 'auto' }}>
+                                  <span style={{ fontSize: '0.62rem', background: '#f59e0b', color: '#000000', padding: '1px 6px', borderRadius: '9999px', fontWeight: 800, marginLeft: 'auto', flexShrink: 0 }}>
                                     DEDICATED
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.74rem' }}>
-                                <Zap size={13} color="#94a3b8" />
-                                <span>Integrated Graphics</span>
+                              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 5, color: '#64748b', fontSize: '0.72rem', minWidth: 0, overflow: 'hidden' }}>
+                                <Zap size={13} color="#94a3b8" style={{ flexShrink: 0 }} />
+                                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>Integrated Graphics</span>
                               </div>
                             )}
 
-                            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b', paddingTop: 4, borderTop: '1px dashed #e2e8f0' }}>
-                              <span>OS: {p.os || 'Windows 10/11 Pro'}</span>
-                              <span style={{ fontStyle: 'italic' }}>Original Charger included</span>
+                            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#64748b', paddingTop: 4, borderTop: '1px dashed #e2e8f0', minWidth: 0, flexWrap: 'wrap', gap: 4 }}>
+                              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>OS: {p.os || 'Windows 10/11 Pro'}</span>
+                              <span style={{ fontStyle: 'italic', flexShrink: 0 }}>Charger included</span>
                             </div>
                           </div>
 
                           {/* 4. PRICING ZONE: Strikethrough Original Price + Golden Amber Offer Price */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, paddingTop: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, paddingTop: 4, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
                             {p.originalPrice ? (
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Original</span>
@@ -3177,7 +3204,7 @@ export default function WhatsAppCatalogPanel() {
                             ) : <div />}
 
                             <div style={{ 
-                              fontSize: isMobile ? '0.88rem' : '0.94rem', 
+                              fontSize: isMobile ? '0.86rem' : '0.94rem', 
                               fontWeight: 800, 
                               background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
                               color: '#78350f',
@@ -3195,15 +3222,16 @@ export default function WhatsAppCatalogPanel() {
                           </div>
 
                           {/* 5. ACTION BAR (FOOTER): Add Photos, Copy Text, Share, Edit, Delete */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
                             {/* Photo Upload Button (Admin Only) */}
                             {isAdmin && (
                               <label style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                padding: '8px 0', border: '1px dashed #c4b5fd', borderRadius: '12px',
-                                cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 700,
+                                padding: '8px 10px', border: '1px dashed #c4b5fd', borderRadius: '12px',
+                                cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: isMobile ? '0.76rem' : '0.8rem', fontWeight: 700,
                                 color: '#6d28d9', background: 'rgba(109, 40, 217, 0.04)',
-                                opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s', width: '100%'
+                                opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s', width: '100%',
+                                minWidth: 0, boxSizing: 'border-box'
                               }}>
                                 <input
                                   type="file"
@@ -3213,18 +3241,21 @@ export default function WhatsAppCatalogPanel() {
                                   disabled={isUploading}
                                   onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
                                 />
-                                <ImagePlus size={15} />
-                                <span>{isUploading ? 'Uploading to Drive...' : photos.length === 0 ? 'Add Photos' : `Add More (${photos.length})`}</span>
+                                <ImagePlus size={15} style={{ flexShrink: 0 }} />
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {isUploading ? 'Uploading to Drive...' : photos.length === 0 ? 'Add Photos' : `Add More (${photos.length})`}
+                                </span>
                               </label>
                             )}
 
                             {/* Action Buttons (Copy Text & Share) */}
-                            <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                            <div style={{ display: 'flex', gap: 6, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
                               <button
                                 style={{
                                   flex: 1,
-                                  padding: '11px 14px',
-                                  fontSize: '0.82rem',
+                                  minWidth: 0,
+                                  padding: isMobile ? '10px 8px' : '11px 14px',
+                                  fontSize: isMobile ? '0.78rem' : '0.82rem',
                                   fontWeight: 800,
                                   borderRadius: '12px',
                                   border: 'none',
@@ -3233,7 +3264,7 @@ export default function WhatsAppCatalogPanel() {
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  gap: 6,
+                                  gap: 5,
                                   cursor: 'pointer',
                                   boxShadow: '0 3px 10px rgba(37, 211, 102, 0.25)',
                                   opacity: sharingId === (p.stableId || p.id) ? 0.7 : 1
@@ -3245,10 +3276,10 @@ export default function WhatsAppCatalogPanel() {
                                   <span>Sharing...</span>
                                 ) : (
                                   <>
-                                    <MessageCircle size={16} />
-                                    <span>
+                                    <MessageCircle size={15} style={{ flexShrink: 0 }} />
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                       {isMobileShareSupported
-                                        ? photos.length > 0 ? `Share + ${photos.length} Photo${photos.length > 1 ? 's' : ''}` : 'Share to WhatsApp'
+                                        ? photos.length > 0 ? `Share (${photos.length})` : 'Share Quote'
                                         : photos.length === 1
                                           ? 'Copy Photo + Text'
                                           : photos.length > 1
@@ -3261,8 +3292,8 @@ export default function WhatsAppCatalogPanel() {
 
                               <button 
                                 style={{ 
-                                  padding: '11px 14px',
-                                  fontSize: '0.82rem', 
+                                  padding: isMobile ? '10px 12px' : '11px 14px',
+                                  fontSize: isMobile ? '0.78rem' : '0.82rem', 
                                   fontWeight: 700,
                                   borderRadius: '12px',
                                   background: copiedId === p.id ? '#10b981' : '#ffffff',
@@ -3273,13 +3304,15 @@ export default function WhatsAppCatalogPanel() {
                                   justifyContent: 'center',
                                   gap: 5,
                                   cursor: 'pointer',
-                                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                                  flexShrink: 0,
+                                  whiteSpace: 'nowrap'
                                 }}
                                 onClick={() => handleCopy(p.rawText, p.id)}
                                 title="Copy raw formatted WhatsApp quote"
                               >
                                 {copiedId === p.id ? <Check size={14} /> : <Copy size={14} />}
-                                <span>{copiedId === p.id ? 'Copied!' : 'Copy'}</span>
+                                <span>{copiedId === p.id ? 'Copied' : 'Copy'}</span>
                               </button>
                             </div>
 
@@ -3448,19 +3481,22 @@ export default function WhatsAppCatalogPanel() {
           bottom: 0,
           left: 0,
           right: 0,
-          background: 'rgba(255, 255, 255, 0.94)',
+          width: '100%',
+          maxWidth: '100vw',
+          boxSizing: 'border-box',
+          background: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderTop: '1px solid #e2e8f0',
-          padding: '12px 16px',
+          padding: '10px 14px',
           boxShadow: '0 -4px 20px rgba(15, 23, 42, 0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 12,
+          gap: 10,
           zIndex: 9999
         }}>
-          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>
             <span style={{ color: '#64748b' }}>Stock:</span>{' '}
             <strong style={{ color: '#311b92', fontWeight: 800 }}>{stats.matched}</strong> / {stats.total}
           </div>
@@ -3468,10 +3504,10 @@ export default function WhatsAppCatalogPanel() {
           <button
             style={{
               flex: 1,
-              maxWidth: '220px',
-              padding: '10px 16px',
+              maxWidth: '190px',
+              padding: '9px 12px',
               fontWeight: 800,
-              fontSize: '0.82rem',
+              fontSize: '0.8rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -3481,12 +3517,13 @@ export default function WhatsAppCatalogPanel() {
               borderRadius: '9999px',
               border: 'none',
               boxShadow: '0 3px 12px rgba(251, 191, 36, 0.35)',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
             onClick={() => handleCopy(formattedOutputText, 'mobile-bottom')}
           >
-            {copiedId === 'mobile-bottom' ? <Check size={15} /> : <Copy size={15} />}
-            <span>{copiedId === 'mobile-bottom' ? 'Copied Quotes!' : 'Copy All Quotes'}</span>
+            {copiedId === 'mobile-bottom' ? <Check size={14} /> : <Copy size={14} />}
+            <span>{copiedId === 'mobile-bottom' ? 'Copied Quotes!' : 'Copy Quotes'}</span>
           </button>
         </div>
       )}
@@ -3984,7 +4021,7 @@ export default function WhatsAppCatalogPanel() {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
                   <div>
                     <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>PROCESSOR (CPU)</label>
                     <input
@@ -4006,7 +4043,7 @@ export default function WhatsAppCatalogPanel() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
                   <div>
                     <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>RAM (GB)</label>
                     <input
@@ -4027,7 +4064,7 @@ export default function WhatsAppCatalogPanel() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
                   <div>
                     <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>OFFER PRICE (AED)</label>
                     <input

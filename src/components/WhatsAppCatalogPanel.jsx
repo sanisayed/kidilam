@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, Share2, ChevronDown, Camera, ImagePlus, ChevronLeft, ChevronRight
+  Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, ChevronDown, 
+  Camera, ImagePlus, ChevronLeft, ChevronRight, Laptop, Cpu, Zap, HardDrive, Layers, 
+  Tablet, Tag, Briefcase, MessageCircle, Lock, Unlock, RotateCcw
 } from 'lucide-react';
 import { urlToBlob } from '../services/supabaseClient';
 import { uploadPhotoToImgBB } from '../services/imgbbService';
@@ -1873,125 +1875,258 @@ export default function WhatsAppCatalogPanel() {
     setSelectedFeature('ALL');
   };
 
-  const dropdownStyle = (isActive, activeBg = 'var(--citrus)', activeColor = '#000000') => ({
+  const dropdownStyle = (isActive, activeBg = '#311b92', activeColor = '#ffffff') => ({
     width: '100%',
     height: '42px',
-    padding: '0 32px 0 12px',
+    padding: '0 32px 0 14px',
     fontSize: '0.84rem',
-    fontWeight: 800,
-    fontFamily: 'var(--font-mono)',
-    backgroundColor: isActive ? activeBg : 'var(--bg-card)',
-    color: isActive ? activeColor : 'var(--text-primary)',
-    border: '2px solid #000000',
-    borderRadius: 'var(--radius-sm)',
-    boxShadow: isActive ? 'var(--shadow-flat-sm)' : 'none',
+    fontWeight: 600,
+    backgroundColor: isActive ? activeBg : '#ffffff',
+    color: isActive ? activeColor : '#0f172a',
+    border: isActive ? '1px solid #311b92' : '1px solid #e2e8f0',
+    borderRadius: '12px',
+    boxShadow: isActive ? '0 4px 14px rgba(49, 27, 146, 0.15)' : '0 1px 2px rgba(0,0,0,0.03)',
     cursor: 'pointer',
     appearance: 'none',
     WebkitAppearance: 'none',
     outline: 'none',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    transition: 'all 0.15s ease'
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20, width: '100%', maxWidth: '100vw', overflowX: 'hidden', padding: isMobile ? '0 2px' : '0 8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 24, width: '100%', maxWidth: '100vw', overflowX: 'hidden', padding: isMobile ? '0 2px' : '0 8px' }}>
       
-      {/* 1. Header Banner & Executive KPI Metrics Bar */}
-      <div className="card static card-p-lg" style={{ border: 'var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-flat)', overflow: 'hidden' }}>
-        {/* Top Title & Metrics Row */}
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border-light-color)' }}>
-          <div>
-            <h2 className="font-display" style={{ fontSize: isMobile ? '1.2rem' : '1.45rem', fontWeight: 900, margin: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span>💻</span> WhatsApp Stock Matcher Console
-            </h2>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-              Filter Workstations, Business & Executive Laptops — copy clean quotes directly for customer chat.
-            </p>
+      {/* 1. Header Banner: Pixelvine Royal Purple with Golden Amber Accents (Reference Image Theme) */}
+      <div style={{
+        borderRadius: '24px',
+        background: 'linear-gradient(135deg, #2e1065 0%, #311b92 50%, #432874 100%)',
+        boxShadow: '0 12px 36px -6px rgba(49, 27, 146, 0.28), 0 4px 12px rgba(15, 23, 42, 0.05)',
+        color: '#ffffff',
+        padding: isMobile ? '20px 18px' : '32px 36px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Subtle decorative dot pattern inspired by reference image */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          opacity: 0.7,
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Reference Image Pill: GIVEAWAY / LIVE CATALOG */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
+            <span style={{
+              background: '#fbbf24',
+              color: '#000000',
+              fontWeight: 800,
+              fontSize: '0.74rem',
+              padding: '6px 14px',
+              borderRadius: '9999px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              letterSpacing: '0.04em',
+              boxShadow: '0 4px 14px rgba(251, 191, 36, 0.35)'
+            }}>
+              <Sparkles size={13} color="#000000" fill="#000000" />
+              LIVE STOCK 16-09-2026
+            </span>
+
+            {/* Cloud Sync Status */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.74rem', fontWeight: 700, color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.08)', padding: '5px 12px', borderRadius: '9999px', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.12)' }}>
+              <span className="pulsing-green-dot" />
+              <span>Cloud Synced</span>
+            </div>
           </div>
 
-          {/* Quick Metrics Badges */}
-          {products.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.73rem', fontWeight: 800, color: 'var(--green)' }}>
-                <span className="pulsing-green-dot"></span>
-                <span>Cloud Sync Active</span>
-              </div>
+          {/* Reference Image Headline */}
+          <h2 style={{
+            margin: '0 0 10px 0',
+            fontSize: isMobile ? '1.55rem' : '2.35rem',
+            fontWeight: 800,
+            lineHeight: 1.15,
+            letterSpacing: '-0.03em',
+            color: '#ffffff'
+          }}>
+            Filter & Share <span style={{ color: '#fbbf24' }}>Executive & Workstation Quotes</span>
+          </h2>
 
-              <div style={{ display: 'flex', gap: 12, padding: '8px 14px', background: 'var(--bg)', border: '1px solid var(--border-light-color)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem', width: isMobile ? '100%' : 'auto', justifyContent: 'space-between', flexShrink: 0 }}>
-                <div>Total Stock: <strong style={{ color: 'var(--purple)', fontSize: '0.95rem' }}>{stats.total}</strong></div>
-                <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
-                  Matched: <strong style={{ color: 'var(--citrus-dark)', fontSize: '0.95rem' }}>{stats.matched}</strong>
-                </div>
-                <div style={{ borderLeft: '1px solid var(--border-light-color)', paddingLeft: 12 }}>
-                  Workstations: <strong style={{ color: 'var(--orange)', fontSize: '0.95rem' }}>{stats.workstationCount}</strong>
-                </div>
-              </div>
+          <p style={{
+            margin: '0 0 22px 0',
+            fontSize: isMobile ? '0.86rem' : '1.02rem',
+            color: 'rgba(255, 255, 255, 0.82)',
+            maxWidth: '680px',
+            lineHeight: 1.55
+          }}>
+            Instant laptop matching with full specs, multi-photo attachments, and verified offer pricing for direct customer WhatsApp chat.
+          </p>
+
+          {/* Quick Metrics Bar */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 20,
+            padding: '12px 18px',
+            background: 'rgba(255, 255, 255, 0.07)',
+            borderRadius: '14px',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.12)'
+          }}>
+            <div style={{ fontSize: '0.84rem', fontWeight: 600 }}>
+              Total Stock: <strong style={{ color: '#fbbf24', fontWeight: 800 }}>{stats.total} Laptops</strong>
             </div>
-          )}
-        </div>
+            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.2)' }} />
+            <div style={{ fontSize: '0.84rem', fontWeight: 600 }}>
+              Showing: <strong style={{ color: '#38bdf8', fontWeight: 800 }}>{stats.matched} Available</strong>
+            </div>
+            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.2)' }} />
+            <div style={{ fontSize: '0.84rem', fontWeight: 600 }}>
+              Workstations: <strong style={{ color: '#fb923c', fontWeight: 800 }}>{stats.workstationCount} GPUs</strong>
+            </div>
+          </div>
 
-        {/* Action Toolbar Row */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', width: '100%' }}>
-          {/* Admin Role Toggle Button */}
-          {isAdmin ? (
+          {/* Action Toolbar Inside Hero */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+            {isAdmin ? (
+              <button 
+                style={{
+                  background: 'rgba(34, 197, 94, 0.2)',
+                  border: '1px solid rgba(34, 197, 94, 0.5)',
+                  color: '#4ade80',
+                  padding: '9px 18px',
+                  borderRadius: '9999px',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+                onClick={handleLockAdmin}
+                title="Lock Admin Mode"
+              >
+                <Unlock size={14} /> Admin Active (Lock)
+              </button>
+            ) : (
+              <button 
+                style={{
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
+                  padding: '9px 18px',
+                  borderRadius: '9999px',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'all 0.15s'
+                }}
+                onClick={() => setShowAdminPinModal(true)}
+              >
+                <Lock size={14} /> Admin Access
+              </button>
+            )}
+
+            {isAdmin && (
+              <>
+                <button 
+                  style={{
+                    background: '#ffffff',
+                    color: '#311b92',
+                    border: 'none',
+                    padding: '9px 18px',
+                    borderRadius: '9999px',
+                    fontWeight: 800,
+                    fontSize: '0.82rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                  }}
+                  onClick={() => { setEditorInput(rawText); setShowModal(true); }}
+                >
+                  <Edit3 size={14} /> {rawText ? 'Edit Stock List' : 'Paste List'}
+                </button>
+
+                <button 
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    padding: '9px 18px',
+                    borderRadius: '9999px',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setShowVaultModal(true)}
+                >
+                  <Camera size={14} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
+                </button>
+
+                <button 
+                  style={{
+                    background: 'rgba(244, 63, 94, 0.15)',
+                    color: '#fda4af',
+                    border: '1px solid rgba(244, 63, 94, 0.3)',
+                    padding: '9px 16px',
+                    borderRadius: '9999px',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer'
+                  }}
+                  onClick={handleClearAllPhotos}
+                >
+                  <Trash2 size={13} /> Clear Photos
+                </button>
+              </>
+            )}
+
             <button 
-              className="btn btn-ghost" 
-              style={{ padding: '8px 14px', fontWeight: 900, color: 'var(--green)', border: '1px solid var(--green)', background: 'rgba(34, 197, 94, 0.08)' }}
-              onClick={handleLockAdmin}
-              title="Click to lock Admin Mode and return to Viewer Mode"
+              style={{
+                background: '#fbbf24',
+                color: '#000000',
+                border: 'none',
+                padding: '9px 22px',
+                borderRadius: '9999px',
+                fontWeight: 800,
+                fontSize: '0.84rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
+                cursor: 'pointer',
+                marginLeft: isMobile ? 0 : 'auto',
+                width: isMobile ? '100%' : 'auto',
+                justifyContent: 'center',
+                boxShadow: '0 4px 14px rgba(251, 191, 36, 0.35)',
+                transition: 'all 0.15s'
+              }}
+              onClick={() => handleCopy(formattedOutputText, 'top-all')}
             >
-              🟢 Admin Mode (Lock)
+              {copiedId === 'top-all' ? <Check size={15} /> : <Copy size={15} />}
+              <span>{copiedId === 'top-all' ? 'Copied to Clipboard!' : 'Copy Filtered Quotes'}</span>
             </button>
-          ) : (
-            <button 
-              className="btn btn-ghost" 
-              style={{ padding: '8px 14px', fontWeight: 900, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.06)' }}
-              onClick={() => setShowAdminPinModal(true)}
-              title="Unlock Admin Mode to edit stock, upload photos, or delete items"
-            >
-              🔐 Admin Access
-            </button>
-          )}
-
-          {isAdmin && (
-            <>
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '8px 14px', fontWeight: 800 }}
-                onClick={() => { setEditorInput(rawText); setShowModal(true); }}
-              >
-                <Edit3 size={15} /> {rawText ? 'Edit / Paste List' : 'Paste List'}
-              </button>
-
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--purple)', border: '1px solid var(--purple-soft)', background: 'rgba(124, 58, 237, 0.05)' }}
-                onClick={() => setShowVaultModal(true)}
-              >
-                <Camera size={15} /> Photo Vault ({Object.keys(productPhotos).filter(k => (productPhotos[k] || []).length > 0).length})
-              </button>
-
-              <button 
-                className="btn btn-ghost" 
-                style={{ padding: '8px 12px', fontWeight: 800, color: 'var(--pink)', border: '1px solid var(--pink)', background: 'rgba(236, 72, 153, 0.05)' }}
-                onClick={handleClearAllPhotos}
-                title="Delete ALL uploaded product photos and clear cache completely"
-              >
-                <Trash2 size={15} /> Clear All Photos
-              </button>
-            </>
-          )}
-
-
-          <button 
-            className="btn btn-primary" 
-            style={{ padding: '8px 18px', fontWeight: 900, marginLeft: isMobile ? 0 : 'auto', width: isMobile ? '100%' : 'auto' }}
-            onClick={() => handleCopy(formattedOutputText, 'top-all')}
-          >
-            {copiedId === 'top-all' ? <Check size={15} /> : <Copy size={15} />}
-            <span>{copiedId === 'top-all' ? 'Copied!' : 'Copy Filtered Quotes'}</span>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -2014,20 +2149,28 @@ export default function WhatsAppCatalogPanel() {
 
       {/* IF NO CATALOG LOADED YET */}
       {products.length === 0 ? (
-        <div className="card static card-p-lg" style={{ border: 'var(--border)', textAlign: 'center', padding: '60px 24px' }}>
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '18px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 20px -2px rgba(15,23,42,0.05)',
+          textAlign: 'center',
+          padding: '60px 24px'
+        }}>
           <div 
             onDragEnter={handleDragOver}
             onDragOver={handleDragOver}
             onDragLeave={handleDragOver}
             onDrop={handleDrop}
             style={{
-              border: dragOver ? '3px dashed var(--purple)' : '2px dashed var(--border-color)',
-              background: dragOver ? 'var(--purple-soft)' : 'rgba(0,0,0,0.02)',
-              borderRadius: 'var(--radius)',
+              border: dragOver ? '2px dashed #311b92' : '2px dashed #cbd5e1',
+              background: dragOver ? 'rgba(49, 27, 146, 0.04)' : '#f8fafc',
+              borderRadius: '16px',
               padding: '40px 20px',
               maxWidth: '600px',
               margin: '0 auto 24px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'all 0.2s'
             }}
             onClick={() => document.getElementById('file-picker-input').click()}
           >
@@ -2038,19 +2181,31 @@ export default function WhatsAppCatalogPanel() {
               style={{ display: 'none' }} 
               onChange={e => e.target.files && handleFileUpload(e.target.files[0])}
             />
-            <FileUp size={44} style={{ margin: '0 auto 12px', color: 'var(--purple)' }} />
-            <h3 className="font-heading" style={{ fontSize: '1.2rem', marginBottom: 6 }}>
+            <FileUp size={44} style={{ margin: '0 auto 12px', color: '#311b92' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>
               {dragOver ? 'Drop your file here!' : 'Upload or Drag & Drop Product List (.txt / .csv)'}
             </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', margin: 0 }}>
+            <p style={{ fontSize: '0.82rem', color: '#64748b', fontFamily: 'var(--font-mono)', margin: 0 }}>
               Or click to browse your computer
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button 
-              className="btn btn-primary" 
-              style={{ padding: '12px 28px', fontSize: '0.92rem', fontWeight: 900 }}
+              style={{
+                background: '#311b92',
+                color: '#ffffff',
+                border: 'none',
+                padding: '12px 28px',
+                borderRadius: '9999px',
+                fontSize: '0.9rem',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(49, 27, 146, 0.25)'
+              }}
               onClick={() => { setEditorInput(rawText); setShowModal(true); }}
             >
               <Edit3 size={16} /> Paste WhatsApp Product List
@@ -2060,7 +2215,17 @@ export default function WhatsAppCatalogPanel() {
       ) : (
         /* FULL-WIDTH FILTER & CATALOG CONSOLE */
         <>
-          <div className="card static card-p-lg" style={{ border: 'var(--border)', display: 'flex', flexDirection: 'column', gap: 18, width: '100%' }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '18px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 20px -2px rgba(15,23,42,0.05)',
+            padding: isMobile ? '14px' : '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            width: '100%'
+          }}>
             
             {/* Responsive Filter Console (Clean Mobile 1-Tap Toggle + Desktop 1-Row Bar) */}
             {isMobile ? (
@@ -2069,19 +2234,29 @@ export default function WhatsAppCatalogPanel() {
                 {/* 1. Mobile Search Bar & Quick Chips */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
                   <div style={{ position: 'relative', width: '100%' }}>
-                    <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                    <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.45, color: '#311b92' }} />
                     <input 
                       type="text" 
-                      className="field-input" 
-                      placeholder="🔍 Search laptop specs (e.g. i7, 16GB, 4GB GPU)..." 
+                      placeholder="Search specs (e.g. i7, 16GB, 4GB GPU)..." 
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      style={{ paddingLeft: 42, paddingRight: 36, fontSize: '0.9rem', height: '44px', width: '100%', borderRadius: '10px' }}
+                      style={{
+                        paddingLeft: 42,
+                        paddingRight: 36,
+                        fontSize: '0.88rem',
+                        height: '44px',
+                        width: '100%',
+                        borderRadius: '12px',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        color: '#0f172a',
+                        outline: 'none'
+                      }}
                     />
                     {searchQuery && (
                       <button 
                         onClick={() => setSearchQuery('')}
-                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}
+                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800, color: '#64748b' }}
                       >
                         ✕
                       </button>
@@ -2091,35 +2266,39 @@ export default function WhatsAppCatalogPanel() {
                   {/* Horizontal 1-Tap Quick Filter Chips Bar */}
                   <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                     {[
-                      { label: 'ALL', isSelected: selectedBrand === 'ALL' && selectedCategory === 'ALL' && selectedGpu === 'ALL' && selectedCpu === 'ALL', action: () => resetAllFilters() },
-                      { label: '🖥️ Workstations', isSelected: selectedCategory === 'WORKSTATION', action: () => setSelectedCategory(selectedCategory === 'WORKSTATION' ? 'ALL' : 'WORKSTATION') },
+                      { label: 'All Laptops', icon: <Laptop size={13} />, isSelected: selectedBrand === 'ALL' && selectedCategory === 'ALL' && selectedGpu === 'ALL' && selectedCpu === 'ALL', action: () => resetAllFilters() },
+                      { label: 'Workstations', icon: <Layers size={13} />, isSelected: selectedCategory === 'WORKSTATION', action: () => setSelectedCategory(selectedCategory === 'WORKSTATION' ? 'ALL' : 'WORKSTATION') },
                       { label: 'DELL', isSelected: selectedBrand === 'DELL', action: () => setSelectedBrand(selectedBrand === 'DELL' ? 'ALL' : 'DELL') },
                       { label: 'HP', isSelected: selectedBrand === 'HP', action: () => setSelectedBrand(selectedBrand === 'HP' ? 'ALL' : 'HP') },
                       { label: 'LENOVO', isSelected: selectedBrand === 'LENOVO', action: () => setSelectedBrand(selectedBrand === 'LENOVO' ? 'ALL' : 'LENOVO') },
-                      { label: 'Core i7', isSelected: selectedCpu === 'i7', action: () => setSelectedCpu(selectedCpu === 'i7' ? 'ALL' : 'i7') },
-                      { label: '16GB RAM', isSelected: selectedRam === '16', action: () => setSelectedRam(selectedRam === '16' ? 'ALL' : '16') },
-                      { label: '🎮 Dedicated GPU', isSelected: selectedGpu === 'dedicated', action: () => setSelectedGpu(selectedGpu === 'dedicated' ? 'ALL' : 'dedicated') },
-                      { label: '💰 < 1500 AED', isSelected: selectedBudget === '1500', action: () => setSelectedBudget(selectedBudget === '1500' ? 'ALL' : '1500') },
+                      { label: 'Core i7', icon: <Cpu size={13} />, isSelected: selectedCpu === 'i7', action: () => setSelectedCpu(selectedCpu === 'i7' ? 'ALL' : 'i7') },
+                      { label: '16GB RAM', icon: <Zap size={13} />, isSelected: selectedRam === '16', action: () => setSelectedRam(selectedRam === '16' ? 'ALL' : '16') },
+                      { label: 'Dedicated GPU', icon: <Zap size={13} />, isSelected: selectedGpu === 'dedicated', action: () => setSelectedGpu(selectedGpu === 'dedicated' ? 'ALL' : 'dedicated') },
+                      { label: '< 1500 AED', icon: <Tag size={13} />, isSelected: selectedBudget === '1500', action: () => setSelectedBudget(selectedBudget === '1500' ? 'ALL' : '1500') },
                     ].map((chip, idx) => (
                       <button
                         key={idx}
                         onClick={chip.action}
                         style={{
                           flexShrink: 0,
-                          padding: '6px 12px',
-                          borderRadius: '20px',
-                          fontSize: '0.76rem',
-                          fontWeight: 800,
-                          fontFamily: 'var(--font-mono)',
+                          padding: '6px 13px',
+                          borderRadius: '9999px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
                           whiteSpace: 'nowrap',
-                          border: chip.isSelected ? '2px solid var(--purple)' : '1px solid var(--border-color)',
-                          background: chip.isSelected ? 'var(--purple)' : 'var(--bg-card)',
-                          color: chip.isSelected ? '#ffffff' : 'var(--text-primary)',
+                          border: chip.isSelected ? '1px solid #311b92' : '1px solid #e2e8f0',
+                          background: chip.isSelected ? '#311b92' : '#ffffff',
+                          color: chip.isSelected ? '#ffffff' : '#334155',
                           cursor: 'pointer',
+                          boxShadow: chip.isSelected ? '0 2px 8px rgba(49, 27, 146, 0.25)' : 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
                           transition: 'all 0.15s'
                         }}
                       >
-                        {chip.label}
+                        {chip.icon}
+                        <span>{chip.label}</span>
                       </button>
                     ))}
                   </div>
@@ -2127,41 +2306,64 @@ export default function WhatsAppCatalogPanel() {
 
                 {/* 2. Mobile 1-Tap Filter Action Row */}
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <button 
-                    type="button"
-                    className="btn btn-primary"
-                    style={{ 
-                      flex: 1, 
-                      height: '42px', 
-                      justifyContent: 'space-between', 
-                      padding: '0 14px', 
-                      fontWeight: 900, 
-                      fontSize: '0.85rem',
-                      background: (selectedBrand !== 'ALL' || selectedBudget !== 'ALL' || selectedSeries !== 'ALL' || selectedGpu !== 'ALL' || selectedCategory !== 'ALL' || selectedCpu !== 'ALL' || selectedRam !== 'ALL') ? 'var(--purple)' : 'var(--citrus)',
-                      color: (selectedBrand !== 'ALL' || selectedBudget !== 'ALL' || selectedSeries !== 'ALL' || selectedGpu !== 'ALL' || selectedCategory !== 'ALL' || selectedCpu !== 'ALL' || selectedRam !== 'ALL') ? '#ffffff' : '#000000'
-                    }}
-                    onClick={() => setShowMobileFilters(!showMobileFilters)}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Filter size={15} />
-                      <span>{showMobileFilters ? 'Hide Filters' : '⚡ More Filter Options'}</span>
-                    </span>
+                  {(() => {
+                    const hasActiveFilters = (selectedBrand !== 'ALL' || selectedBudget !== 'ALL' || selectedSeries !== 'ALL' || selectedGpu !== 'ALL' || selectedCategory !== 'ALL' || selectedCpu !== 'ALL' || selectedRam !== 'ALL' || selectedStorage !== 'ALL' || selectedGen !== 'ALL' || selectedFeature !== 'ALL');
+                    return (
+                      <button 
+                        type="button"
+                        style={{ 
+                          flex: 1, 
+                          height: '42px', 
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between', 
+                          padding: '0 14px', 
+                          fontWeight: 700, 
+                          fontSize: '0.84rem',
+                          borderRadius: '12px',
+                          border: hasActiveFilters ? '1px solid #311b92' : '1px solid #e2e8f0',
+                          background: hasActiveFilters ? '#311b92' : '#f8fafc',
+                          color: hasActiveFilters ? '#ffffff' : '#1e293b',
+                          boxShadow: hasActiveFilters ? '0 4px 12px rgba(49, 27, 146, 0.2)' : 'none',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setShowMobileFilters(!showMobileFilters)}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                          <Filter size={15} color={hasActiveFilters ? '#ffffff' : '#311b92'} />
+                          <span>{showMobileFilters ? 'Hide Filter Drawer' : 'More Filter Options'}</span>
+                        </span>
 
-                    {(selectedBrand !== 'ALL' || selectedBudget !== 'ALL' || selectedSeries !== 'ALL' || selectedGpu !== 'ALL' || selectedCategory !== 'ALL' || selectedCpu !== 'ALL' || selectedRam !== 'ALL') && (
-                      <span style={{ background: '#ffffff', color: '#000000', fontSize: '0.68rem', fontWeight: 900, padding: '1px 7px', borderRadius: '10px' }}>
-                        Active
-                      </span>
-                    )}
-                    <ChevronDown size={15} style={{ transform: showMobileFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                  </button>
+                        {hasActiveFilters && (
+                          <span style={{ background: '#fbbf24', color: '#000000', fontSize: '0.7rem', fontWeight: 800, padding: '1px 8px', borderRadius: '9999px' }}>
+                            Active
+                          </span>
+                        )}
+                        <ChevronDown size={15} style={{ transform: showMobileFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    );
+                  })()}
 
                   {(searchQuery || selectedCategory !== 'ALL' || selectedSeries !== 'ALL' || selectedBudget !== 'ALL' || selectedBrand !== 'ALL' || selectedCpu !== 'ALL' || selectedGen !== 'ALL' || selectedRam !== 'ALL' || selectedStorage !== 'ALL' || selectedGpu !== 'ALL' || selectedFeature !== 'ALL') && (
                     <button 
-                      className="btn btn-ghost" 
-                      style={{ padding: '0 12px', height: '42px', fontSize: '0.78rem', color: 'var(--pink)', fontWeight: 800, whiteSpace: 'nowrap' }}
+                      style={{
+                        padding: '0 14px',
+                        height: '42px',
+                        fontSize: '0.8rem',
+                        color: '#dc2626',
+                        background: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        borderRadius: '12px',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        cursor: 'pointer'
+                      }}
                       onClick={resetAllFilters}
                     >
-                      Reset
+                      <RotateCcw size={13} /> Reset
                     </button>
                   )}
                 </div>
@@ -2177,18 +2379,20 @@ export default function WhatsAppCatalogPanel() {
                         display: 'flex', 
                         flexDirection: 'column', 
                         gap: 12, 
-                        padding: '14px', 
-                        background: 'var(--bg)', 
-                        borderRadius: 'var(--radius)', 
-                        border: '1px solid var(--border-light-color)',
+                        padding: '16px', 
+                        background: '#f8fafc', 
+                        borderRadius: '14px', 
+                        border: '1px solid #e2e8f0',
                         marginTop: 4
                       }}
                     >
                       {/* Brand */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>🏷️ BRAND</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Tag size={12} color="#311b92" /> BRAND
+                        </label>
                         <div style={{ position: 'relative' }}>
-                          <select value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)} style={dropdownStyle(selectedBrand !== 'ALL', 'var(--purple)', '#ffffff')}>
+                          <select value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)} style={dropdownStyle(selectedBrand !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">All Brands</option>
                             <option value="DELL">DELL</option>
                             <option value="HP">HP</option>
@@ -2196,15 +2400,17 @@ export default function WhatsAppCatalogPanel() {
                             <option value="SURFACE">MICROSOFT SURFACE</option>
                             <option value="MACBOOK">APPLE MACBOOK</option>
                           </select>
-                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBrand !== 'ALL' ? '#ffffff' : '#64748b' }} />
                         </div>
                       </div>
 
                       {/* Budget */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>💰 MAX BUDGET</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Sparkles size={12} color="#f59e0b" /> MAX BUDGET
+                        </label>
                         <div style={{ position: 'relative' }}>
-                          <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)} style={dropdownStyle(selectedBudget !== 'ALL', 'var(--citrus)', '#000000')}>
+                          <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)} style={dropdownStyle(selectedBudget !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">All Prices</option>
                             <option value="500">Under 500 AED</option>
                             <option value="1000">Under 1000 AED</option>
@@ -2212,15 +2418,17 @@ export default function WhatsAppCatalogPanel() {
                             <option value="2000">Under 2000 AED</option>
                             <option value="2000+">2000+ AED</option>
                           </select>
-                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBudget !== 'ALL' ? '#ffffff' : '#64748b' }} />
                         </div>
                       </div>
 
                       {/* Model Series */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>💻 MODEL SERIES</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Laptop size={12} color="#311b92" /> MODEL SERIES
+                        </label>
                         <div style={{ position: 'relative' }}>
-                          <select value={selectedSeries} onChange={e => setSelectedSeries(e.target.value)} style={dropdownStyle(selectedSeries !== 'ALL', 'var(--cyan)', '#000000')}>
+                          <select value={selectedSeries} onChange={e => setSelectedSeries(e.target.value)} style={dropdownStyle(selectedSeries !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">All Series</option>
                             <option value="Latitude">Dell Latitude</option>
                             <option value="Precision">Dell Precision</option>
@@ -2234,33 +2442,37 @@ export default function WhatsAppCatalogPanel() {
                             <option value="Surface">Surface</option>
                             <option value="MacBook">MacBook</option>
                           </select>
-                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedSeries !== 'ALL' ? '#ffffff' : '#64748b' }} />
                         </div>
                       </div>
 
                       {/* GPU / Graphics */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>🎮 GRAPHICS & GPU</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Zap size={12} color="#f59e0b" /> GRAPHICS & GPU
+                        </label>
                         <div style={{ position: 'relative' }}>
-                          <select value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)} style={dropdownStyle(selectedGpu !== 'ALL', 'var(--orange)', '#ffffff')}>
+                          <select value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)} style={dropdownStyle(selectedGpu !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">Any Graphics</option>
-                            <option value="dedicated">🎮 Any Dedicated GPU</option>
-                            <option value="8gb">🔥 8GB Dedicated</option>
-                            <option value="6gb">⚡ 6GB Dedicated</option>
-                            <option value="4gb">🎮 4GB Dedicated</option>
-                            <option value="2gb">⚡ 2GB Dedicated</option>
-                            <option value="iris">💻 Intel Iris Xe</option>
-                            <option value="integrated">💼 Integrated Only</option>
+                            <option value="dedicated">Any Dedicated GPU</option>
+                            <option value="8gb">8GB Dedicated</option>
+                            <option value="6gb">6GB Dedicated</option>
+                            <option value="4gb">4GB Dedicated</option>
+                            <option value="2gb">2GB Dedicated</option>
+                            <option value="iris">Intel Iris Xe</option>
+                            <option value="integrated">Integrated Only</option>
                           </select>
-                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedGpu !== 'ALL' ? '#ffffff' : '#64748b' }} />
                         </div>
                       </div>
 
                       {/* Memory RAM & SSD Grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>💾 RAM</label>
-                          <select value={selectedRam} onChange={e => setSelectedRam(e.target.value)} style={dropdownStyle(selectedRam !== 'ALL', 'var(--pink)', '#ffffff')}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <Zap size={12} color="#2563eb" /> RAM
+                          </label>
+                          <select value={selectedRam} onChange={e => setSelectedRam(e.target.value)} style={dropdownStyle(selectedRam !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">Any RAM</option>
                             <option value="4">4 GB</option>
                             <option value="8">8 GB</option>
@@ -2268,9 +2480,11 @@ export default function WhatsAppCatalogPanel() {
                             <option value="32">32 GB</option>
                           </select>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>💿 SSD</label>
-                          <select value={selectedStorage} onChange={e => setSelectedStorage(e.target.value)} style={dropdownStyle(selectedStorage !== 'ALL', 'var(--purple)', '#ffffff')}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <HardDrive size={12} color="#059669" /> SSD
+                          </label>
+                          <select value={selectedStorage} onChange={e => setSelectedStorage(e.target.value)} style={dropdownStyle(selectedStorage !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">Any SSD</option>
                             <option value="32">32 GB</option>
                             <option value="256">256 GB</option>
@@ -2282,9 +2496,11 @@ export default function WhatsAppCatalogPanel() {
 
                       {/* CPU & Generation Grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>⚡ CPU</label>
-                          <select value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)} style={dropdownStyle(selectedCpu !== 'ALL', 'var(--cyan)', '#000000')}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <Cpu size={12} color="#311b92" /> CPU
+                          </label>
+                          <select value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)} style={dropdownStyle(selectedCpu !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">Any CPU</option>
                             <option value="i3">Core i3</option>
                             <option value="i5">Core i5</option>
@@ -2295,11 +2511,10 @@ export default function WhatsAppCatalogPanel() {
                             <option value="Ultra 9">Ultra 9</option>
                             <option value="Ryzen">AMD Ryzen</option>
                           </select>
-
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>🎓 GEN</label>
-                          <select value={selectedGen} onChange={e => setSelectedGen(e.target.value)} style={dropdownStyle(selectedGen !== 'ALL', 'var(--green)', '#000000')}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>GEN</label>
+                          <select value={selectedGen} onChange={e => setSelectedGen(e.target.value)} style={dropdownStyle(selectedGen !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">Any Gen</option>
                             <option value="4">4th Gen</option>
                             <option value="7">7th Gen</option>
@@ -2314,27 +2529,41 @@ export default function WhatsAppCatalogPanel() {
                       </div>
 
                       {/* Feature & Screen */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <label style={{ fontSize: '0.7rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>✨ FEATURE & SCREEN</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Tablet size={12} color="#7c3aed" /> DISPLAY & SCREEN
+                        </label>
                         <div style={{ position: 'relative' }}>
-                          <select value={selectedFeature} onChange={e => setSelectedFeature(e.target.value)} style={dropdownStyle(selectedFeature !== 'ALL', 'var(--citrus)', '#000000')}>
+                          <select value={selectedFeature} onChange={e => setSelectedFeature(e.target.value)} style={dropdownStyle(selectedFeature !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">All Displays</option>
-                            <option value="touch">👉 Touchscreen</option>
-                            <option value="2in1">🔄 2-in-1 Touch</option>
-                            <option value="10">📐 10-12" Compact</option>
-                            <option value="13">📐 13.3" Screen</option>
-                            <option value="14">📐 14" Screen</option>
-                            <option value="15">📐 15.6" Screen</option>
-                            <option value="17">📐 17" Screen</option>
+                            <option value="touch">Touchscreen</option>
+                            <option value="2in1">2-in-1 Touch</option>
+                            <option value="10">10-12" Compact</option>
+                            <option value="13">13.3" Screen</option>
+                            <option value="14">14" Screen</option>
+                            <option value="15">15.6" Screen</option>
+                            <option value="17">17" Screen</option>
                           </select>
-                          <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedFeature !== 'ALL' ? '#ffffff' : '#64748b' }} />
                         </div>
                       </div>
 
                       <button 
                         type="button"
-                        className="btn btn-primary"
-                        style={{ height: '42px', fontWeight: 900, justifyContent: 'center', marginTop: 6 }}
+                        style={{
+                          height: '42px',
+                          fontWeight: 800,
+                          borderRadius: '12px',
+                          background: '#311b92',
+                          color: '#ffffff',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginTop: 6,
+                          boxShadow: '0 4px 14px rgba(49, 27, 146, 0.2)'
+                        }}
                         onClick={() => setShowMobileFilters(false)}
                       >
                         ✓ Done & View {filteredProducts.length} Laptops
@@ -2347,19 +2576,29 @@ export default function WhatsAppCatalogPanel() {
               /* DESKTOP 1-ROW MINIMALISTIC BAR */
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'nowrap' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-                  <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                  <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.45, color: '#311b92' }} />
                   <input 
                     type="text" 
-                    className="field-input" 
-                    placeholder="🔍 Type customer specs (e.g. Precision, i7, 16GB RAM, 4GB GPU, 512GB SSD)..." 
+                    placeholder="Search model specs (e.g. Precision, i7, 16GB RAM, 4GB GPU, 512GB SSD)..." 
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    style={{ paddingLeft: 46, paddingRight: 40, fontSize: '0.94rem', height: '44px', width: '100%' }}
+                    style={{
+                      paddingLeft: 46,
+                      paddingRight: 40,
+                      fontSize: '0.9rem',
+                      height: '44px',
+                      width: '100%',
+                      borderRadius: '12px',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      color: '#0f172a',
+                      outline: 'none'
+                    }}
                   />
                   {searchQuery && (
                     <button 
                       onClick={() => setSearchQuery('')}
-                      style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '1rem' }}
+                      style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.9rem', color: '#64748b' }}
                     >
                       ✕
                     </button>
@@ -2367,32 +2606,32 @@ export default function WhatsAppCatalogPanel() {
                 </div>
 
                 <div style={{ position: 'relative', width: '150px' }}>
-                  <select value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)} style={dropdownStyle(selectedBrand !== 'ALL', 'var(--purple)', '#ffffff')}>
-                    <option value="ALL">🏷️ All Brands</option>
+                  <select value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)} style={dropdownStyle(selectedBrand !== 'ALL', '#311b92', '#ffffff')}>
+                    <option value="ALL">All Brands</option>
                     <option value="DELL">DELL</option>
                     <option value="HP">HP</option>
                     <option value="LENOVO">LENOVO</option>
                     <option value="SURFACE">MICROSOFT</option>
                     <option value="MACBOOK">APPLE MAC</option>
                   </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBrand !== 'ALL' ? '#ffffff' : '#000000' }} />
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBrand !== 'ALL' ? '#ffffff' : '#64748b' }} />
                 </div>
 
                 <div style={{ position: 'relative', width: '150px' }}>
-                  <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)} style={dropdownStyle(selectedBudget !== 'ALL', 'var(--citrus)', '#000000')}>
-                    <option value="ALL">💰 All Prices</option>
+                  <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)} style={dropdownStyle(selectedBudget !== 'ALL', '#311b92', '#ffffff')}>
+                    <option value="ALL">All Prices</option>
                     <option value="500">Under 500 AED</option>
                     <option value="1000">Under 1000 AED</option>
                     <option value="1500">Under 1500 AED</option>
                     <option value="2000">Under 2000 AED</option>
                     <option value="2000+">2000+ AED</option>
                   </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBudget !== 'ALL' ? '#ffffff' : '#64748b' }} />
                 </div>
 
                 <div style={{ position: 'relative', width: '160px' }}>
-                  <select value={selectedSeries} onChange={e => setSelectedSeries(e.target.value)} style={dropdownStyle(selectedSeries !== 'ALL', 'var(--cyan)', '#000000')}>
-                    <option value="ALL">💻 All Series</option>
+                  <select value={selectedSeries} onChange={e => setSelectedSeries(e.target.value)} style={dropdownStyle(selectedSeries !== 'ALL', '#311b92', '#ffffff')}>
+                    <option value="ALL">All Series</option>
                     <option value="Latitude">Dell Latitude</option>
                     <option value="Precision">Dell Precision</option>
                     <option value="Vostro">Dell Vostro</option>
@@ -2405,31 +2644,33 @@ export default function WhatsAppCatalogPanel() {
                     <option value="Surface">Surface</option>
                     <option value="MacBook">MacBook</option>
                   </select>
-                  <ChevronDown size={15} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                  <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedSeries !== 'ALL' ? '#ffffff' : '#64748b' }} />
                 </div>
 
                 <button
                   type="button"
-                  className="btn btn-ghost"
                   style={{
                     height: '44px',
-                    padding: '0 14px',
-                    fontWeight: 900,
-                    fontSize: '0.82rem',
-                    border: showMoreFilters ? '2px solid var(--purple)' : '2px solid var(--border-color)',
-                    background: showMoreFilters ? 'var(--purple-soft)' : 'var(--bg-card)',
-                    color: showMoreFilters ? 'var(--purple)' : 'var(--text-primary)',
+                    padding: '0 16px',
+                    fontWeight: 700,
+                    fontSize: '0.84rem',
+                    borderRadius: '12px',
+                    border: showMoreFilters ? '1px solid #311b92' : '1px solid #e2e8f0',
+                    background: showMoreFilters ? 'rgba(49, 27, 146, 0.08)' : '#ffffff',
+                    color: showMoreFilters ? '#311b92' : '#1e293b',
                     whiteSpace: 'nowrap',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6
+                    gap: 6,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
                   }}
                   onClick={() => setShowMoreFilters(!showMoreFilters)}
                 >
-                  <Filter size={15} />
+                  <Filter size={15} color={showMoreFilters ? '#311b92' : '#64748b'} />
                   <span>+ More Specs</span>
                   {activeMoreFiltersCount > 0 && (
-                    <span style={{ background: 'var(--purple)', color: '#fff', fontSize: '0.68rem', fontWeight: 900, padding: '1px 6px', borderRadius: '10px' }}>
+                    <span style={{ background: '#311b92', color: '#fff', fontSize: '0.7rem', fontWeight: 800, padding: '1px 7px', borderRadius: '9999px' }}>
                       {activeMoreFiltersCount}
                     </span>
                   )}
@@ -2438,11 +2679,24 @@ export default function WhatsAppCatalogPanel() {
 
                 {(searchQuery || selectedCategory !== 'ALL' || selectedSeries !== 'ALL' || selectedBudget !== 'ALL' || selectedBrand !== 'ALL' || selectedCpu !== 'ALL' || selectedGen !== 'ALL' || selectedRam !== 'ALL' || selectedStorage !== 'ALL' || selectedGpu !== 'ALL' || selectedFeature !== 'ALL') && (
                   <button 
-                    className="btn btn-ghost" 
-                    style={{ padding: '0 12px', height: '44px', fontSize: '0.8rem', color: 'var(--pink)', fontWeight: 800, whiteSpace: 'nowrap' }}
+                    style={{
+                      padding: '0 14px',
+                      height: '44px',
+                      fontSize: '0.82rem',
+                      color: '#dc2626',
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      borderRadius: '12px',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      cursor: 'pointer'
+                    }}
                     onClick={resetAllFilters}
                   >
-                    Reset
+                    <RotateCcw size={13} /> Reset
                   </button>
                 )}
               </div>
@@ -2461,53 +2715,53 @@ export default function WhatsAppCatalogPanel() {
                       gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
                       gap: 14, 
                       paddingTop: 16, 
-                      borderTop: '1px solid var(--border-light-color)' 
+                      borderTop: '1px solid #f1f5f9' 
                     }}
                   >
                     {/* GPU / Graphics */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                        🎮 Graphics & GPU
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Zap size={12} color="#f59e0b" /> Graphics & GPU
                       </label>
                       <div style={{ position: 'relative', width: '100%' }}>
-                        <select value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)} style={dropdownStyle(selectedGpu !== 'ALL', 'var(--orange)', '#ffffff')}>
+                        <select value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)} style={dropdownStyle(selectedGpu !== 'ALL', '#311b92', '#ffffff')}>
                           <option value="ALL">Any Graphics</option>
-                          <option value="dedicated">🎮 Any Dedicated GPU</option>
-                          <option value="8gb">🔥 8GB Dedicated</option>
-                          <option value="6gb">⚡ 6GB Dedicated</option>
-                          <option value="4gb">🔥 4GB Dedicated</option>
-                          <option value="2gb">⚡ 2GB Dedicated</option>
-                          <option value="iris">💻 Intel Iris Xe</option>
-                          <option value="integrated">💼 Integrated Only</option>
+                          <option value="dedicated">Any Dedicated GPU</option>
+                          <option value="8gb">8GB Dedicated</option>
+                          <option value="6gb">6GB Dedicated</option>
+                          <option value="4gb">4GB Dedicated</option>
+                          <option value="2gb">2GB Dedicated</option>
+                          <option value="iris">Intel Iris Xe</option>
+                          <option value="integrated">Integrated Only</option>
                         </select>
-                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedGpu !== 'ALL' ? '#ffffff' : '#000000' }} />
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedGpu !== 'ALL' ? '#ffffff' : '#64748b' }} />
                       </div>
                     </div>
 
                     {/* Category / Purpose */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                        🎯 Category
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Layers size={12} color="#311b92" /> Category
                       </label>
                       <div style={{ position: 'relative', width: '100%' }}>
-                        <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} style={dropdownStyle(selectedCategory !== 'ALL', 'var(--orange)', '#ffffff')}>
+                        <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} style={dropdownStyle(selectedCategory !== 'ALL', '#311b92', '#ffffff')}>
                           <option value="ALL">All Categories</option>
-                          <option value="WORKSTATION">🖥️ Workstation</option>
-                          <option value="BUSINESS">💼 Business</option>
-                          <option value="EXECUTIVE">✨ Executive</option>
-                          <option value="CONVERTIBLE">🔄 2-in-1 Touch</option>
+                          <option value="WORKSTATION">Workstation</option>
+                          <option value="BUSINESS">Business</option>
+                          <option value="EXECUTIVE">Executive</option>
+                          <option value="CONVERTIBLE">2-in-1 Touch</option>
                         </select>
-                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedCategory !== 'ALL' ? '#ffffff' : '#000000' }} />
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedCategory !== 'ALL' ? '#ffffff' : '#64748b' }} />
                       </div>
                     </div>
 
                     {/* Processor */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                        ⚡ CPU Processor
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Cpu size={12} color="#311b92" /> CPU Processor
                       </label>
                       <div style={{ position: 'relative', width: '100%' }}>
-                        <select value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)} style={dropdownStyle(selectedCpu !== 'ALL', 'var(--cyan)', '#000000')}>
+                        <select value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)} style={dropdownStyle(selectedCpu !== 'ALL', '#311b92', '#ffffff')}>
                           <option value="ALL">All CPUs</option>
                           <option value="i3">Intel Core i3</option>
                           <option value="i5">Intel Core i5</option>
@@ -2518,18 +2772,17 @@ export default function WhatsAppCatalogPanel() {
                           <option value="Ultra 9">Intel Ultra 9</option>
                           <option value="Ryzen">AMD Ryzen</option>
                         </select>
-
-                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedCpu !== 'ALL' ? '#ffffff' : '#64748b' }} />
                       </div>
                     </div>
 
                     {/* Generation */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                        🎓 Exact Gen
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>
+                        Exact Gen
                       </label>
                       <div style={{ position: 'relative', width: '100%' }}>
-                        <select value={selectedGen} onChange={e => setSelectedGen(e.target.value)} style={dropdownStyle(selectedGen !== 'ALL', 'var(--green)', '#000000')}>
+                        <select value={selectedGen} onChange={e => setSelectedGen(e.target.value)} style={dropdownStyle(selectedGen !== 'ALL', '#311b92', '#ffffff')}>
                           <option value="ALL">Exact Gen (Any)</option>
                           <option value="4">4th Gen</option>
                           <option value="7">7th Gen</option>
@@ -2540,61 +2793,61 @@ export default function WhatsAppCatalogPanel() {
                           <option value="12">12th Gen</option>
                           <option value="13">13th Gen</option>
                         </select>
-                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedGen !== 'ALL' ? '#ffffff' : '#64748b' }} />
                       </div>
                     </div>
 
                     {/* RAM */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                        💾 RAM Memory
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Zap size={12} color="#2563eb" /> RAM Memory
                       </label>
                       <div style={{ position: 'relative', width: '100%' }}>
-                        <select value={selectedRam} onChange={e => setSelectedRam(e.target.value)} style={dropdownStyle(selectedRam !== 'ALL', 'var(--pink)', '#ffffff')}>
+                        <select value={selectedRam} onChange={e => setSelectedRam(e.target.value)} style={dropdownStyle(selectedRam !== 'ALL', '#311b92', '#ffffff')}>
                           <option value="ALL">Exact RAM (Any)</option>
                           <option value="4">4 GB RAM</option>
                           <option value="8">8 GB RAM</option>
                           <option value="16">16 GB RAM</option>
                           <option value="32">32 GB RAM</option>
                         </select>
-                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedRam !== 'ALL' ? '#ffffff' : '#000000' }} />
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedRam !== 'ALL' ? '#ffffff' : '#64748b' }} />
                       </div>
                     </div>
 
                     {/* Storage SSD */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                        💿 Storage SSD
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <HardDrive size={12} color="#059669" /> Storage SSD
                       </label>
                       <div style={{ position: 'relative', width: '100%' }}>
-                        <select value={selectedStorage} onChange={e => setSelectedStorage(e.target.value)} style={dropdownStyle(selectedStorage !== 'ALL', 'var(--purple)', '#ffffff')}>
+                        <select value={selectedStorage} onChange={e => setSelectedStorage(e.target.value)} style={dropdownStyle(selectedStorage !== 'ALL', '#311b92', '#ffffff')}>
                           <option value="ALL">Exact SSD (Any)</option>
                           <option value="32">32 GB Storage</option>
                           <option value="256">256 GB SSD</option>
                           <option value="512">512 GB SSD</option>
                           <option value="1024">1 TB SSD</option>
                         </select>
-                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedStorage !== 'ALL' ? '#ffffff' : '#000000' }} />
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedStorage !== 'ALL' ? '#ffffff' : '#64748b' }} />
                       </div>
                     </div>
 
                     {/* Feature & Display */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                        ✨ Feature & Screen
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Tablet size={12} color="#7c3aed" /> Feature & Screen
                       </label>
                       <div style={{ position: 'relative', width: '100%' }}>
-                        <select value={selectedFeature} onChange={e => setSelectedFeature(e.target.value)} style={dropdownStyle(selectedFeature !== 'ALL', 'var(--citrus)', '#000000')}>
+                        <select value={selectedFeature} onChange={e => setSelectedFeature(e.target.value)} style={dropdownStyle(selectedFeature !== 'ALL', '#311b92', '#ffffff')}>
                           <option value="ALL">All Displays</option>
-                          <option value="touch">👉 Touchscreen</option>
-                          <option value="2in1">🔄 2-in-1 Touch</option>
-                          <option value="10">📐 10-12" Compact</option>
-                          <option value="13">📐 13.3" Screen</option>
-                          <option value="14">📐 14" Screen</option>
-                          <option value="15">📐 15.6" Screen</option>
-                          <option value="17">📐 17" Screen</option>
+                          <option value="touch">Touchscreen</option>
+                          <option value="2in1">2-in-1 Touch</option>
+                          <option value="10">10-12" Compact</option>
+                          <option value="13">13.3" Screen</option>
+                          <option value="14">14" Screen</option>
+                          <option value="15">15.6" Screen</option>
+                          <option value="17">17" Screen</option>
                         </select>
-                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#000000' }} />
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedFeature !== 'ALL' ? '#ffffff' : '#64748b' }} />
                       </div>
                     </div>
 
@@ -2611,15 +2864,29 @@ export default function WhatsAppCatalogPanel() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Header Bar */}
               <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
-                <span style={{ fontSize: '0.92rem', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
-                  Matched Stock: <span style={{ color: 'var(--purple)', fontSize: '1.15rem' }}>{filteredProducts.length}</span> Laptops
+                <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#334155' }}>
+                  Matched Stock: <span style={{ color: '#311b92', fontSize: '1.15rem', fontWeight: 800 }}>{filteredProducts.length}</span> Laptops
                 </span>
 
                 <div style={{ display: 'flex', gap: 10, width: isMobile ? '100%' : 'auto' }}>
-
                   <button 
-                    className="btn btn-primary" 
-                    style={{ padding: '8px 14px', fontWeight: 900, fontSize: '0.82rem', flex: isMobile ? 1 : 'none', justifyContent: 'center', whiteSpace: 'nowrap' }}
+                    style={{
+                      background: '#fbbf24',
+                      color: '#000000',
+                      border: 'none',
+                      padding: '8px 18px',
+                      borderRadius: '9999px',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(251, 191, 36, 0.3)',
+                      flex: isMobile ? 1 : 'none',
+                      whiteSpace: 'nowrap'
+                    }}
                     onClick={() => handleCopy(formattedOutputText, 'bottom-all')}
                   >
                     {copiedId === 'bottom-all' ? <Check size={15} /> : <Copy size={15} />}
@@ -2629,13 +2896,35 @@ export default function WhatsAppCatalogPanel() {
               </div>
 
                 {/* Grid of Laptop Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(310px, 1fr))', gap: isMobile ? 10 : 18 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(310px, 1fr))', gap: isMobile ? 12 : 18 }}>
                   {filteredProducts.length === 0 ? (
-                    <div className="card static card-p-lg" style={{ gridColumn: '1 / -1', textAlign: 'center', border: 'var(--border)', padding: '50px 20px' }}>
-                      <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10 }}>🔍</span>
-                      <h3 style={{ fontWeight: 900, marginBottom: 6 }}>No laptops match your exact filter combination.</h3>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 16 }}>Try loosening RAM, Storage or GPU filter criteria.</p>
-                      <button className="btn btn-primary" onClick={resetAllFilters}>Reset All Filters</button>
+                    <div style={{
+                      gridColumn: '1 / -1',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      borderRadius: '18px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 4px 20px -2px rgba(15,23,42,0.05)',
+                      padding: '50px 20px'
+                    }}>
+                      <Search size={36} color="#94a3b8" style={{ margin: '0 auto 12px' }} />
+                      <h3 style={{ fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>No laptops match your exact filter combination.</h3>
+                      <p style={{ fontSize: '0.84rem', color: '#64748b', marginBottom: 16 }}>Try loosening RAM, Storage or GPU filter criteria.</p>
+                      <button 
+                        style={{
+                          background: '#311b92',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '10px 22px',
+                          borderRadius: '9999px',
+                          fontWeight: 700,
+                          fontSize: '0.84rem',
+                          cursor: 'pointer'
+                        }}
+                        onClick={resetAllFilters}
+                      >
+                        Reset All Filters
+                      </button>
                     </div>
                   ) : (
                     filteredProducts.map((p, pIdx) => {
@@ -2652,44 +2941,64 @@ export default function WhatsAppCatalogPanel() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95 }}
-                          className="card static"
                           style={{
-                            backgroundColor: 'var(--bg-card)',
-                            borderRadius: 'var(--radius-lg)',
-                            border: 'var(--border)',
-                            boxShadow: 'var(--shadow-flat)',
+                            backgroundColor: '#ffffff',
+                            borderRadius: '18px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 4px 20px -2px rgba(15,23,42,0.06)',
                             padding: isMobile ? '16px' : '20px',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 12
+                            gap: 14,
+                            transition: 'all 0.2s'
                           }}
                         >
                           {/* 1. HEADER ZONE: Brand Badge + Category Tag + Product Title */}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                              <span className={`badge ${
-                                p.brand === 'DELL' ? 'badge-cyan' :
-                                p.brand === 'HP' ? 'badge-purple' :
-                                p.brand === 'LENOVO' ? 'badge-orange' : 'badge-pink'
-                              }`}>
+                              <span style={{
+                                padding: '3px 10px',
+                                borderRadius: '9999px',
+                                fontSize: '0.72rem',
+                                fontWeight: 800,
+                                background: p.brand === 'DELL' ? '#eff6ff' : p.brand === 'HP' ? '#f5f3ff' : p.brand === 'LENOVO' ? '#fef2f2' : '#f1f5f9',
+                                color: p.brand === 'DELL' ? '#1d4ed8' : p.brand === 'HP' ? '#6d28d9' : p.brand === 'LENOVO' ? '#b91c1c' : '#475569',
+                                border: p.brand === 'DELL' ? '1px solid #bfdbfe' : p.brand === 'HP' ? '1px solid #ddd6fe' : p.brand === 'LENOVO' ? '1px solid #fecaca' : '1px solid #e2e8f0'
+                              }}>
                                 {p.brand}
                               </span>
 
                               <span style={{ 
-                                fontSize: '0.65rem', 
+                                fontSize: '0.68rem', 
                                 fontWeight: 800, 
-                                background: p.category === 'WORKSTATION' ? 'var(--orange-soft)' : p.category === 'EXECUTIVE' ? 'var(--pink-soft)' : 'var(--bg)',
-                                color: p.category === 'WORKSTATION' ? 'var(--orange)' : p.category === 'EXECUTIVE' ? 'var(--pink)' : 'var(--text-muted)',
-                                padding: '2px 8px', 
-                                borderRadius: '4px',
-                                border: '1px solid var(--border-light-color)'
+                                background: p.category === 'WORKSTATION' ? '#fef3c7' : p.category === 'EXECUTIVE' ? '#f3e8ff' : '#f1f5f9',
+                                color: p.category === 'WORKSTATION' ? '#92400e' : p.category === 'EXECUTIVE' ? '#6b21a8' : '#475569',
+                                border: p.category === 'WORKSTATION' ? '1px solid #fde68a' : p.category === 'EXECUTIVE' ? '1px solid #e9d5ff' : '1px solid #e2e8f0',
+                                padding: '3px 10px', 
+                                borderRadius: '9999px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4
                               }}>
-                                {p.category === 'WORKSTATION' ? '🖥️ WORKSTATION' : p.category === 'EXECUTIVE' ? '✨ EXECUTIVE' : '💼 BUSINESS'}
+                                {p.category === 'WORKSTATION' ? (
+                                  <>
+                                    <Layers size={11} color="#92400e" /> WORKSTATION
+                                  </>
+                                ) : p.category === 'EXECUTIVE' ? (
+                                  <>
+                                    <Sparkles size={11} color="#6b21a8" /> EXECUTIVE
+                                  </>
+                                ) : (
+                                  <>
+                                    <Briefcase size={11} color="#475569" /> BUSINESS
+                                  </>
+                                )}
                               </span>
                             </div>
 
-                            <h3 style={{ margin: 0, fontSize: isMobile ? '1.02rem' : '1.12rem', fontWeight: 900, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span>💻</span> {p.title}
+                            <h3 style={{ margin: 0, fontSize: isMobile ? '1.02rem' : '1.1rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.35 }}>
+                              <Laptop size={18} color="#311b92" strokeWidth={2.2} style={{ flexShrink: 0 }} />
+                              <span>{p.title}</span>
                             </h3>
                           </div>
 
@@ -2697,7 +3006,7 @@ export default function WhatsAppCatalogPanel() {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {activePhoto ? (
                               <div
-                                style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-light-color)', background: '#000', cursor: 'zoom-in', aspectRatio: '16/9' }}
+                                style={{ position: 'relative', width: '100%', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', background: '#0f172a', cursor: 'zoom-in', aspectRatio: '16/9' }}
                                 onClick={() => setLightbox({ stableId, idx: activeIdx })}
                               >
                                 <img
@@ -2716,15 +3025,17 @@ export default function WhatsAppCatalogPanel() {
                                 {/* Floating Top Right Price Tag */}
                                 <div style={{
                                   position: 'absolute', top: 8, right: 8,
-                                  fontSize: '0.82rem', fontWeight: 900,
-                                  background: 'var(--citrus)', color: '#000000',
-                                  padding: '3px 8px', borderRadius: '6px',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.5)', border: '1px solid #000'
+                                  fontSize: '0.8rem', fontWeight: 800,
+                                  background: '#fbbf24', color: '#000000',
+                                  padding: '4px 10px', borderRadius: '9999px',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                  display: 'flex', alignItems: 'center', gap: 4
                                 }}>
-                                  AED {p.offerPrice}/-
+                                  <Sparkles size={12} fill="#000000" />
+                                  <span>AED {p.offerPrice}/-</span>
                                 </div>
 
-                                <span style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>
+                                <span style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: '9999px', fontFamily: 'var(--font-mono)' }}>
                                   {activeIdx + 1} / {photos.length}
                                 </span>
                                 {/* Prev/Next arrows */}
@@ -2732,28 +3043,30 @@ export default function WhatsAppCatalogPanel() {
                                   <>
                                     <button
                                       onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx - 1 + photos.length) % photos.length })); }}
-                                      style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                    ><ChevronLeft size={14} /></button>
+                                      style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', border: 'none', color: '#0f172a', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}
+                                    ><ChevronLeft size={16} /></button>
                                     <button
                                       onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx + 1) % photos.length })); }}
-                                      style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                    ><ChevronRight size={14} /></button>
+                                      style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', border: 'none', color: '#0f172a', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}
+                                    ><ChevronRight size={16} /></button>
                                   </>
                                 )}
                               </div>
                             ) : (
-                              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.02)', gap: 6, color: 'var(--text-muted)' }}>
-                                <Camera size={28} strokeWidth={1.5} />
-                                <span style={{ fontSize: '0.73rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>No photos uploaded</span>
+                              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', border: '1px dashed #cbd5e1', borderRadius: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', gap: 6, color: '#64748b' }}>
+                                <Camera size={26} strokeWidth={1.5} color="#94a3b8" />
+                                <span style={{ fontSize: '0.74rem', fontWeight: 600 }}>No photos uploaded</span>
 
                                 {/* Floating Top Right Price Tag */}
                                 <div style={{
                                   position: 'absolute', top: 8, right: 8,
-                                  fontSize: '0.82rem', fontWeight: 900,
-                                  background: 'var(--citrus)', color: '#000000',
-                                  padding: '3px 8px', borderRadius: '6px', border: '1px solid #000'
+                                  fontSize: '0.8rem', fontWeight: 800,
+                                  background: '#fbbf24', color: '#000000',
+                                  padding: '4px 10px', borderRadius: '9999px',
+                                  display: 'flex', alignItems: 'center', gap: 4
                                 }}>
-                                  AED {p.offerPrice}/-
+                                  <Sparkles size={12} fill="#000000" />
+                                  <span>AED {p.offerPrice}/-</span>
                                 </div>
                               </div>
                             )}
@@ -2768,15 +3081,15 @@ export default function WhatsAppCatalogPanel() {
                                       alt={ph.label}
                                       onClick={() => setActivePhotoIdx(prev => ({ ...prev, [stableId]: i }))}
                                       style={{
-                                        width: 52, height: 38, objectFit: 'cover', borderRadius: 6, cursor: 'pointer',
-                                        border: activeIdx === i ? '2px solid var(--purple)' : '1px solid var(--border-light-color)',
+                                        width: 52, height: 38, objectFit: 'cover', borderRadius: 8, cursor: 'pointer',
+                                        border: activeIdx === i ? '2px solid #311b92' : '1px solid #e2e8f0',
                                         opacity: activeIdx === i ? 1 : 0.65, transition: 'all 0.15s'
                                       }}
                                     />
                                     {isAdmin && (
                                       <button
                                         onClick={() => handleDeletePhoto(p, i)}
-                                        style={{ position: 'absolute', top: -5, right: -5, background: 'var(--pink)', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '0.6rem', fontWeight: 900 }}
+                                        style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '0.6rem', fontWeight: 900 }}
                                         title="Delete this photo"
                                       >✕</button>
                                     )}
@@ -2786,72 +3099,110 @@ export default function WhatsAppCatalogPanel() {
                             )}
                           </div>
 
-                          {/* 3. SPECIFICATIONS ZONE: Clean Structured Text Block */}
+                          {/* 3. SPECIFICATIONS ZONE: Clean Lucide Spec Chips Grid */}
                           <div style={{ 
-                            fontSize: isMobile ? '0.78rem' : '0.83rem', 
-                            lineHeight: 1.6, 
-                            fontFamily: 'var(--font-mono)',
-                            padding: '12px 14px',
-                            background: 'var(--bg)',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--border-light-color)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 4
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: 8,
+                            padding: '12px',
+                            background: '#f8fafc',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0',
+                            fontSize: '0.78rem'
                           }}>
-                            <div>
-                              <strong>Processor</strong> – {p.processor} {p.gen && <span style={{ color: 'var(--purple)', fontWeight: 800 }}>({p.gen})</span>}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+                              <Cpu size={14} color="#311b92" style={{ flexShrink: 0 }} />
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                <strong>{p.processor}</strong> {p.gen && <span style={{ color: '#64748b' }}>({p.gen})</span>}
+                              </span>
                             </div>
-                            <div><strong>RAM</strong> – <span style={{ color: 'var(--pink)', fontWeight: 800 }}>{p.ram} GB</span></div>
-                            <div><strong>Storage</strong> – <span style={{ color: 'var(--purple)', fontWeight: 800 }}>{p.storage} GB SSD</span></div>
-                            <div><strong>Display</strong> – {p.display}</div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+                              <Zap size={14} color="#2563eb" style={{ flexShrink: 0 }} />
+                              <span><strong>{p.ram} GB</strong> RAM</span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+                              <HardDrive size={14} color="#059669" style={{ flexShrink: 0 }} />
+                              <span><strong>{p.storage} GB</strong> SSD</span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+                              <Tablet size={14} color="#7c3aed" style={{ flexShrink: 0 }} />
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{p.display || 'HD Screen'}</span>
+                            </div>
+
                             {p.gpu ? (
-                              <div style={{ color: p.isDedicatedGpu ? 'var(--orange)' : 'inherit', fontWeight: p.isDedicatedGpu ? 800 : 400 }}>
-                                <strong>GPU</strong> – {p.gpu}
+                              <div style={{
+                                gridColumn: '1 / -1',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                color: p.isDedicatedGpu ? '#b45309' : '#475569',
+                                fontWeight: p.isDedicatedGpu ? 700 : 500,
+                                background: p.isDedicatedGpu ? '#fffbeb' : 'transparent',
+                                padding: p.isDedicatedGpu ? '4px 8px' : '2px 0',
+                                borderRadius: '6px'
+                              }}>
+                                <Zap size={14} color={p.isDedicatedGpu ? '#f59e0b' : '#94a3b8'} style={{ flexShrink: 0 }} />
+                                <span>{p.gpu}</span>
                                 {p.isDedicatedGpu && (
-                                  <span style={{ fontSize: '0.62rem', background: 'var(--orange)', color: '#fff', padding: '1px 5px', borderRadius: '3px', marginLeft: 6, fontWeight: 900 }}>
+                                  <span style={{ fontSize: '0.62rem', background: '#f59e0b', color: '#000000', padding: '1px 6px', borderRadius: '9999px', fontWeight: 800, marginLeft: 'auto' }}>
                                     DEDICATED
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <div style={{ opacity: 0.7 }}><strong>GPU</strong> – Integrated Graphics</div>
+                              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.74rem' }}>
+                                <Zap size={13} color="#94a3b8" />
+                                <span>Integrated Graphics</span>
+                              </div>
                             )}
-                            <div><strong>OS</strong> – {p.os}</div>
-                            <div style={{ opacity: 0.7, fontStyle: 'italic', fontSize: '0.76rem', marginTop: 2 }}>Charger included.</div>
+
+                            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b', paddingTop: 4, borderTop: '1px dashed #e2e8f0' }}>
+                              <span>OS: {p.os || 'Windows 10/11 Pro'}</span>
+                              <span style={{ fontStyle: 'italic' }}>Original Charger included</span>
+                            </div>
                           </div>
 
-
-                          {/* 4. PRICING ZONE: Strikethrough Original Price + Highlighted Offer Price */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, paddingTop: 10, borderTop: '1px solid var(--border-light-color)' }}>
+                          {/* 4. PRICING ZONE: Strikethrough Original Price + Golden Amber Offer Price */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, paddingTop: 4 }}>
                             {p.originalPrice ? (
-                              <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-                                AED {p.originalPrice}
-                              </span>
-                            ) : <span />}
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Original</span>
+                                <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.84rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                                  AED {p.originalPrice}
+                                </span>
+                              </div>
+                            ) : <div />}
 
                             <div style={{ 
-                              fontSize: isMobile ? '0.88rem' : '0.98rem', 
-                              fontWeight: 900, 
-                              background: 'var(--citrus)',
-                              color: '#000000',
-                              padding: '5px 12px',
-                              borderRadius: 'var(--radius-sm)',
-                              border: '2px solid #000'
+                              fontSize: isMobile ? '0.88rem' : '0.94rem', 
+                              fontWeight: 800, 
+                              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                              color: '#78350f',
+                              padding: '6px 14px',
+                              borderRadius: '9999px',
+                              border: '1px solid #fcd34d',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              boxShadow: '0 2px 6px rgba(245, 158, 11, 0.12)'
                             }}>
-                              Offer Price @{p.offerPrice}/- AED 💰
+                              <Sparkles size={13} color="#d97706" fill="#d97706" />
+                              <span>Offer: AED {p.offerPrice}/-</span>
                             </div>
                           </div>
 
                           {/* 5. ACTION BAR (FOOTER): Add Photos, Copy Text, Share, Edit, Delete */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2 }}>
                             {/* Photo Upload Button (Admin Only) */}
                             {isAdmin && (
                               <label style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                padding: '8px 0', border: '1.5px dashed var(--purple-soft)', borderRadius: 'var(--radius-sm)',
-                                cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 800,
-                                color: 'var(--purple)', background: 'rgba(124, 58, 237, 0.04)',
+                                padding: '8px 0', border: '1px dashed #c4b5fd', borderRadius: '12px',
+                                cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 700,
+                                color: '#6d28d9', background: 'rgba(109, 40, 217, 0.04)',
                                 opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s', width: '100%'
                               }}>
                                 <input
@@ -2863,62 +3214,72 @@ export default function WhatsAppCatalogPanel() {
                                   onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
                                 />
                                 <ImagePlus size={15} />
-                                {isUploading ? 'Uploading to Drive...' : photos.length === 0 ? '📷 Add Photos' : `📷 Add More (${photos.length})`}
+                                <span>{isUploading ? 'Uploading to Drive...' : photos.length === 0 ? 'Add Photos' : `Add More (${photos.length})`}</span>
                               </label>
                             )}
 
                             {/* Action Buttons (Copy Text & Share) */}
                             <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                              <button 
-                                className="btn btn-primary" 
-                                style={{ 
-                                  flex: 1, 
-                                  fontSize: '0.83rem', 
-                                  fontWeight: 900,
-                                  justifyContent: 'center',
-                                  background: copiedId === p.id ? 'var(--green)' : 'var(--citrus)',
-                                  color: '#000000',
-                                  padding: '10px 8px',
-                                  borderRadius: '8px'
-                                }}
-                                onClick={() => handleCopy(p.rawText, p.id)}
-                              >
-                                {copiedId === p.id ? <Check size={15} /> : <Copy size={15} />}
-                                <span>{copiedId === p.id ? 'Copied!' : '📋 Copy Text'}</span>
-                              </button>
-
                               <button
-                                className="btn btn-secondary"
                                 style={{
                                   flex: 1,
-                                  padding: '10px 12px',
-                                  fontSize: '0.83rem',
-                                  fontWeight: 900,
+                                  padding: '11px 14px',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 800,
+                                  borderRadius: '12px',
+                                  border: 'none',
+                                  background: 'linear-gradient(135deg, #25d366 0%, #16a34a 100%)',
+                                  color: '#ffffff',
+                                  display: 'flex',
+                                  alignItems: 'center',
                                   justifyContent: 'center',
-                                  borderRadius: '8px',
+                                  gap: 6,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 3px 10px rgba(37, 211, 102, 0.25)',
                                   opacity: sharingId === (p.stableId || p.id) ? 0.7 : 1
                                 }}
                                 disabled={sharingId === (p.stableId || p.id)}
                                 onClick={() => handleSmartShare(p)}
                               >
                                 {sharingId === (p.stableId || p.id) ? (
-                                  <span>⏳</span>
-                                ) : isMobileShareSupported ? (
-                                  <Share2 size={15} />
+                                  <span>Sharing...</span>
                                 ) : (
-                                  <Copy size={15} />
+                                  <>
+                                    <MessageCircle size={16} />
+                                    <span>
+                                      {isMobileShareSupported
+                                        ? photos.length > 0 ? `Share + ${photos.length} Photo${photos.length > 1 ? 's' : ''}` : 'Share to WhatsApp'
+                                        : photos.length === 1
+                                          ? 'Copy Photo + Text'
+                                          : photos.length > 1
+                                            ? `Copy + ${photos.length} Photos`
+                                            : 'Copy Quote'}
+                                    </span>
+                                  </>
                                 )}
-                                <span>
-                                  {sharingId === (p.stableId || p.id)
-                                    ? 'Sharing...'
-                                    : isMobileShareSupported
-                                      ? photos.length > 0 ? `📲 Share ${photos.length} Photo${photos.length > 1 ? 's' : ''}` : '📲 Share'
-                                      : photos.length === 1
-                                        ? '📋 Copy Photo + Text'
-                                        : photos.length > 1
-                                          ? `📋 Copy + ${photos.length} Photos`
-                                          : '📋 Copy'}
-                                </span>
+                              </button>
+
+                              <button 
+                                style={{ 
+                                  padding: '11px 14px',
+                                  fontSize: '0.82rem', 
+                                  fontWeight: 700,
+                                  borderRadius: '12px',
+                                  background: copiedId === p.id ? '#10b981' : '#ffffff',
+                                  color: copiedId === p.id ? '#ffffff' : '#1e293b',
+                                  border: copiedId === p.id ? '1px solid #10b981' : '1px solid #e2e8f0',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 5,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                                }}
+                                onClick={() => handleCopy(p.rawText, p.id)}
+                                title="Copy raw formatted WhatsApp quote"
+                              >
+                                {copiedId === p.id ? <Check size={14} /> : <Copy size={14} />}
+                                <span>{copiedId === p.id ? 'Copied!' : 'Copy'}</span>
                               </button>
                             </div>
 
@@ -2928,9 +3289,9 @@ export default function WhatsAppCatalogPanel() {
                                 <button
                                   onClick={() => handleOpenEditProduct(p)}
                                   style={{
-                                    flex: 1, padding: '6px 8px', background: 'rgba(6, 182, 212, 0.08)',
-                                    color: 'var(--cyan)', border: '1px solid var(--cyan)', borderRadius: 'var(--radius-sm)',
-                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                                    flex: 1, padding: '7px 10px', background: '#eff6ff',
+                                    color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '10px',
+                                    fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5
                                   }}
                                 >
                                   <Edit3 size={13} /> Edit Item
@@ -2939,9 +3300,9 @@ export default function WhatsAppCatalogPanel() {
                                 <button
                                   onClick={() => handleDeleteSingleProduct(p)}
                                   style={{
-                                    padding: '6px 10px', background: 'rgba(236, 72, 153, 0.08)',
-                                    color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 'var(--radius-sm)',
-                                    fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                                    padding: '7px 12px', background: '#fef2f2',
+                                    color: '#dc2626', border: '1px solid #fecaca', borderRadius: '10px',
+                                    fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5
                                   }}
                                 >
                                   <Trash2 size={13} /> Delete
@@ -2956,8 +3317,6 @@ export default function WhatsAppCatalogPanel() {
               </div>
             </div>
 
-
-
           </div>
         </>
       )}
@@ -2968,8 +3327,9 @@ export default function WhatsAppCatalogPanel() {
           <div style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(5px)',
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -2980,42 +3340,99 @@ export default function WhatsAppCatalogPanel() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="card card-p-lg static" 
               style={{
                 width: '100%',
                 maxWidth: '750px',
                 maxHeight: '90vh',
-                backgroundColor: 'var(--bg-card)',
+                backgroundColor: '#ffffff',
+                borderRadius: '20px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)',
                 display: 'flex',
                 flexDirection: 'column',
-                border: 'var(--border)',
-                boxShadow: 'var(--shadow-flat-lg)',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                padding: '24px'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '2px solid #000', paddingBottom: 10 }}>
-                <h3 className="font-mono" style={{ fontSize: '1.1rem', fontWeight: 900, margin: 0, textTransform: 'uppercase' }}>
-                  📝 PASTE / EDIT PRODUCT LIST
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Edit3 size={18} color="#311b92" /> PASTE / EDIT PRODUCT LIST
                 </h3>
-                <button className="btn btn-ghost" onClick={() => setShowModal(false)}>✕</button>
+                <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                  <X size={20} />
+                </button>
               </div>
 
               <textarea 
-                className="field-input" 
-                style={{ flex: 1, minHeight: '300px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', lineHeight: 1.5, padding: '12px' }}
+                style={{
+                  flex: 1,
+                  minHeight: '300px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.84rem',
+                  lineHeight: 1.6,
+                  padding: '14px',
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  color: '#0f172a',
+                  outline: 'none',
+                  resize: 'vertical'
+                }}
                 value={editorInput}
                 onChange={e => setEditorInput(e.target.value)}
                 placeholder="Paste your WhatsApp product list text here..."
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, flexWrap: 'wrap', gap: 10 }}>
-                <button className="btn btn-ghost" style={{ fontSize: '0.78rem' }} onClick={() => { updateAndSaveRawText(DEFAULT_STOCK_CATALOG); setEditorInput(DEFAULT_STOCK_CATALOG); }}>
-                  <Sparkles size={13} /> Load Sample Template
+                <button 
+                  style={{
+                    background: '#f1f5f9',
+                    color: '#334155',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '9999px',
+                    padding: '8px 16px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => { updateAndSaveRawText(DEFAULT_STOCK_CATALOG); setEditorInput(DEFAULT_STOCK_CATALOG); }}
+                >
+                  <Sparkles size={13} color="#f59e0b" /> Load Sample Template
                 </button>
 
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                  <button className="btn btn-primary" style={{ fontWeight: 900 }} onClick={() => { updateAndSaveRawText(editorInput); setShowModal(false); }}>
+                  <button 
+                    style={{
+                      background: 'none',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '9999px',
+                      padding: '8px 18px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: '#64748b',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    style={{
+                      background: '#311b92',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '9999px',
+                      padding: '10px 24px',
+                      fontSize: '0.86rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(49, 27, 146, 0.25)'
+                    }}
+                    onClick={() => { updateAndSaveRawText(editorInput); setShowModal(false); }}
+                  >
                     Save & Parse List
                   </button>
                 </div>
@@ -3031,37 +3448,45 @@ export default function WhatsAppCatalogPanel() {
           bottom: 0,
           left: 0,
           right: 0,
-          background: 'var(--bg-card)',
-          borderTop: '2px solid var(--border-color)',
-          padding: '10px 14px',
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.3)',
+          background: 'rgba(255, 255, 255, 0.94)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderTop: '1px solid #e2e8f0',
+          padding: '12px 16px',
+          boxShadow: '0 -4px 20px rgba(15, 23, 42, 0.08)',
           display: 'flex',
           alignItems: 'center',
-          justify: 'space-between',
-          gap: 10,
+          justifyContent: 'space-between',
+          gap: 12,
           zIndex: 9999
         }}>
-          <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
-            <span style={{ color: 'var(--text-muted)' }}>Stock:</span>{' '}
-            <strong style={{ color: 'var(--citrus-dark)' }}>{stats.matched}</strong> / {stats.total}
+          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+            <span style={{ color: '#64748b' }}>Stock:</span>{' '}
+            <strong style={{ color: '#311b92', fontWeight: 800 }}>{stats.matched}</strong> / {stats.total}
           </div>
 
           <button
-            className="btn btn-primary"
             style={{
               flex: 1,
               maxWidth: '220px',
-              padding: '10px 12px',
-              fontWeight: 900,
+              padding: '10px 16px',
+              fontWeight: 800,
               fontSize: '0.82rem',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
-              background: 'var(--citrus)',
-              color: '#000000'
+              gap: 6,
+              background: '#fbbf24',
+              color: '#000000',
+              borderRadius: '9999px',
+              border: 'none',
+              boxShadow: '0 3px 12px rgba(251, 191, 36, 0.35)',
+              cursor: 'pointer'
             }}
             onClick={() => handleCopy(formattedOutputText, 'mobile-bottom')}
           >
-            {copiedId === 'mobile-bottom' ? <Check size={14} /> : <Copy size={14} />}
-            <span>{copiedId === 'mobile-bottom' ? 'Copied Quotes!' : '📋 Copy All Quotes'}</span>
+            {copiedId === 'mobile-bottom' ? <Check size={15} /> : <Copy size={15} />}
+            <span>{copiedId === 'mobile-bottom' ? 'Copied Quotes!' : 'Copy All Quotes'}</span>
           </button>
         </div>
       )}
@@ -3079,8 +3504,9 @@ export default function WhatsAppCatalogPanel() {
               exit={{ opacity: 0 }}
               style={{
                 position: 'fixed', inset: 0,
-                background: 'rgba(0,0,0,0.92)',
-                backdropFilter: 'blur(8px)',
+                background: 'rgba(15, 23, 42, 0.94)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
                 zIndex: 99999,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexDirection: 'column', gap: 12, padding: 16
@@ -3090,8 +3516,10 @@ export default function WhatsAppCatalogPanel() {
               {/* Close */}
               <button
                 onClick={() => setLightbox(null)}
-                style={{ position: 'absolute', top: 16, right: 20, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >✕</button>
+                style={{ position: 'absolute', top: 16, right: 20, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={18} />
+              </button>
 
               {/* Image */}
               <motion.img
@@ -3102,11 +3530,11 @@ export default function WhatsAppCatalogPanel() {
                 src={photo.url}
                 alt={photo.label}
                 onClick={e => e.stopPropagation()}
-                style={{ maxWidth: '95vw', maxHeight: '78vh', objectFit: 'contain', borderRadius: 8, boxShadow: '0 8px 60px rgba(0,0,0,0.8)' }}
+                style={{ maxWidth: '95vw', maxHeight: '78vh', objectFit: 'contain', borderRadius: 14, boxShadow: '0 8px 60px rgba(0,0,0,0.6)' }}
               />
 
               {/* Label + Counter */}
-              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: 1 }}>
+              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: 0.5 }}>
                 {photo.label} — {lightbox.idx + 1} / {photos.length}
               </div>
 
@@ -3115,12 +3543,16 @@ export default function WhatsAppCatalogPanel() {
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button
                     onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, idx: (prev.idx - 1 + photos.length) % photos.length })); }}
-                    style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontWeight: 900, fontSize: '1rem' }}
-                  >← Prev</button>
+                    style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '9999px', padding: '8px 22px', cursor: 'pointer', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <ChevronLeft size={16} /> Prev
+                  </button>
                   <button
                     onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, idx: (prev.idx + 1) % photos.length })); }}
-                    style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontWeight: 900, fontSize: '1rem' }}
-                  >Next →</button>
+                    style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '9999px', padding: '8px 22px', cursor: 'pointer', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    Next <ChevronRight size={16} />
+                  </button>
                 </div>
               )}
 
@@ -3133,7 +3565,7 @@ export default function WhatsAppCatalogPanel() {
                       src={ph.url}
                       alt={ph.label}
                       onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, idx: i })); }}
-                      style={{ width: 52, height: 38, objectFit: 'cover', borderRadius: 4, cursor: 'pointer', border: lightbox.idx === i ? '2px solid #fff' : '2px solid rgba(255,255,255,0.2)', opacity: lightbox.idx === i ? 1 : 0.55, transition: 'all 0.15s' }}
+                      style={{ width: 52, height: 38, objectFit: 'cover', borderRadius: 6, cursor: 'pointer', border: lightbox.idx === i ? '2px solid #fbbf24' : '2px solid rgba(255,255,255,0.2)', opacity: lightbox.idx === i ? 1 : 0.55, transition: 'all 0.15s' }}
                     />
                   ))}
                 </div>
@@ -3151,7 +3583,9 @@ export default function WhatsAppCatalogPanel() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)',
+              position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
               zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
             }}
             onClick={() => setShowVaultModal(false)}
@@ -3162,56 +3596,56 @@ export default function WhatsAppCatalogPanel() {
               exit={{ scale: 0.94 }}
               onClick={e => e.stopPropagation()}
               style={{
-                background: 'var(--bg-card)', width: '100%', maxWidth: 720, maxHeight: '85vh',
-                borderRadius: 14, border: '2px solid var(--border-color)', display: 'flex',
-                flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.5)'
+                background: '#ffffff', width: '100%', maxWidth: 720, maxHeight: '85vh',
+                borderRadius: 20, border: '1px solid #e2e8f0', display: 'flex',
+                flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)'
               }}
             >
               {/* Vault Header */}
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
+              <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>📸</span> Product Photo Vault
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8, color: '#0f172a' }}>
+                    <Camera size={18} color="#311b92" /> Product Photo Vault
                   </h3>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '0.76rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                    High-speed ImgBB CDN hosting — zero logins required! Photos auto-link when you paste laptop quotes!
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                    Photos auto-link to matching models when you paste WhatsApp laptop quotes!
                   </p>
                 </div>
-                <button onClick={() => setShowVaultModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <button onClick={() => setShowVaultModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
                   <X size={20} />
                 </button>
               </div>
 
               {/* Action Banner */}
-              <div style={{ padding: '10px 20px', background: 'rgba(124, 58, 237, 0.06)', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '0.78rem', color: 'var(--purple)', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
-                  ⚡ Free ImgBB Storage: Permanent high-resolution image links
+              <div style={{ padding: '10px 24px', background: 'rgba(49, 27, 146, 0.05)', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: '0.78rem', color: '#311b92', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Sparkles size={13} color="#f59e0b" /> Permanent high-resolution image hosting
                 </div>
                 <button
                   onClick={handleClearAllPhotos}
-                  style={{ padding: '4px 10px', background: 'rgba(236, 72, 153, 0.15)', color: 'var(--pink)', border: '1px solid var(--pink)', borderRadius: 6, fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                  style={{ padding: '5px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '9999px', fontSize: '0.74rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                 >
                   <Trash2 size={13} /> Clear All Photos
                 </button>
               </div>
 
               {/* Search Bar */}
-              <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-light-color)', background: 'var(--bg-card)' }}>
+              <div style={{ padding: '12px 24px', borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
                 <input
                   type="text"
-                  placeholder="Search vault photo albums by model name (e.g. 5310, T14, ZBook)..."
+                  placeholder="Search albums by model name (e.g. 5310, T14, ZBook)..."
                   value={vaultSearch}
                   onChange={e => setVaultSearch(e.target.value)}
                   style={{
-                    width: '100%', padding: '10px 14px', borderRadius: 8,
-                    border: '1px solid var(--border-color)', background: 'var(--bg)',
-                    color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '0.84rem'
+                    width: '100%', padding: '10px 14px', borderRadius: 12,
+                    border: '1px solid #e2e8f0', background: '#f8fafc',
+                    color: '#0f172a', fontSize: '0.86rem', outline: 'none'
                   }}
                 />
               </div>
 
               {/* Album List Grid */}
-              <div style={{ padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, flex: 1 }}>
+              <div style={{ padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, flex: 1 }}>
                 {(() => {
                   const keys = Object.keys(productPhotos).filter(k => {
                     const list = productPhotos[k] || [];
@@ -3222,7 +3656,7 @@ export default function WhatsAppCatalogPanel() {
 
                   if (keys.length === 0) {
                     return (
-                      <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+                      <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8', fontSize: '0.86rem' }}>
                         No saved photo albums matching "{vaultSearch}".
                       </div>
                     );
@@ -3233,17 +3667,17 @@ export default function WhatsAppCatalogPanel() {
                     const modelName = k.replace(/^prod_/, '').replace(/_/g, ' ').toUpperCase();
 
                     return (
-                      <div key={k} style={{ padding: 14, borderRadius: 10, border: '1px solid var(--border-light-color)', background: 'var(--bg)' }}>
+                      <div key={k} style={{ padding: 14, borderRadius: 14, border: '1px solid #e2e8f0', background: '#f8fafc' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-                          <span style={{ fontWeight: 900, fontSize: '0.88rem', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
-                            💻 {modelName}
+                          <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Laptop size={15} color="#311b92" /> {modelName}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: '0.72rem', background: 'var(--purple-soft)', color: 'var(--purple)', padding: '2px 8px', borderRadius: 4, fontWeight: 800 }}>
-                              {photos.length} Drive Photos
+                            <span style={{ fontSize: '0.72rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 9px', borderRadius: '9999px', fontWeight: 700 }}>
+                              {photos.length} Photos
                             </span>
                             {isAdmin && (
-                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'rgba(124, 58, 237, 0.1)', color: 'var(--purple)', border: '1px solid var(--purple-soft)', borderRadius: 6, fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}>
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', background: '#311b92', color: '#ffffff', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
                                 <ImagePlus size={13} /> Add Photos
                                 <input
                                   type="file"
@@ -3268,18 +3702,18 @@ export default function WhatsAppCatalogPanel() {
                               <img
                                 src={ph.url}
                                 alt={ph.label}
-                                style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-color)', display: 'block' }}
+                                style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid #e2e8f0', display: 'block' }}
                               />
                               {isAdmin && (
                                 <button
                                   onClick={() => handleVaultDelete(k, i)}
                                   style={{
-                                    position: 'absolute', top: -6, right: -6,
-                                    background: 'var(--pink)', color: '#fff', border: 'none',
-                                    borderRadius: '50%', width: 20, height: 20,
+                                    position: 'absolute', top: -5, right: -5,
+                                    background: '#ef4444', color: '#fff', border: 'none',
+                                    borderRadius: '50%', width: 18, height: 18,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
                                   }}
                                   title="Delete photo from Vault"
                                 >
@@ -3308,7 +3742,9 @@ export default function WhatsAppCatalogPanel() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)',
+              position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
               zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
             }}
             onClick={() => setShowApprovalModal(false)}
@@ -3319,58 +3755,58 @@ export default function WhatsAppCatalogPanel() {
               exit={{ scale: 0.94 }}
               onClick={e => e.stopPropagation()}
               style={{
-                background: 'var(--bg-card)', width: '100%', maxWidth: 640, maxHeight: '85vh',
-                borderRadius: 14, border: '2px solid var(--border-color)', display: 'flex',
-                flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.5)'
+                background: '#ffffff', width: '100%', maxWidth: 640, maxHeight: '85vh',
+                borderRadius: 20, border: '1px solid #e2e8f0', display: 'flex',
+                flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)'
               }}
             >
               {/* Modal Header */}
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
+              <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>👥</span> Staff Access Approval Console
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                    Staff Access Approval Console
                   </h3>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '0.76rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                    Approve staff members to grant them Admin photo upload permissions into your Master Drive!
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                    Approve staff members to grant them photo upload permissions into your Master Drive!
                   </p>
                 </div>
-                <button onClick={() => setShowApprovalModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <button onClick={() => setShowApprovalModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
                   <X size={20} />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <div style={{ padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
+              <div style={{ padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
                 
                 {/* 1. Pending Access Requests */}
                 <div>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.86rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--orange)', textTransform: 'uppercase' }}>
-                    ⏳ Pending Access Requests ({(adminRequests.pending || []).length})
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.84rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase' }}>
+                    Pending Access Requests ({(adminRequests.pending || []).length})
                   </h4>
                   {(adminRequests.pending || []).length === 0 ? (
-                    <div style={{ padding: '12px 14px', background: 'var(--bg)', borderRadius: 8, fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    <div style={{ padding: '14px', background: '#f8fafc', borderRadius: 12, fontSize: '0.82rem', color: '#64748b' }}>
                       No pending staff requests right now.
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {(adminRequests.pending || []).map((req, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border-light-color)' }}>
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
                           <div>
-                            <strong style={{ fontSize: '0.88rem', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{req.email}</strong>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Requested: {req.requestedAt}</div>
+                            <strong style={{ fontSize: '0.88rem', color: '#0f172a' }}>{req.email}</strong>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Requested: {req.requestedAt}</div>
                           </div>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button
                               onClick={() => handleAdminAction('approve', req.email)}
-                              style={{ background: 'var(--green)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 900, fontSize: '0.76rem', cursor: 'pointer' }}
+                              style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '9999px', fontWeight: 800, fontSize: '0.76rem', cursor: 'pointer' }}
                             >
-                              ✅ Approve
+                              Approve
                             </button>
                             <button
                               onClick={() => handleAdminAction('reject', req.email)}
-                              style={{ background: 'var(--pink)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 900, fontSize: '0.76rem', cursor: 'pointer' }}
+                              style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '6px 14px', borderRadius: '9999px', fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer' }}
                             >
-                              ❌ Reject
+                              Reject
                             </button>
                           </div>
                         </div>
@@ -3381,11 +3817,11 @@ export default function WhatsAppCatalogPanel() {
 
                 {/* 2. Approved Staff Emails */}
                 <div>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.86rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--green)', textTransform: 'uppercase' }}>
-                    🟢 Approved Master & Staff Admins ({(adminRequests.approved || []).length})
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.84rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>
+                    Approved Master & Staff Admins ({(adminRequests.approved || []).length})
                   </h4>
                   {(adminRequests.approved || []).length === 0 ? (
-                    <div style={{ padding: '12px 14px', background: 'var(--bg)', borderRadius: 8, fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    <div style={{ padding: '14px', background: '#f8fafc', borderRadius: 12, fontSize: '0.82rem', color: '#64748b' }}>
                       No approved staff yet.
                     </div>
                   ) : (
@@ -3393,18 +3829,18 @@ export default function WhatsAppCatalogPanel() {
                       {(adminRequests.approved || []).map((email, idx) => {
                         const isMasterAccount = email.toLowerCase() === MASTER_EMAIL;
                         return (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border-light-color)' }}>
-                            <span style={{ fontSize: '0.88rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span>👑</span> {email}
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
+                              {email}
                             </span>
                             {isMasterAccount ? (
-                              <span style={{ fontSize: '0.72rem', background: 'rgba(34, 197, 94, 0.15)', color: 'var(--green)', border: '1px solid var(--green)', padding: '3px 10px', borderRadius: 6, fontWeight: 900 }}>
+                              <span style={{ fontSize: '0.72rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 10px', borderRadius: '9999px', fontWeight: 800 }}>
                                 Master Owner
                               </span>
                             ) : (
                               <button
                                 onClick={() => handleAdminAction('revoke', email)}
-                                style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--pink)', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer' }}
+                                style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '5px 12px', borderRadius: '9999px', fontWeight: 700, fontSize: '0.74rem', cursor: 'pointer' }}
                               >
                                 Revoke Access
                               </button>
@@ -3430,7 +3866,9 @@ export default function WhatsAppCatalogPanel() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+              position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
               zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
             }}
             onClick={() => setShowAdminPinModal(false)}
@@ -3441,22 +3879,22 @@ export default function WhatsAppCatalogPanel() {
               exit={{ scale: 0.94 }}
               onClick={e => e.stopPropagation()}
               style={{
-                background: 'var(--bg-card)', width: '100%', maxWidth: 420,
-                borderRadius: 14, border: '2px solid var(--purple)', padding: 24,
-                boxShadow: '0 12px 48px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', gap: 16
+                background: '#ffffff', width: '100%', maxWidth: 400,
+                borderRadius: 20, border: '1px solid #e2e8f0', padding: 24,
+                boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)', display: 'flex', flexDirection: 'column', gap: 16
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>🔐</span> Admin Mode Unlock
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8, color: '#0f172a' }}>
+                  <Lock size={18} color="#311b92" /> Admin Unlock
                 </h3>
-                <button onClick={() => setShowAdminPinModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <button onClick={() => setShowAdminPinModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
                   <X size={20} />
                 </button>
               </div>
 
-              <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                Enter Admin passcode to unlock stock editing, photo uploads, single item edits, and deletions.
+              <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748b', lineHeight: 1.5 }}>
+                Enter Admin passcode to unlock stock editing, photo uploads, item edits, and deletions.
               </p>
 
               <form onSubmit={handleUnlockAdmin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -3467,9 +3905,9 @@ export default function WhatsAppCatalogPanel() {
                   onChange={e => setAdminPinInput(e.target.value)}
                   autoFocus
                   style={{
-                    width: '100%', padding: '12px 14px', borderRadius: 8,
-                    border: '2px solid var(--purple-soft)', background: 'var(--bg)',
-                    color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '1rem', textAlign: 'center'
+                    width: '100%', padding: '12px 14px', borderRadius: 12,
+                    border: '1px solid #311b92', background: '#f8fafc',
+                    color: '#0f172a', fontSize: '1rem', textAlign: 'center', outline: 'none'
                   }}
                 />
 
@@ -3477,14 +3915,17 @@ export default function WhatsAppCatalogPanel() {
                   <button
                     type="button"
                     onClick={() => setShowAdminPinModal(false)}
-                    style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg)', fontWeight: 800, cursor: 'pointer' }}
+                    style={{ flex: 1, padding: '10px 14px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#f8fafc', fontWeight: 700, color: '#64748b', cursor: 'pointer' }}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn btn-primary"
-                    style={{ flex: 1, padding: '10px 14px', fontWeight: 900, justifyContent: 'center' }}
+                    style={{
+                      flex: 1, padding: '10px 14px', fontWeight: 800,
+                      background: '#311b92', color: '#ffffff', border: 'none',
+                      borderRadius: 12, cursor: 'pointer', boxShadow: '0 4px 14px rgba(49, 27, 146, 0.25)'
+                    }}
                   >
                     Unlock Admin
                   </button>
@@ -3503,7 +3944,9 @@ export default function WhatsAppCatalogPanel() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+              position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
               zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
             }}
             onClick={() => setEditingProduct(null)}
@@ -3514,123 +3957,122 @@ export default function WhatsAppCatalogPanel() {
               exit={{ scale: 0.94 }}
               onClick={e => e.stopPropagation()}
               style={{
-                background: 'var(--bg-card)', width: '100%', maxWidth: 540, maxHeight: '90vh',
-                borderRadius: 14, border: '2px solid var(--cyan)', overflow: 'hidden',
-                boxShadow: '0 12px 48px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column'
+                background: '#ffffff', width: '100%', maxWidth: 540, maxHeight: '90vh',
+                borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden',
+                boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)', display: 'flex', flexDirection: 'column'
               }}
             >
               {/* Modal Header */}
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>✏️</span> Edit Laptop Specs
+              <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8, color: '#0f172a' }}>
+                  <Edit3 size={18} color="#311b92" /> Edit Laptop Specs
                 </h3>
-                <button onClick={() => setEditingProduct(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <button onClick={() => setEditingProduct(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
                   <X size={20} />
                 </button>
               </div>
 
               {/* Form Body */}
-              <div style={{ padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+              <div style={{ padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14, flex: 1 }}>
                 <div>
-                  <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>LAPTOP TITLE / MODEL</label>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>LAPTOP TITLE / MODEL</label>
                   <input
                     type="text"
                     value={editForm.title}
                     onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)', fontWeight: 800 }}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', fontWeight: 700, outline: 'none' }}
                   />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>PROCESSOR (CPU)</label>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>PROCESSOR (CPU)</label>
                     <input
                       type="text"
                       value={editForm.processor}
                       onChange={e => setEditForm({ ...editForm, processor: e.target.value })}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', outline: 'none' }}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>GENERATION</label>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>GENERATION</label>
                     <input
                       type="text"
                       placeholder="e.g. 10th"
                       value={editForm.gen}
                       onChange={e => setEditForm({ ...editForm, gen: e.target.value })}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', outline: 'none' }}
                     />
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>RAM (GB)</label>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>RAM (GB)</label>
                     <input
                       type="number"
                       value={editForm.ram}
                       onChange={e => setEditForm({ ...editForm, ram: e.target.value })}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', outline: 'none' }}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>STORAGE (GB SSD)</label>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>STORAGE (GB SSD)</label>
                     <input
                       type="number"
                       value={editForm.storage}
                       onChange={e => setEditForm({ ...editForm, storage: e.target.value })}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', outline: 'none' }}
                     />
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>OFFER PRICE (AED)</label>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>OFFER PRICE (AED)</label>
                     <input
                       type="number"
                       value={editForm.offerPrice}
                       onChange={e => setEditForm({ ...editForm, offerPrice: e.target.value })}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--citrus)', background: 'var(--bg)', color: 'var(--text-primary)', fontWeight: 900 }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #fbbf24', background: '#fefce8', color: '#78350f', fontWeight: 800, outline: 'none' }}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>DISPLAY</label>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>DISPLAY</label>
                     <input
                       type="text"
                       value={editForm.display}
                       onChange={e => setEditForm({ ...editForm, display: e.target.value })}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', outline: 'none' }}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.74rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>GRAPHICS / GPU (OPTIONAL)</label>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>GRAPHICS / GPU (OPTIONAL)</label>
                   <input
                     type="text"
                     placeholder="e.g. 4GB Nvidia RTX A2000"
                     value={editForm.gpu}
                     onChange={e => setEditForm({ ...editForm, gpu: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', outline: 'none' }}
                   />
                 </div>
               </div>
 
               {/* Modal Footer */}
-              <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border-light-color)', display: 'flex', gap: 10, justifyContent: 'flex-end', background: 'var(--bg)' }}>
+              <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: 10, justifyContent: 'flex-end', background: '#f8fafc' }}>
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg)', fontWeight: 800, cursor: 'pointer' }}
+                  style={{ padding: '9px 18px', borderRadius: '9999px', border: '1px solid #e2e8f0', background: '#ffffff', fontWeight: 700, color: '#64748b', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary"
                   onClick={handleSaveEditedProduct}
-                  style={{ padding: '8px 20px', fontWeight: 900 }}
+                  style={{ padding: '9px 24px', borderRadius: '9999px', border: 'none', background: '#311b92', color: '#ffffff', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(49, 27, 146, 0.25)' }}
                 >
                   Save Laptop Specs
                 </button>
@@ -3641,24 +4083,23 @@ export default function WhatsAppCatalogPanel() {
       </AnimatePresence>
 
       {/* ── TOAST NOTIFICATION ── */}
-
-
       <AnimatePresence>
         {toastMessage && (
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
+            exit={{ opacity: 0, y: 30 }}
             style={{
               position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-              background: 'var(--bg-card)', color: 'var(--text-primary)',
-              padding: '12px 22px', borderRadius: 10,
-              border: '2px solid var(--green)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-              fontWeight: 800, fontSize: '0.86rem', zIndex: 100000,
-              maxWidth: '90vw', textAlign: 'center', whiteSpace: 'pre-wrap'
+              background: '#0f172a', color: '#ffffff',
+              padding: '12px 24px', borderRadius: '9999px',
+              border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+              fontWeight: 700, fontSize: '0.86rem', zIndex: 100000,
+              maxWidth: '90vw', textAlign: 'center', display: 'flex', alignItems: 'center', gap: 8
             }}
           >
-            {toastMessage}
+            <Check size={16} color="#4ade80" />
+            <span>{toastMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>

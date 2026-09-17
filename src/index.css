@@ -1,89 +1,109 @@
 /* ===========================
-   BUYOLOGY - Flat Neo-Brutalist SaaS Design System
-   Cyber Citrus Palette + Professional Flat Layout
+   BUYOLOGY - Pixelvine Clean Design System
+   Pure White Canvas + Royal Purple & Golden Amber Palette
    =========================== */
 
 :root {
   --scale-factor: 0.85;
-  /* === COLOR SYSTEM === */
-  --citrus:       #d8ff36;
-  --citrus-deep:  #bfea00;
-  --cyan:         #00f0ff;
-  --cyan-soft:    #cffafe;
-  --pink:         #ff007f;
-  --pink-soft:    #ffe4f0;
-  --purple:       #8b5cf6;
-  --purple-deep:  #6d28d9;
-  --purple-soft:  #ede9fe;
-  --green:        #10b981;
-  --green-soft:   #d1fae5;
-  --orange:       #f97316;
-  --orange-soft:  #ffedd5;
-  
-  /* === CANVAS === */
-  --bg:           #f4f5f7;
-  --bg-sidebar:   #0e0f12;
-  --bg-card:      #ffffff;
-  --bg-dark:      #0e0f12;
-  --bg-dark-2:    #1a1c22;
-  --bg-dark-3:    #252830;
-  
-  /* === TEXT === */
-  --text-primary:   #0e0f12;
-  --text-secondary: #64748b;
-  --text-muted:     #94a3b8;
-  --text-on-dark:   #f1f5f9;
-  --text-on-dark-2: #94a3b8;
-  
-  /* === BORDERS === */
-  --border:       2px solid #000000;
-  --border-light: 1px solid #e2e8f0;
-  --border-color: #000000;
-  --border-light-color: #e2e8f0;
-  
-  /* === SHADOWS - Flat Style === */
-  --shadow-flat:    3px 3px 0px 0px #000000;
-  --shadow-flat-sm: 2px 2px 0px 0px #000000;
-  --shadow-flat-lg: 6px 6px 0px 0px #000000;
-  --shadow-flat-xl: 8px 8px 0px 0px #000000;
-  --shadow-hover:   5px 5px 0px 0px #000000;
-  --shadow-lifted:  0 20px 40px -12px rgba(0,0,0,0.12);
 
-  /* === FONTS === */
-  --font-display:  'Syne', sans-serif;
-  --font-sans:     'Plus Jakarta Sans', sans-serif;
-  --font-mono:     'Space Grotesk', sans-serif;
+  /* === PIXELVINE COLOR PALETTE (From Reference Image) === */
+  --brand-purple:       #311b92; /* Deep Royal Purple */
+  --brand-purple-dark:  #23126d;
+  --brand-purple-light: #f3e8ff; /* Soft Lavender Pill */
+  --brand-purple-glow:  rgba(49, 27, 146, 0.14);
 
-  /* === SIZING === */
-  --sidebar-w:    280px;
-  --header-h:     64px;
-  --radius:       6px;
-  --radius-sm:    4px;
-  --radius-lg:    10px;
+  --accent-gold:        #fbbf24; /* Vibrant Golden Amber */
+  --accent-gold-dark:   #d97706;
+  --accent-gold-soft:   #fef3c7; /* Soft Gold Pill */
+
+  --whatsapp-green:     #25d366; /* WhatsApp Brand Emerald */
+  --whatsapp-green-dark:#16a34a;
+  --whatsapp-green-soft:#dcfce7;
+
+  /* Backward Compatibility Aliases */
+  --citrus:             #fbbf24; /* Replaced harsh neon with golden amber */
+  --citrus-deep:        #d97706;
+  --purple:             #311b92;
+  --purple-deep:        #23126d;
+  --purple-soft:        #f3e8ff;
+  --green:              #25d366;
+  --green-soft:         #dcfce7;
+  --orange:             #f97316;
+  --orange-soft:        #ffedd5;
+  --cyan:               #0284c7;
+  --cyan-soft:          #e0f2fe;
+
+  /* === CANVAS & SURFACES (Pure White Primary) === */
+  --bg:                 #ffffff;
+  --bg-main:            #ffffff;
+  --bg-card:            #ffffff;
+  --bg-subtle:          #f8fafc;
+  --bg-elevated:        #ffffff;
+  --bg-dark:            #0f172a;
+  --bg-dark-2:          #1e293b;
+  --bg-dark-3:          #334155;
+
+  /* === TEXT HIERARCHY === */
+  --text-primary:       #0f172a; /* Slate 900 */
+  --text-secondary:     #475569; /* Slate 600 */
+  --text-muted:         #64748b; /* Slate 500 */
+  --text-light:         #94a3b8; /* Slate 400 */
+  --text-on-dark:       #ffffff;
+  --text-on-dark-2:     #cbd5e1;
+
+  /* === LUXURY SOFT BORDERS (No brutalism) === */
+  --border:             1px solid #e2e8f0;
+  --border-light:       1px solid #f1f5f9;
+  --border-color:       #e2e8f0;
+  --border-light-color: #f1f5f9;
+  --border-focus:       1px solid #311b92;
+
+  /* === MULTI-LAYERED AMBIENT SHADOWS (No flat black boxes) === */
+  --shadow-flat:        0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+  --shadow-flat-sm:     0 2px 8px -1px rgba(15, 23, 42, 0.04);
+  --shadow-flat-lg:     0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+  --shadow-flat-xl:     0 20px 48px -8px rgba(15, 23, 42, 0.12);
+  --shadow-hover:       0 16px 36px -6px rgba(49, 27, 146, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lifted:      0 20px 40px -12px rgba(15, 23, 42, 0.08);
+
+  /* === PIXELVINE GEOMETRIC TYPOGRAPHY === */
+  --font-display:       'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-sans:          'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-mono:          'Plus Jakarta Sans', -apple-system, sans-serif;
+
+  /* === MODERN SIZING & PILL RADIUS === */
+  --sidebar-w:          280px;
+  --header-h:           68px;
+  --radius:             16px;
+  --radius-sm:          10px;
+  --radius-lg:          20px;
+  --radius-pill:        9999px;
 
   /* === TRANSITIONS === */
-  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);
-  --t-fast:       0.12s;
-  --t-base:       0.22s;
-  --t-slow:       0.4s;
+  --ease-spring:        cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:           cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast:             0.15s ease;
+  --t-base:             0.25s ease;
+  --t-slow:             0.4s ease;
 }
 
-/* === DARK THEME (Cyber Citrus Dark) === */
+/* === REFINED DARK THEME === */
 [data-theme="dark"] {
-  --bg:           #0e0f12;
-  --bg-card:      #1a1c22;
-  --text-primary:   #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted:     #475569;
-  --border:       2px solid #2d3047;
-  --border-light: 1px solid #2d3047;
-  --border-color: #2d3047;
-  --border-light-color: #2d3047;
-  --shadow-flat:    3px 3px 0px 0px rgba(139,92,246,0.4);
-  --shadow-flat-sm: 2px 2px 0px 0px rgba(139,92,246,0.4);
-  --shadow-flat-lg: 6px 6px 0px 0px rgba(139,92,246,0.4);
-  --shadow-hover:   5px 5px 0px 0px rgba(139,92,246,0.5);
+  --bg:                 #0b0f19;
+  --bg-main:            #0b0f19;
+  --bg-card:            #131b2e;
+  --bg-subtle:          #0f172a;
+  --text-primary:       #f8fafc;
+  --text-secondary:     #94a3b8;
+  --text-muted:         #64748b;
+  --border:             1px solid rgba(255, 255, 255, 0.08);
+  --border-light:       1px solid rgba(255, 255, 255, 0.05);
+  --border-color:       rgba(255, 255, 255, 0.08);
+  --border-light-color: rgba(255, 255, 255, 0.05);
+  --shadow-flat:        0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-flat-sm:     0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-flat-lg:     0 20px 40px rgba(0, 0, 0, 0.5);
+  --shadow-hover:       0 14px 34px rgba(49, 27, 146, 0.3);
 }
 
 /* === THEME: MIDNIGHT GLASS === */
@@ -1736,15 +1756,16 @@ body {
 }
 
 .cinematic-logo-mark {
-  background: var(--citrus, #d8ff36);
-  color: #000;
+  background: var(--brand-purple, #311b92);
+  color: #ffffff;
   font-family: var(--font-display), sans-serif;
-  font-weight: 900;
+  font-weight: 800;
   font-size: 1.8rem;
-  padding: 8px 18px;
-  border: 3px solid #000000;
-  box-shadow: 4px 4px 0px 0px #000000;
-  letter-spacing: 0.1em;
+  padding: 8px 24px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 25px -5px rgba(49, 27, 146, 0.35);
+  letter-spacing: 0.05em;
   margin-bottom: 24px;
   animation: logo-entrance 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   opacity: 0;

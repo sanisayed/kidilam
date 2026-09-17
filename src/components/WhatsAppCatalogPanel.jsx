@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Copy, Check, Filter, Trash2, Edit3, X, FileUp, Sparkles, ChevronDown, 
   Camera, ImagePlus, ChevronLeft, ChevronRight, Laptop, Cpu, Zap, HardDrive, Layers, 
-  Tablet, Tag, Briefcase, MessageCircle, Lock, Unlock, RotateCcw
+  Tablet, Tag, MessageCircle, Lock, Unlock, RotateCcw, MoreVertical
 } from 'lucide-react';
 import { urlToBlob } from '../services/supabaseClient';
 import { uploadPhotoToImgBB } from '../services/imgbbService';
@@ -1166,14 +1166,20 @@ export default function WhatsAppCatalogPanel() {
   const [editForm, setEditForm] = useState({
     title: '', processor: '', gen: '', ram: '', storage: '', display: '', gpu: '', os: '', offerPrice: ''
   });
+  const [openAdminMenuId, setOpenAdminMenuId] = useState(null);
 
   const DEFAULT_ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN || '1234';
 
   // ── 2. EFFECTS & DERIVED HOOKS ──
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleCloseMenu = () => setOpenAdminMenuId(null);
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('click', handleCloseMenu);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('click', handleCloseMenu);
+    };
   }, []);
 
   const updateAndSaveRawText = useCallback((newText) => {
@@ -3020,6 +3026,11 @@ export default function WhatsAppCatalogPanel() {
                       const activeIdx = activePhotoIdx[stableId] || 0;
                       const activePhoto = photos[activeIdx] || null;
                       const isUploading = photoUploading[stableId] || false;
+                      const isMenuOpen = openAdminMenuId === stableId;
+
+                      const savings = (p.originalPrice && p.offerPrice && p.originalPrice > p.offerPrice)
+                        ? p.originalPrice - p.offerPrice
+                        : 0;
 
                       return (
                         <motion.div 
@@ -3030,79 +3041,39 @@ export default function WhatsAppCatalogPanel() {
                           exit={{ opacity: 0, scale: 0.95 }}
                           style={{
                             backgroundColor: '#ffffff',
-                            borderRadius: '18px',
+                            borderRadius: '20px',
                             border: '1px solid #e2e8f0',
                             boxShadow: '0 4px 20px -2px rgba(15,23,42,0.06)',
-                            padding: isMobile ? '14px 12px' : '20px',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 12,
-                            transition: 'all 0.2s',
                             width: '100%',
                             maxWidth: '100%',
                             boxSizing: 'border-box',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            position: 'relative',
+                            transition: 'all 0.2s ease'
                           }}
                         >
-                          {/* 1. HEADER ZONE: Brand Badge + Category Tag + Product Title */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, width: '100%' }}>
-                              <span style={{
-                                padding: '3px 10px',
-                                borderRadius: '9999px',
-                                fontSize: '0.72rem',
-                                fontWeight: 800,
-                                background: p.brand === 'DELL' ? '#eff6ff' : p.brand === 'HP' ? '#f5f3ff' : p.brand === 'LENOVO' ? '#fef2f2' : '#f1f5f9',
-                                color: p.brand === 'DELL' ? '#1d4ed8' : p.brand === 'HP' ? '#6d28d9' : p.brand === 'LENOVO' ? '#b91c1c' : '#475569',
-                                border: p.brand === 'DELL' ? '1px solid #bfdbfe' : p.brand === 'HP' ? '1px solid #ddd6fe' : p.brand === 'LENOVO' ? '1px solid #fecaca' : '1px solid #e2e8f0'
-                              }}>
-                                {p.brand}
-                              </span>
-
-                              <span style={{ 
-                                fontSize: '0.68rem', 
-                                fontWeight: 800, 
-                                background: p.category === 'WORKSTATION' ? '#fef3c7' : p.category === 'EXECUTIVE' ? '#f3e8ff' : '#f1f5f9',
-                                color: p.category === 'WORKSTATION' ? '#92400e' : p.category === 'EXECUTIVE' ? '#6b21a8' : '#475569',
-                                border: p.category === 'WORKSTATION' ? '1px solid #fde68a' : p.category === 'EXECUTIVE' ? '1px solid #e9d5ff' : '1px solid #e2e8f0',
-                                padding: '3px 10px', 
-                                borderRadius: '9999px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 4
-                              }}>
-                                {p.category === 'WORKSTATION' ? (
-                                  <>
-                                    <Layers size={11} color="#92400e" /> WORKSTATION
-                                  </>
-                                ) : p.category === 'EXECUTIVE' ? (
-                                  <>
-                                    <Sparkles size={11} color="#6b21a8" /> EXECUTIVE
-                                  </>
-                                ) : (
-                                  <>
-                                    <Briefcase size={11} color="#475569" /> BUSINESS
-                                  </>
-                                )}
-                              </span>
-                            </div>
-
-                            <h3 style={{ margin: 0, fontSize: isMobile ? '0.98rem' : '1.1rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.35, minWidth: 0, wordBreak: 'break-word', width: '100%' }}>
-                              <Laptop size={18} color="#311b92" strokeWidth={2.2} style={{ flexShrink: 0 }} />
-                              <span style={{ minWidth: 0, wordBreak: 'break-word' }}>{p.title}</span>
-                            </h3>
-                          </div>
-
-                          {/* 2. MEDIA ZONE: Hero Photo / Upload Placeholder + Current Price Badge Overlay */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {/* 1. FULL-BLEED MEDIA HEADER */}
+                          <div style={{
+                            position: 'relative',
+                            width: '100%',
+                            aspectRatio: '16/10',
+                            background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderBottom: '1px solid #f1f5f9'
+                          }}>
                             {activePhoto ? (
-                              <div
-                                style={{ position: 'relative', width: '100%', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', background: '#0f172a', cursor: 'zoom-in', aspectRatio: '16/9' }}
+                              <div 
+                                style={{ width: '100%', height: '100%', cursor: 'zoom-in', position: 'relative' }}
                                 onClick={() => setLightbox({ stableId, idx: activeIdx })}
                               >
                                 <img
                                   src={activePhoto.url}
-                                  alt={activePhoto.label}
+                                  alt={activePhoto.label || p.title}
                                   onError={(e) => {
                                     const src = e?.target?.src;
                                     if (src && src.includes('lh3.googleusercontent.com/d/')) {
@@ -3113,225 +3084,388 @@ export default function WhatsAppCatalogPanel() {
                                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                 />
 
-                                {/* Floating Top Right Price Tag */}
-                                <div style={{
-                                  position: 'absolute', top: 8, right: 8,
-                                  fontSize: '0.8rem', fontWeight: 800,
-                                  background: '#fbbf24', color: '#000000',
-                                  padding: '4px 10px', borderRadius: '9999px',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                                  display: 'flex', alignItems: 'center', gap: 4
-                                }}>
-                                  <Sparkles size={12} fill="#000000" />
-                                  <span>AED {p.offerPrice}/-</span>
-                                </div>
+                                {/* Photo Counter Pill */}
+                                {photos.length > 1 && (
+                                  <span style={{
+                                    position: 'absolute', bottom: 10, right: 10,
+                                    background: 'rgba(15,23,42,0.72)', backdropFilter: 'blur(6px)',
+                                    WebkitBackdropFilter: 'blur(6px)',
+                                    color: '#ffffff', fontSize: '0.66rem', fontWeight: 700,
+                                    padding: '2px 8px', borderRadius: '9999px', fontFamily: 'var(--font-mono)'
+                                  }}>
+                                    {activeIdx + 1} / {photos.length}
+                                  </span>
+                                )}
 
-                                <span style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: '9999px', fontFamily: 'var(--font-mono)' }}>
-                                  {activeIdx + 1} / {photos.length}
-                                </span>
-                                {/* Prev/Next arrows */}
+                                {/* Prev / Next Arrows */}
                                 {photos.length > 1 && (
                                   <>
                                     <button
-                                      onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx - 1 + photos.length) % photos.length })); }}
-                                      style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', border: 'none', color: '#0f172a', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx - 1 + photos.length) % photos.length }));
+                                      }}
+                                      style={{
+                                        position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+                                        background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)',
+                                        border: 'none', color: '#0f172a', borderRadius: '50%', width: 28, height: 28,
+                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                      }}
+                                      title="Previous photo"
                                     ><ChevronLeft size={16} /></button>
+
                                     <button
-                                      onClick={e => { e.stopPropagation(); setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx + 1) % photos.length })); }}
-                                      style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', border: 'none', color: '#0f172a', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        setActivePhotoIdx(prev => ({ ...prev, [stableId]: (activeIdx + 1) % photos.length }));
+                                      }}
+                                      style={{
+                                        position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                                        background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)',
+                                        border: 'none', color: '#0f172a', borderRadius: '50%', width: 28, height: 28,
+                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                      }}
+                                      title="Next photo"
                                     ><ChevronRight size={16} /></button>
                                   </>
                                 )}
                               </div>
                             ) : (
-                              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', border: '1px dashed #cbd5e1', borderRadius: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', gap: 6, color: '#64748b' }}>
-                                <Camera size={26} strokeWidth={1.5} color="#94a3b8" />
-                                <span style={{ fontSize: '0.74rem', fontWeight: 600 }}>No photos uploaded</span>
-
-                                {/* Floating Top Right Price Tag */}
-                                <div style={{
-                                  position: 'absolute', top: 8, right: 8,
-                                  fontSize: '0.8rem', fontWeight: 800,
-                                  background: '#fbbf24', color: '#000000',
-                                  padding: '4px 10px', borderRadius: '9999px',
-                                  display: 'flex', alignItems: 'center', gap: 4
-                                }}>
-                                  <Sparkles size={12} fill="#000000" />
-                                  <span>AED {p.offerPrice}/-</span>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Thumbnail Strip */}
-                            {photos.length > 0 && (
-                              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, width: '100%', minWidth: 0, boxSizing: 'border-box', scrollbarWidth: 'none' }}>
-                                {photos.map((ph, i) => (
-                                  <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
-                                    <img
-                                      src={ph.url}
-                                      alt={ph.label}
-                                      onClick={() => setActivePhotoIdx(prev => ({ ...prev, [stableId]: i }))}
-                                      style={{
-                                        width: 52, height: 38, objectFit: 'cover', borderRadius: 8, cursor: 'pointer',
-                                        border: activeIdx === i ? '2px solid #311b92' : '1px solid #e2e8f0',
-                                        opacity: activeIdx === i ? 1 : 0.65, transition: 'all 0.15s'
-                                      }}
-                                    />
-                                    {isAdmin && (
-                                      <button
-                                        onClick={() => handleDeletePhoto(p, i)}
-                                        style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: '0.6rem', fontWeight: 900 }}
-                                        title="Delete this photo"
-                                      >✕</button>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* 3. SPECIFICATIONS ZONE: Clean Lucide Spec Chips Grid */}
-                          <div style={{ 
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                            gap: isMobile ? 6 : 8,
-                            padding: isMobile ? '10px 8px' : '12px',
-                            background: '#f8fafc',
-                            borderRadius: '12px',
-                            border: '1px solid #e2e8f0',
-                            fontSize: isMobile ? '0.74rem' : '0.78rem',
-                            width: '100%',
-                            maxWidth: '100%',
-                            boxSizing: 'border-box',
-                            minWidth: 0
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#334155', minWidth: 0, overflow: 'hidden' }}>
-                              <Cpu size={14} color="#311b92" style={{ flexShrink: 0 }} />
-                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>
-                                <strong>{p.processor}</strong> {p.gen && <span style={{ color: '#64748b' }}>({p.gen})</span>}
-                              </span>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#334155', minWidth: 0, overflow: 'hidden' }}>
-                              <Zap size={14} color="#2563eb" style={{ flexShrink: 0 }} />
-                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>
-                                <strong>{p.ram} GB</strong> RAM
-                              </span>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#334155', minWidth: 0, overflow: 'hidden' }}>
-                              <HardDrive size={14} color="#059669" style={{ flexShrink: 0 }} />
-                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>
-                                <strong>{p.storage} GB</strong> SSD
-                              </span>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#334155', minWidth: 0, overflow: 'hidden' }}>
-                              <Tablet size={14} color="#7c3aed" style={{ flexShrink: 0 }} />
-                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>
-                                {p.display || 'HD Screen'}
-                              </span>
-                            </div>
-
-                            {p.gpu ? (
                               <div style={{
-                                gridColumn: '1 / -1',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 5,
-                                minWidth: 0,
-                                overflow: 'hidden',
-                                color: p.isDedicatedGpu ? '#b45309' : '#475569',
-                                fontWeight: p.isDedicatedGpu ? 700 : 500,
-                                background: p.isDedicatedGpu ? '#fffbeb' : 'transparent',
-                                padding: p.isDedicatedGpu ? '4px 8px' : '2px 0',
-                                borderRadius: '6px'
+                                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                justifyContent: 'center', gap: 6, color: '#94a3b8'
                               }}>
-                                <Zap size={14} color={p.isDedicatedGpu ? '#f59e0b' : '#94a3b8'} style={{ flexShrink: 0 }} />
-                                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>{p.gpu}</span>
-                                {p.isDedicatedGpu && (
-                                  <span style={{ fontSize: '0.62rem', background: '#f59e0b', color: '#000000', padding: '1px 6px', borderRadius: '9999px', fontWeight: 800, marginLeft: 'auto', flexShrink: 0 }}>
-                                    DEDICATED
-                                  </span>
+                                <Laptop size={32} strokeWidth={1.3} color="#cbd5e1" />
+                                <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#94a3b8' }}>No photos uploaded</span>
+                                {isAdmin && (
+                                  <label style={{
+                                    marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4,
+                                    padding: '4px 10px', background: '#ffffff', border: '1px solid #cbd5e1',
+                                    borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, color: '#311b92',
+                                    cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                                  }}>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      multiple
+                                      style={{ display: 'none' }}
+                                      disabled={isUploading}
+                                      onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
+                                    />
+                                    <ImagePlus size={12} />
+                                    <span>{isUploading ? 'Uploading...' : '+ Add Photos'}</span>
+                                  </label>
                                 )}
                               </div>
-                            ) : (
-                              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 5, color: '#64748b', fontSize: '0.72rem', minWidth: 0, overflow: 'hidden' }}>
-                                <Zap size={13} color="#94a3b8" style={{ flexShrink: 0 }} />
-                                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0 }}>Integrated Graphics</span>
-                              </div>
                             )}
 
-                            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#64748b', paddingTop: 4, borderTop: '1px dashed #e2e8f0', minWidth: 0, flexWrap: 'wrap', gap: 4 }}>
-                              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>OS: {p.os || 'Windows 10/11 Pro'}</span>
-                              <span style={{ fontStyle: 'italic', flexShrink: 0 }}>Charger included</span>
+                            {/* Top-Left Floating Brand Pill */}
+                            <div style={{
+                              position: 'absolute', top: 10, left: 10,
+                              background: 'rgba(255, 255, 255, 0.94)',
+                              backdropFilter: 'blur(8px)',
+                              WebkitBackdropFilter: 'blur(8px)',
+                              border: '1px solid rgba(226, 232, 240, 0.8)',
+                              padding: '3px 9px', borderRadius: '9999px',
+                              fontSize: '0.68rem', fontWeight: 800,
+                              color: p.brand === 'DELL' ? '#1d4ed8' : p.brand === 'HP' ? '#6d28d9' : p.brand === 'LENOVO' ? '#b91c1c' : '#0f172a',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                            }}>
+                              {p.brand}
+                            </div>
+
+                            {/* Top-Right Floating Badges: Savings Pill + Admin 3-Dot Menu */}
+                            <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              {savings > 0 && (
+                                <div style={{
+                                  background: 'rgba(220, 252, 231, 0.95)',
+                                  backdropFilter: 'blur(8px)',
+                                  WebkitBackdropFilter: 'blur(8px)',
+                                  border: '1px solid rgba(187, 247, 208, 0.8)',
+                                  color: '#15803d',
+                                  padding: '3px 8px', borderRadius: '9999px',
+                                  fontSize: '0.68rem', fontWeight: 800,
+                                  boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                                }}>
+                                  SAVE AED {savings}
+                                </div>
+                              )}
+
+                              {isAdmin && (
+                                <div style={{ position: 'relative' }}>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenAdminMenuId(prev => prev === stableId ? null : stableId);
+                                    }}
+                                    style={{
+                                      width: 28, height: 28, borderRadius: '50%',
+                                      background: 'rgba(255, 255, 255, 0.95)',
+                                      backdropFilter: 'blur(8px)',
+                                      WebkitBackdropFilter: 'blur(8px)',
+                                      border: '1px solid rgba(226, 232, 240, 0.8)',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      cursor: 'pointer', color: '#1e293b', padding: 0,
+                                      boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
+                                    }}
+                                    title="Admin actions"
+                                  >
+                                    <MoreVertical size={15} />
+                                  </button>
+
+                                  {/* 3-Dot Dropdown Menu */}
+                                  {isMenuOpen && (
+                                    <div 
+                                      onClick={e => e.stopPropagation()}
+                                      style={{
+                                        position: 'absolute', top: 34, right: 0,
+                                        background: '#ffffff', borderRadius: '12px',
+                                        border: '1px solid #e2e8f0',
+                                        boxShadow: '0 10px 25px -5px rgba(15,23,42,0.18)',
+                                        padding: 4, minWidth: 150, zIndex: 30,
+                                        display: 'flex', flexDirection: 'column', gap: 2
+                                      }}
+                                    >
+                                      <label style={{
+                                        display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                                        borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#334155',
+                                        cursor: 'pointer', transition: 'background 0.15s'
+                                      }}
+                                      onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          multiple
+                                          style={{ display: 'none' }}
+                                          disabled={isUploading}
+                                          onChange={e => {
+                                            setOpenAdminMenuId(null);
+                                            if (e.target.files) handleAddPhotos(p, Array.from(e.target.files));
+                                          }}
+                                        />
+                                        <ImagePlus size={14} color="#6d28d9" />
+                                        <span>Add Photos</span>
+                                      </label>
+
+                                      <button
+                                        onClick={() => {
+                                          setOpenAdminMenuId(null);
+                                          handleOpenEditProduct(p);
+                                        }}
+                                        style={{
+                                          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                                          borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#2563eb',
+                                          background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
+                                          cursor: 'pointer'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = '#eff6ff'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        <Edit3 size={14} color="#2563eb" />
+                                        <span>Edit Specs</span>
+                                      </button>
+
+                                      <button
+                                        onClick={() => {
+                                          setOpenAdminMenuId(null);
+                                          handleDeleteSingleProduct(p);
+                                        }}
+                                        style={{
+                                          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                                          borderRadius: '8px', fontSize: '0.76rem', fontWeight: 600, color: '#dc2626',
+                                          background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
+                                          cursor: 'pointer'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        <Trash2 size={14} color="#dc2626" />
+                                        <span>Delete Laptop</span>
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          {/* 4. PRICING ZONE: Strikethrough Original Price + Golden Amber Offer Price */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, paddingTop: 4, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
-                            {p.originalPrice ? (
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Original</span>
-                                <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.84rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                          {/* Thumbnail Strip (If multiple photos) */}
+                          {photos.length > 1 && (
+                            <div style={{
+                              display: 'flex', gap: 6, overflowX: 'auto',
+                              padding: '6px 14px 2px', width: '100%', minWidth: 0,
+                              boxSizing: 'border-box', scrollbarWidth: 'none', background: '#fafafa',
+                              borderBottom: '1px solid #f1f5f9'
+                            }}>
+                              {photos.map((ph, i) => (
+                                <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
+                                  <img
+                                    src={ph.url}
+                                    alt={ph.label}
+                                    onClick={() => setActivePhotoIdx(prev => ({ ...prev, [stableId]: i }))}
+                                    style={{
+                                      width: 44, height: 32, objectFit: 'cover', borderRadius: 6, cursor: 'pointer',
+                                      border: activeIdx === i ? '2px solid #311b92' : '1px solid #e2e8f0',
+                                      opacity: activeIdx === i ? 1 : 0.65, transition: 'all 0.15s'
+                                    }}
+                                  />
+                                  {isAdmin && (
+                                    <button
+                                      onClick={() => handleDeletePhoto(p, i)}
+                                      style={{
+                                        position: 'absolute', top: -4, right: -4, background: '#ef4444',
+                                        border: 'none', color: '#fff', borderRadius: '50%', width: 14, height: 14,
+                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        padding: 0, fontSize: '0.55rem', fontWeight: 900
+                                      }}
+                                      title="Delete this photo"
+                                    >✕</button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* 2. CARD BODY & CONTENT */}
+                          <div style={{
+                            padding: isMobile ? '12px 14px 14px' : '16px 18px 18px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 10,
+                            flex: 1,
+                            boxSizing: 'border-box'
+                          }}>
+                            {/* Category & Form Factor Subtitle */}
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 6,
+                              fontSize: '0.68rem', fontWeight: 700, color: '#64748b',
+                              textTransform: 'uppercase', letterSpacing: '0.04em'
+                            }}>
+                              <span>{p.category}</span>
+                              {p.display && <span>• {p.display}</span>}
+                              {p.isDedicatedGpu && (
+                                <span style={{ color: '#d97706', background: '#fef3c7', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                                  GPU
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Product Title */}
+                            <h3 style={{
+                              margin: 0,
+                              fontSize: isMobile ? '0.98rem' : '1.08rem',
+                              fontWeight: 800,
+                              color: '#0f172a',
+                              lineHeight: 1.35,
+                              wordBreak: 'break-word',
+                              letterSpacing: '-0.01em'
+                            }}>
+                              {p.title}
+                            </h3>
+
+                            {/* Single Unified Apple-Style Price Block */}
+                            <div style={{
+                              display: 'flex', alignItems: 'baseline', gap: 8,
+                              flexWrap: 'wrap', marginTop: 2, marginBottom: 2
+                            }}>
+                              <span style={{
+                                fontSize: isMobile ? '1.25rem' : '1.38rem',
+                                fontWeight: 900,
+                                color: '#311b92',
+                                letterSpacing: '-0.02em',
+                                fontFamily: 'var(--font-mono)'
+                              }}>
+                                AED {p.offerPrice}/-
+                              </span>
+
+                              {p.originalPrice && (
+                                <span style={{
+                                  fontSize: '0.84rem',
+                                  color: '#94a3b8',
+                                  textDecoration: 'line-through',
+                                  fontWeight: 600,
+                                  fontFamily: 'var(--font-mono)'
+                                }}>
                                   AED {p.originalPrice}
                                 </span>
-                              </div>
-                            ) : <div />}
-
-                            <div style={{ 
-                              fontSize: isMobile ? '0.86rem' : '0.94rem', 
-                              fontWeight: 800, 
-                              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                              color: '#78350f',
-                              padding: '6px 14px',
-                              borderRadius: '9999px',
-                              border: '1px solid #fcd34d',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              boxShadow: '0 2px 6px rgba(245, 158, 11, 0.12)'
-                            }}>
-                              <Sparkles size={13} color="#d97706" fill="#d97706" />
-                              <span>Offer: AED {p.offerPrice}/-</span>
+                              )}
                             </div>
-                          </div>
 
-                          {/* 5. ACTION BAR (FOOTER): Add Photos, Copy Text, Share, Edit, Delete */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
-                            {/* Photo Upload Button (Admin Only) */}
-                            {isAdmin && (
-                              <label style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                padding: '8px 10px', border: '1px dashed #c4b5fd', borderRadius: '12px',
-                                cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: isMobile ? '0.76rem' : '0.8rem', fontWeight: 700,
-                                color: '#6d28d9', background: 'rgba(109, 40, 217, 0.04)',
-                                opacity: isUploading ? 0.7 : 1, transition: 'all 0.15s', width: '100%',
-                                minWidth: 0, boxSizing: 'border-box'
+                            {/* Inline Modern Spec Badges */}
+                            <div style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 6,
+                              marginTop: 2
+                            }}>
+                              <div style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '4px 8px', borderRadius: '8px',
+                                background: '#f8fafc', border: '1px solid #e2e8f0',
+                                fontSize: '0.74rem', color: '#334155', fontWeight: 600
                               }}>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  multiple
-                                  style={{ display: 'none' }}
-                                  disabled={isUploading}
-                                  onChange={e => e.target.files && handleAddPhotos(p, Array.from(e.target.files))}
-                                />
-                                <ImagePlus size={15} style={{ flexShrink: 0 }} />
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {isUploading ? 'Uploading to Drive...' : photos.length === 0 ? 'Add Photos' : `Add More (${photos.length})`}
-                                </span>
-                              </label>
-                            )}
+                                <Cpu size={12} color="#311b92" style={{ flexShrink: 0 }} />
+                                <span>{p.processor} {p.gen && <span style={{ color: '#64748b' }}>({p.gen})</span>}</span>
+                              </div>
 
-                            {/* Action Buttons (Copy Text & Share) */}
-                            <div style={{ display: 'flex', gap: 6, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+                              <div style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '4px 8px', borderRadius: '8px',
+                                background: '#f8fafc', border: '1px solid #e2e8f0',
+                                fontSize: '0.74rem', color: '#334155', fontWeight: 600
+                              }}>
+                                <Zap size={12} color="#2563eb" style={{ flexShrink: 0 }} />
+                                <span>{p.ram} GB RAM</span>
+                              </div>
+
+                              <div style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '4px 8px', borderRadius: '8px',
+                                background: '#f8fafc', border: '1px solid #e2e8f0',
+                                fontSize: '0.74rem', color: '#334155', fontWeight: 600
+                              }}>
+                                <HardDrive size={12} color="#059669" style={{ flexShrink: 0 }} />
+                                <span>{p.storage} GB SSD</span>
+                              </div>
+
+                              {p.gpu && (
+                                <div style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                                  padding: '4px 8px', borderRadius: '8px',
+                                  background: p.isDedicatedGpu ? '#fffbeb' : '#f8fafc',
+                                  border: p.isDedicatedGpu ? '1px solid #fde68a' : '1px solid #e2e8f0',
+                                  fontSize: '0.74rem', color: p.isDedicatedGpu ? '#b45309' : '#475569', fontWeight: 600
+                                }}>
+                                  <Zap size={12} color={p.isDedicatedGpu ? '#f59e0b' : '#94a3b8'} style={{ flexShrink: 0 }} />
+                                  <span>{p.gpu}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* OS & Included Accessories Line */}
+                            <div style={{
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                              fontSize: '0.7rem', color: '#64748b',
+                              borderTop: '1px solid #f1f5f9', paddingTop: 8, marginTop: 4
+                            }}>
+                              <span>OS: {p.os || 'Windows 11 Pro'}</span>
+                              <span style={{ color: '#059669', fontWeight: 600 }}>• Charger included</span>
+                            </div>
+
+                            {/* Action Buttons: WhatsApp Share & Copy Quote */}
+                            <div style={{
+                              display: 'flex', gap: 6, width: '100%',
+                              marginTop: 'auto', paddingTop: 6
+                            }}>
                               <button
                                 style={{
-                                  flex: 1,
-                                  minWidth: 0,
-                                  padding: isMobile ? '10px 8px' : '11px 14px',
-                                  fontSize: isMobile ? '0.78rem' : '0.82rem',
+                                  flex: 1, minWidth: 0,
+                                  padding: isMobile ? '10px 10px' : '11px 14px',
+                                  fontSize: isMobile ? '0.8rem' : '0.84rem',
                                   fontWeight: 800,
                                   borderRadius: '12px',
                                   border: 'none',
@@ -3340,27 +3474,24 @@ export default function WhatsAppCatalogPanel() {
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  gap: 5,
+                                  gap: 6,
                                   cursor: 'pointer',
                                   boxShadow: '0 3px 10px rgba(37, 211, 102, 0.25)',
-                                  opacity: sharingId === (p.stableId || p.id) ? 0.7 : 1
+                                  opacity: sharingId === stableId ? 0.7 : 1,
+                                  transition: 'transform 0.15s ease'
                                 }}
-                                disabled={sharingId === (p.stableId || p.id)}
+                                disabled={sharingId === stableId}
                                 onClick={() => handleSmartShare(p)}
                               >
-                                {sharingId === (p.stableId || p.id) ? (
+                                {sharingId === stableId ? (
                                   <span>Sharing...</span>
                                 ) : (
                                   <>
-                                    <MessageCircle size={15} style={{ flexShrink: 0 }} />
+                                    <MessageCircle size={16} style={{ flexShrink: 0 }} />
                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                       {isMobileShareSupported
-                                        ? photos.length > 0 ? `Share (${photos.length})` : 'Share Quote'
-                                        : photos.length === 1
-                                          ? 'Copy Photo + Text'
-                                          : photos.length > 1
-                                            ? `Copy + ${photos.length} Photos`
-                                            : 'Copy Quote'}
+                                        ? photos.length > 0 ? `Share Quote (${photos.length})` : 'Share Quote'
+                                        : photos.length > 0 ? `Copy + ${photos.length} Photos` : 'Copy Quote'}
                                     </span>
                                   </>
                                 )}
@@ -3369,55 +3500,28 @@ export default function WhatsAppCatalogPanel() {
                               <button 
                                 style={{ 
                                   padding: isMobile ? '10px 12px' : '11px 14px',
-                                  fontSize: isMobile ? '0.78rem' : '0.82rem', 
+                                  fontSize: isMobile ? '0.8rem' : '0.84rem', 
                                   fontWeight: 700,
                                   borderRadius: '12px',
                                   background: copiedId === p.id ? '#10b981' : '#ffffff',
                                   color: copiedId === p.id ? '#ffffff' : '#1e293b',
-                                  border: copiedId === p.id ? '1px solid #10b981' : '1px solid #e2e8f0',
+                                  border: copiedId === p.id ? '1px solid #10b981' : '1px solid #cbd5e1',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   gap: 5,
                                   cursor: 'pointer',
-                                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                   flexShrink: 0,
                                   whiteSpace: 'nowrap'
                                 }}
                                 onClick={() => handleCopy(p.rawText, p.id)}
                                 title="Copy raw formatted WhatsApp quote"
                               >
-                                {copiedId === p.id ? <Check size={14} /> : <Copy size={14} />}
+                                {copiedId === p.id ? <Check size={15} /> : <Copy size={15} />}
                                 <span>{copiedId === p.id ? 'Copied' : 'Copy'}</span>
                               </button>
                             </div>
-
-                            {/* Admin Controls (Edit & Delete) */}
-                            {isAdmin && (
-                              <div style={{ display: 'flex', gap: 6, width: '100%', marginTop: 2 }}>
-                                <button
-                                  onClick={() => handleOpenEditProduct(p)}
-                                  style={{
-                                    flex: 1, padding: '7px 10px', background: '#eff6ff',
-                                    color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '10px',
-                                    fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5
-                                  }}
-                                >
-                                  <Edit3 size={13} /> Edit Item
-                                </button>
-
-                                <button
-                                  onClick={() => handleDeleteSingleProduct(p)}
-                                  style={{
-                                    padding: '7px 12px', background: '#fef2f2',
-                                    color: '#dc2626', border: '1px solid #fecaca', borderRadius: '10px',
-                                    fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5
-                                  }}
-                                >
-                                  <Trash2 size={13} /> Delete
-                                </button>
-                              </div>
-                            )}
                           </div>
                         </motion.div>
                       );

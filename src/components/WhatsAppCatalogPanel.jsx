@@ -637,6 +637,118 @@ function normalizeModelKey(title) {
   return 'prod_' + (clean || 'laptop');
 }
 
+function getModelFingerprint(str) {
+  if (!str) return { brand: '', modelCode: '', gen: '', subFamily: '', isYoga: false, tokens: [] };
+  const s = str.toLowerCase().replace(/prod_/, '').replace(/[^a-z0-9]+/g, ' ');
+  const tokens = s.split(/\s+/).filter(Boolean);
+
+  let brand = '';
+  if (tokens.includes('dell')) brand = 'dell';
+  else if (tokens.includes('hp')) brand = 'hp';
+  else if (tokens.includes('lenovo') || tokens.includes('thinkpad')) brand = 'lenovo';
+  else if (tokens.includes('apple') || tokens.includes('macbook')) brand = 'apple';
+  else if (tokens.includes('surface') || tokens.includes('microsoft')) brand = 'microsoft';
+
+  let modelCode = '';
+  if (tokens.includes('surface')) {
+    if (tokens.includes('pro')) {
+      const proIdx = tokens.indexOf('pro');
+      const num = tokens[proIdx + 1];
+      modelCode = num && /^\d+$/.test(num) ? `surface_pro_${num}` : 'surface_pro';
+    } else if (tokens.includes('go')) {
+      const goIdx = tokens.indexOf('go');
+      const num = tokens[goIdx + 1];
+      modelCode = num && /^\d+$/.test(num) ? `surface_go_${num}` : 'surface_go';
+    } else if (tokens.includes('laptop')) {
+      const lapIdx = tokens.indexOf('laptop');
+      const num = tokens[lapIdx + 1];
+      modelCode = num && /^\d+$/.test(num) ? `surface_laptop_${num}` : 'surface_laptop';
+    } else {
+      modelCode = 'surface';
+    }
+  } else if (tokens.includes('chromebook')) {
+    const cbIdx = tokens.indexOf('chromebook');
+    const prev = tokens[cbIdx - 1];
+    const next = tokens[cbIdx + 1];
+    const num = /^\d+$/.test(prev) ? prev : (/^\d+$/.test(next) ? next : '');
+    modelCode = num ? `chromebook_${num}` : 'chromebook';
+  } else {
+    for (const t of tokens) {
+      if (/^[a-z]?\d{3,5}[a-z]?$/i.test(t)) {
+        modelCode = t;
+        break;
+      }
+      if (/^(t14|t14s|t15|p14s|p1|p15|x13|x1|x2|l15|l14|l13|m17|m15)$/i.test(t)) {
+        modelCode = t;
+        break;
+      }
+    }
+  }
+
+  let gen = '';
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (/^gen_?\d+$/i.test(t)) {
+      gen = t.replace('_', '');
+    } else if (t === 'gen' && tokens[i + 1] && /^\d+$/.test(tokens[i + 1])) {
+      gen = 'gen' + tokens[i + 1];
+    } else if (/^g\d+$/i.test(t)) {
+      gen = t;
+    } else if (/^r\d+$/i.test(t)) {
+      gen = t;
+    } else if (/^(2017|2019|2020|2021|2022|2023|2024)$/.test(t)) {
+      gen = t;
+    }
+  }
+
+  let subFamily = '';
+  if (tokens.includes('fury') || tokens.includes('furry')) subFamily = 'fury';
+  else if (tokens.includes('firefly')) subFamily = 'firefly';
+  else if (tokens.includes('studio')) subFamily = 'studio';
+  else if (tokens.includes('spectre')) subFamily = 'spectre';
+  else if (tokens.includes('carbon')) subFamily = 'carbon';
+  else if (tokens.includes('alienware')) subFamily = 'alienware';
+
+  const isYoga = tokens.includes('yoga') || tokens.includes('2in1') || (tokens.includes('2') && tokens.includes('1'));
+
+  return { brand, modelCode, gen, subFamily, isYoga, tokens };
+}
+
+function findMatchingAlbumKey(p, productPhotos) {
+  if (!p || (!p.title && !p.model) || !productPhotos) return null;
+  const stableId = p.stableId || p.id;
+  if (productPhotos[stableId] && productPhotos[stableId].length > 0) return stableId;
+
+  const cleanTitle = (p.title || p.model || '').trim();
+  const baseKey = normalizeModelKey(cleanTitle);
+  const noPrefixBase = baseKey.replace(/^prod_/, '');
+
+  if (productPhotos[baseKey] && productPhotos[baseKey].length > 0) return baseKey;
+  if (productPhotos[noPrefixBase] && productPhotos[noPrefixBase].length > 0) return noPrefixBase;
+
+  // Strict signature matching:
+  // Must match brand, exact modelCode, subFamily, isYoga, and generation (if either has gen)
+  const pFP = getModelFingerprint(cleanTitle + ' ' + (p.gen || ''));
+  if (!pFP.modelCode && !pFP.subFamily) return null;
+
+  for (const [key, photos] of Object.entries(productPhotos)) {
+    if (!photos || photos.length === 0) continue;
+    const kFP = getModelFingerprint(key);
+
+    if (pFP.brand && kFP.brand && pFP.brand !== kFP.brand) continue;
+    if (pFP.modelCode && kFP.modelCode !== pFP.modelCode) continue;
+    if (pFP.subFamily || kFP.subFamily) {
+      if (pFP.subFamily !== kFP.subFamily) continue;
+    }
+    if (pFP.isYoga !== kFP.isYoga) continue;
+    if (pFP.gen || kFP.gen) {
+      if (pFP.gen !== kFP.gen) continue;
+    }
+    return key;
+  }
+  return null;
+}
+
 function parseWhatsAppCatalog(rawText) {
   if (!rawText || !rawText.trim()) return [];
 
@@ -1384,43 +1496,12 @@ export default function WhatsAppCatalogPanel() {
   const getPhotos = useCallback((stableId, p = null) => {
     let local = productPhotos[stableId] || [];
 
-    // Multi-tier smart fallback for automatic photo carry-over across catalog updates
+    // Multi-tier smart fallback with strict model & generation fingerprinting:
+    // Guarantees photos NEVER leak across different generations or sub-models
     if (local.length === 0 && p && (p.title || p.model)) {
-      const cleanTitle = (p.title || p.model || '').trim();
-      const baseKey = normalizeModelKey(cleanTitle);
-      const noPrefixBase = baseKey.replace(/^prod_/, '');
-
-      if (productPhotos[baseKey] && productPhotos[baseKey].length > 0) {
-        local = productPhotos[baseKey];
-      } else if (productPhotos[noPrefixBase] && productPhotos[noPrefixBase].length > 0) {
-        local = productPhotos[noPrefixBase];
-      } else {
-        // Tier 3: Model number & family token matching (e.g. 5490, t14, m17, a2289, 3571)
-        const pTokens = cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(t => t.length >= 2);
-        const pModelNum = pTokens.find(t => /\d+/.test(t));
-
-        for (const [key, photos] of Object.entries(productPhotos)) {
-          if (!photos || photos.length === 0) continue;
-          const cleanK = key.toLowerCase().replace(/^prod_/, '').replace(/[^a-z0-9]/g, ' ');
-          const kTokens = cleanK.split(/\s+/).filter(t => t.length >= 2);
-
-          if (pModelNum && kTokens.includes(pModelNum)) {
-            const sharesFamily = pTokens.some(pt => !/\d+/.test(pt) && kTokens.includes(pt));
-            if (sharesFamily || kTokens.length === 1) {
-              local = photos;
-              break;
-            }
-          }
-
-          // Substring match
-          const cleanKUnderscore = key.toLowerCase().replace(/[^a-z0-9]/g, '_');
-          const titleUnderscore = cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '_');
-          if ((cleanKUnderscore.length > 5 && titleUnderscore.includes(cleanKUnderscore)) ||
-              (titleUnderscore.length > 5 && cleanKUnderscore.includes(titleUnderscore))) {
-            local = photos;
-            break;
-          }
-        }
+      const matchKey = findMatchingAlbumKey(p, productPhotos);
+      if (matchKey && productPhotos[matchKey]) {
+        local = productPhotos[matchKey];
       }
     }
 
@@ -1550,17 +1631,12 @@ export default function WhatsAppCatalogPanel() {
     let targetKey = stableId;
     let photos = productPhotos[stableId] || [];
 
-    // Fallback key lookup if photos were auto-linked from base model key
+    // Resolve target key using strict fingerprint matching
     if (photos.length === 0 && p && (p.title || p.model)) {
-      const cleanTitle = (p.title || p.model || '').trim();
-      const baseKey = normalizeModelKey(cleanTitle);
-      const noPrefixBase = baseKey.replace(/^prod_/, '');
-      if (productPhotos[baseKey] && productPhotos[baseKey].length > 0) {
-        targetKey = baseKey;
-        photos = productPhotos[baseKey];
-      } else if (productPhotos[noPrefixBase] && productPhotos[noPrefixBase].length > 0) {
-        targetKey = noPrefixBase;
-        photos = productPhotos[noPrefixBase];
+      const matchKey = findMatchingAlbumKey(p, productPhotos);
+      if (matchKey && productPhotos[matchKey] && productPhotos[matchKey].length > 0) {
+        targetKey = matchKey;
+        photos = productPhotos[matchKey];
       }
     }
 

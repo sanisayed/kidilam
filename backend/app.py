@@ -2,7 +2,15 @@ import io
 import os
 import sqlite3
 from datetime import date as _date
-from flask import Flask, jsonify, request, render_template, send_file, abort
+from flask import Flask, jsonify, request, render_template, send_file, abort, send_from_directory
+
+# Resolve directory for built React Vite static files
+FRONTEND_DIST_DIR = os.environ.get(
+    "FRONTEND_DIST_DIR",
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "dist"))
+)
+if not os.path.exists(FRONTEND_DIST_DIR):
+    FRONTEND_DIST_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "dist"))
 
 try:
     from dotenv import load_dotenv
@@ -539,9 +547,14 @@ def admin_required(f):
 
 @app.route("/login", methods=["GET"])
 def login_view():
+    if os.path.exists(os.path.join(FRONTEND_DIST_DIR, "index.html")):
+        return send_from_directory(FRONTEND_DIST_DIR, "index.html")
     if "user_id" in session:
-        return redirect(url_for("index"))
-    return render_template("login.html")
+        return redirect("/")
+    try:
+        return render_template("login.html")
+    except Exception:
+        return redirect("/")
 
 
 @app.route("/api/auth/login", methods=["POST"])
@@ -707,10 +720,27 @@ def api_users_delete(user_id):
 
 # ── Page ─────────────────────────────────────────────────────────────────────
 
-@app.route("/")
-@login_required
-def index():
-    return render_template("index.html")
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_frontend_spa(path):
+    # Never intercept API routes
+    if path.startswith("api/") or path == "api":
+        return jsonify({"error": "API route not found"}), 404
+    # Serve static assets from dist if they exist
+    if path != "" and os.path.exists(os.path.join(FRONTEND_DIST_DIR, path)):
+        return send_from_directory(FRONTEND_DIST_DIR, path)
+    # Serve index.html for SPA client-side routing
+    if os.path.exists(os.path.join(FRONTEND_DIST_DIR, "index.html")):
+        return send_from_directory(FRONTEND_DIST_DIR, "index.html")
+    # Fallback if accessed before building frontend
+    try:
+        return render_template("index.html")
+    except Exception:
+        return jsonify({
+            "status": "Kidilam Backend API is running",
+            "frontend_dist": "Not built yet. Build with 'npm run build' or access Vite on port 5173.",
+            "health_check": "/api/health"
+        }), 200
 
 
 # ── Combined init endpoint — ONE request loads all startup data ───────────────

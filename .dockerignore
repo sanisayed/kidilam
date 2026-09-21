@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.gitignore
+.env*
+backend/*.db
+backend/*.sqlite3
+backend/tunnel_url.txt
+backend/__pycache__
+__pycache__
+invoices_pdf
+*.md
+.oxlintrc.json
+render.yaml

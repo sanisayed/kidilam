@@ -5,8 +5,9 @@
 //  - Google Drive URL import support
 //  - Falls back to localStorage Base64 if Supabase is not configured
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://viglitfnvcnzdhpunrvc.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Yq1TJCPc49WzQzyPcqLohA_tBOd5mEJ';
+
 const BUCKET = 'product-photos';
 
 const isSupabaseConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY &&

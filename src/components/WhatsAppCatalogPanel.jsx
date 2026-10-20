@@ -622,77 +622,295 @@ Charger
   @~3399/- Aed~
  *Offer price @ 2999/- AED 💰*`;
 
-const DEFAULT_OMAN_STOCK_CATALOG = `💻 *BUYOLOGY OMAN - LAPTOP PRICE LIST (OMR)*
+const DEFAULT_OMAN_STOCK_CATALOG = `*DELL*
 
-*💻 Dell Latitude 5290 2 IN 1*
-  Processor – Intel Core i5-8th
-  RAM – 8 GB DDR4
-  Storage – 256 GB SSD
-  Display – 12.5 inch , Touch screen ,HD
-  
-  Charger.
-Price@~95/- OMR~
-*Offer price @75/- OMR* 💰*
-━━━━━━━━━━━━━━━
+*💻 Dell Latitude 5480 Touch*
+
+Processor – Intel Core i5  
+7th Generation  
+RAM – 8 GB RAM  
+Storage – 256 GB SSD  
+Display – 14 Inch Touch Display  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB 3.0, USB-C, HDMI, VGA, Ethernet (RJ-45), 3.5mm Audio  
+Keyboard – Standard Dell Keyboard  
+GPU – Intel HD Graphics 620  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 79 OMR* 💰
+
+______________________________
+
+*💻 Dell Latitude 3420*
+
+Processor – Intel Core i5  
+11th Generation  
+RAM – 8 GB RAM  
+Storage – 256 GB SSD  
+Display – 14 Inch Display  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB 3.2, USB-C, HDMI, Ethernet (RJ-45), 3.5mm Audio  
+Keyboard – Standard Dell Keyboard  
+GPU – Intel UHD Graphics  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 105 OMR* 💰
+
+______________________________
+
 *💻 Dell Latitude 5510*
-  Processor – Intel core i7
-  10 th Generation
-  RAM – 16 GB RAM  
-  Storage – 256 GB SSD
-  Display – 13.3 Inch , Touch
-  Ports – USB, HDMI, Audio
-  Connectivity - Wi-Fi & Bluetooth
-  Keyboard: Backlit Keyboard 
-  GPU - integrated UHD
-  OS – Windows 11 pro
-  
-  Charger.
-Price@~115/-OMR~
-*Offer Price @85/- OMR💰*
-━━━━━━━━━━━━━━━
-*💻 Dell Latitude 7410*
-  Processor – Intel core i7
-  10 th Generation
-  RAM – 16 GB RAM
-  Storage – 256 GB SSD
-  Display – 14 Inch Full HD 
-  Connectivity - Wi-Fi & Bluetooth
-  Ports - USB, HDMI, LAN & Audio
-  Keyboard: Backlit Keyboard 
-  GPU -integrated UHD
-  OS – Windows 11 pro
-  
-  Charger.
-Price@~130/-OMR~
-**Offer Price @99/- OMR* 💰
-━━━━━━━━━━━━━━━
-*💻 Dell Latitude 7430*
-  Processor – Intel Core i7-12th
-  RAM – 32GB DDR4
-  Storage – 512 GB SSD
-  Display – 14 Inch 
-  Connectivity: Wi-Fi & Bluetooth
-  Ports - USB-C / Thunderbolt, USB-A, HDMI & Audio Jack
-  Keyboard: Backlit Keyboard 
-  GPU - Intel®️ Iris Xe Graphics
-  OS – Windows 11 pro
-  
-  Charger.
-Price@~195/- OMR~
-*Offer price @155/- OMR* 💰
-━━━━━━━━━━━━━━━
-*💻 Lenovo ThinkPad T14 Gen 1*
-  Processor – Intel Core i5-10th
-  RAM – 16 GB RAM
-  Storage – 256 GB SSD
-  Display – 14 Inch Full HD
-  Ports - USB, HDMI, Type-C
-  Keyboard: Backlit Keyboard
-  OS – Windows 11 Pro
-  
-  Charger.
-Price@~115/- OMR~
-*Offer price @85/- OMR* 💰`;
+
+Processor – Intel Core i5  
+10th Generation  
+RAM – 8 GB RAM  
+Storage – 256 GB SSD  
+Display – 15.6 Inch Display  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB 3.2, USB-C / Thunderbolt, HDMI, Ethernet (RJ-45), 3.5mm Audio  
+Keyboard – Standard Dell Keyboard  
+GPU – Intel UHD Graphics  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 109 OMR* 💰
+
+______________________________
+
+*💻 Dell Latitude 5410*
+
+Processor – Intel Core i5  
+10th Generation  
+RAM – 16 GB RAM  
+Storage – 256 GB SSD  
+Display – 14 Inch Display  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB 3.2, USB-C / Thunderbolt, HDMI, Ethernet (RJ-45), 3.5mm Audio  
+Keyboard – Standard Dell Keyboard  
+GPU – Intel UHD Graphics  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 119 OMR* 💰
+
+______________________________
+
+*🖥️ Dell OptiPlex 5260 All-in-One*
+
+Processor – Intel Core i5  
+8th Generation  
+RAM – 8 GB RAM  
+Storage – 256 GB SSD  
+Display – 21.5 Inch Full HD IPS  
+Connectivity – Wi-Fi, Bluetooth & Ethernet  
+Ports – USB 3.1, USB-C, DisplayPort, Ethernet (RJ-45), 3.5mm Audio  
+GPU – Intel UHD Graphics 630  
+OS – Windows 11 Pro  
+
+Power Cable.
+
+*Offer Price @ 129 OMR* 💰
+
+______________________________
+
+*💻 Dell Latitude 5410*
+
+Processor – Intel Core i7  
+10th Generation  
+RAM – 16 GB RAM  
+Storage – 256 GB SSD  
+Display – 14 Inch Display  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB 3.2, USB-C / Thunderbolt, HDMI, Ethernet (RJ-45), 3.5mm Audio  
+Keyboard – Standard Dell Keyboard  
+GPU – Intel UHD Graphics  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 129 OMR* 💰
+
+______________________________
+
+*🖥️ Dell SFF Desktop + 22 Inch Monitor*
+
+Processor – Intel Core i5  
+9th Generation  
+RAM – 8 GB RAM  
+Storage – 256 GB SSD  
+Display – 22 Inch Monitor  
+Connectivity – Ethernet  
+Ports – USB 3.0, DisplayPort, Ethernet (RJ-45), Audio  
+Keyboard – Standard Dell Keyboard  
+GPU – Intel UHD Graphics  
+OS – Windows 11 Pro  
+
+Power Cable.
+
+*Offer Price @ 139 OMR* 💰
+
+______________________________
+
+
+*HP*
+
+*💻 HP ProBook 640 G3*
+
+Processor – Intel Core i5  
+7th Generation  
+RAM – 8 GB RAM  
+Storage – 256 GB SSD  
+Display – 14 Inch Display  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB 3.0, USB-C, DisplayPort, VGA, Ethernet (RJ-45), 3.5mm Audio  
+Keyboard – Standard HP Keyboard  
+GPU – Intel HD Graphics 620  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 75 OMR* 💰
+
+______________________________
+
+*💻 HP EliteBook 830 G7 x360*
+
+Processor – Intel Core i7  
+10th Generation  
+RAM – 16 GB RAM  
+Storage – 512 GB SSD  
+Display – 13.3 Inch Full HD Touch Display  
+Type – x360 Convertible  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB 3.1, USB-C / Thunderbolt, HDMI, 3.5mm Audio  
+Keyboard – Standard HP Keyboard  
+GPU – Intel UHD Graphics  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 169 OMR* 💰
+
+______________________________
+
+*💻 HP EliteBook 1040 G9*
+
+Processor – Intel Core i5  
+12th Generation  
+RAM – 16 GB RAM  
+Storage – 256 GB SSD  
+Display – 14 Inch Display  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB-A, Thunderbolt 4 / USB-C, HDMI, 3.5mm Audio  
+Keyboard – HP Premium Keyboard  
+GPU – Intel Iris Xe Graphics  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 179 OMR* 💰
+
+______________________________
+
+
+*LENOVO*
+
+*📱 Lenovo TAB6 A101LV*
+
+Processor – Qualcomm Snapdragon 690 5G  
+RAM – 4 GB RAM  
+Storage – 64 GB  
+Display – 10.3 Inch 1920 × 1200 Touch Display  
+Connectivity – Wi-Fi, Bluetooth 5.1 & 5G  
+Port – USB Type-C  
+Camera – 8MP Rear & 8MP Front  
+Expandable Storage – microSD Supported  
+OS – Android 11  
+
+Charger.
+
+*Offer Price @ 40 OMR* 💰
+
+______________________________
+
+*💻 Lenovo ThinkPad T480*
+
+Processor – Intel Core i5  
+8th Generation  
+RAM – 8 GB RAM  
+Storage – 256 GB SSD  
+Display – 14 Inch Display  
+Connectivity – Wi-Fi & Bluetooth  
+Ports – USB 3.1, USB-C, Thunderbolt 3, HDMI, Ethernet (RJ-45), 3.5mm Audio  
+Keyboard – ThinkPad Keyboard  
+GPU – Intel UHD Graphics 620  
+OS – Windows 11 Pro  
+
+Charger.
+
+*Offer Price @ 89 OMR* 💰
+
+______________________________
+
+
+*APPLE*
+
+*📱 Apple iPad 7th Generation*
+
+Processor – Apple A10 Fusion Chip  
+Storage – 128 GB  
+Display – 10.2 Inch Retina Touch Display  
+Resolution – 2160 × 1620  
+Connectivity – Wi-Fi & Bluetooth 4.2  
+Ports – Lightning Connector, 3.5mm Audio, Smart Connector  
+Camera – 8MP Rear Camera  
+Security – Touch ID  
+OS – iPadOS  
+
+Charger.
+
+*Offer Price @ 55 OMR* 💰
+
+______________________________
+
+*🖥️ Apple iMac 2019 Retina 5K*
+
+Processor – Intel Core i9  
+RAM – 16 GB RAM  
+Storage – 256 GB SSD  
+Display – 27 Inch Retina 5K Display  
+Resolution – 5120 × 2880  
+Connectivity – Wi-Fi, Bluetooth & Gigabit Ethernet  
+Ports – 4× USB 3, 2× Thunderbolt 3 / USB-C, Ethernet, SDXC, 3.5mm Audio  
+GPU – 4 GB Dedicated Graphics  
+OS – macOS  
+
+Power Cable.
+
+*Offer Price @ 279 OMR* 💰
+
+______________________________
+
+*🖥️ Apple iMac 2019 Retina 5K*
+
+Processor – Intel Core i5  
+RAM – 8 GB RAM  
+Storage – 3 TB  
+Display – 27 Inch Retina 5K Display  
+Resolution – 5120 × 2880  
+Connectivity – Wi-Fi, Bluetooth & Gigabit Ethernet  
+Ports – 4× USB 3, 2× Thunderbolt 3 / USB-C, Ethernet, SDXC, 3.5mm Audio  
+GPU – 8 GB Dedicated Graphics  
+OS – macOS  
+
+Power Cable.
+
+*Offer Price @ 369 OMR* 💰`;
 
 /* =========================================================
    TEXT PARSER UTILITIES
@@ -702,11 +920,11 @@ function normalizeModelKey(title) {
   if (!title) return 'prod_unknown';
   const clean = title.toLowerCase()
     .replace(/\b\d+\s*(gb|tb|ssd|ram|aed|omr|ro|rial|riyal|baisa|ghz)\b/gi, '')
-    .replace(/\b(i3|i5|i7|i9|ryzen\s*\d*|core\s*ultra|apple|m1|m2|m3)\b/gi, '')
+    .replace(/\b(i3|i5|i7|i9|ryzen\s*\d*|core\s*ultra|apple|m1|m2|m3|snapdragon)\b/gi, '')
     .replace(/\b\d+(th|st|nd|rd)\s*gen\b/gi, '')
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
-  return 'prod_' + (clean || 'laptop');
+  return 'prod_' + (clean || 'device');
 }
 
 function getModelFingerprint(str) {
@@ -833,7 +1051,7 @@ function parseWhatsAppCatalog(rawText) {
   const finalizeBlock = (blockLines) => {
     if (blockLines.length === 0) return;
 
-    // Filter out pure separator lines like ━━━━━ from block ends/internal
+    // Filter out pure separator lines like ━━━━━ or ___________________
     const cleanLines = blockLines.filter(l => !/^[━─=\-_*#]{4,}$/.test(l.trim()));
     if (cleanLines.length === 0) return;
 
@@ -851,13 +1069,21 @@ function parseWhatsAppCatalog(rawText) {
     const fullBlockText = cleanLines.slice(firstNonEmpty, lastNonEmpty + 1).join('\n').trim();
     if (!fullBlockText) return;
 
-    // Title line: line with 💻 or first non-empty line
-    let titleLine = cleanLines.slice(firstNonEmpty).find(l => l.includes('💻')) || cleanLines[firstNonEmpty];
+    // Title line: line with 💻, 🖥️, 🖥, 📱 or first non-empty line
+    let titleLine = cleanLines.slice(firstNonEmpty).find(l => 
+      l.includes('💻') || l.includes('🖥️') || l.includes('🖥') || l.includes('📱')
+    ) || cleanLines[firstNonEmpty];
+
     let cleanTitle = titleLine
       .replaceAll('💻', '')
+      .replaceAll('🖥️', '')
+      .replaceAll('🖥', '')
+      .replaceAll('📱', '')
       .replace(/[*•]/gu, '')
       .replace(/\s+/g, ' ')
       .trim();
+
+    if (!cleanTitle || isHeaderLine(cleanTitle) || isGroupHeaderLine(cleanTitle)) return;
 
     let processor = '';
     let gen = '';
@@ -878,7 +1104,8 @@ function parseWhatsAppCatalog(rawText) {
       if (!l) return;
 
       // Do not treat product title line as a spec line
-      if (l === titleLine.trim() || (l.includes('💻') && l.replaceAll('💻', '').replace(/[*•]/gu, '').trim() === cleanTitle)) {
+      const rawLWithoutEmoji = l.replaceAll('💻', '').replaceAll('🖥️', '').replaceAll('🖥', '').replaceAll('📱', '').replace(/[*•]/gu, '').trim();
+      if (rawLWithoutEmoji === cleanTitle || l === titleLine.trim()) {
         return;
       }
       const lower = l.toLowerCase();
@@ -891,20 +1118,20 @@ function parseWhatsAppCatalog(rawText) {
       if (!isGpuKeywordLine) {
         const val = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
         const valLower = val.toLowerCase();
-        const valHasChip = valLower.includes('core i') || valLower.includes('intelcore') || valLower.includes('ultra') || valLower.includes('ryzen') || valLower.includes('apple m') || valLower.includes('m1') || valLower.includes('pentium') || valLower.includes('celeron') || valLower.includes('i9') || valLower.includes('i7') || valLower.includes('i5') || valLower.includes('i3');
-        const currHasChip = processor.toLowerCase().includes('core i') || processor.toLowerCase().includes('ultra') || processor.toLowerCase().includes('ryzen') || processor.toLowerCase().includes('apple') || processor.toLowerCase().includes('m1') || processor.toLowerCase().includes('pentium');
+        const valHasChip = valLower.includes('core i') || valLower.includes('intelcore') || valLower.includes('ultra') || valLower.includes('ryzen') || valLower.includes('apple m') || valLower.includes('m1') || valLower.includes('snapdragon') || valLower.includes('fusion') || valLower.includes('pentium') || valLower.includes('celeron') || valLower.includes('i9') || valLower.includes('i7') || valLower.includes('i5') || valLower.includes('i3');
+        const currHasChip = processor.toLowerCase().includes('core i') || processor.toLowerCase().includes('ultra') || processor.toLowerCase().includes('ryzen') || processor.toLowerCase().includes('apple') || processor.toLowerCase().includes('snapdragon') || processor.toLowerCase().includes('fusion');
 
         if (valHasChip) {
           processor = val;
         } else if (isExplicitProcessorLine && !currHasChip) {
           processor = val;
-        } else if (!processor && (isCpuKeyword || lower.includes('intel'))) {
+        } else if (!processor && (isCpuKeyword || lower.includes('intel') || lower.includes('qualcomm'))) {
           processor = val;
         }
       }
 
-      // Generation extraction (e.g. 7 th Generation, 10 Th, 12 th, 8th Gen, i5-11th)
-      if (!lower.includes('display') && !lower.includes('inch') && !lower.includes('screen')) {
+      // Generation extraction (e.g. 7th Generation, 10 Th, 12 th, 8th Gen, i5-11th) - exclude iPad lines
+      if (!lower.includes('display') && !lower.includes('inch') && !lower.includes('screen') && !lower.includes('ipad')) {
         const m = l.match(/(\d+)\s*(?:th|Th|st|nd|rd)?\s*(?:Gen|Generation)/i) || 
                   l.match(/i[3579]\s*-\s*(\d+)/i) || 
                   l.match(/(?:core\s*i[3579]|intelcore\s*i[3579]|i[3579])[\s,-]+(\d{1,2})\s*(?:th|Th)?\b/i) ||
@@ -923,8 +1150,8 @@ function parseWhatsAppCatalog(rawText) {
         if (rMatch) ram = parseInt(rMatch[1], 10);
       }
 
-      // Storage
-      if (lower.includes('storage') || lower.includes('ssd') || lower.includes('hdd')) {
+      // Storage (GB / TB)
+      if (lower.includes('storage') || lower.includes('ssd') || lower.includes('hdd') || lower.includes('emmc')) {
         const sMatch = l.match(/(\d+)\s*(gb|tb)/i);
         if (sMatch) {
           let num = parseInt(sMatch[1], 10);
@@ -933,15 +1160,16 @@ function parseWhatsAppCatalog(rawText) {
         }
       }
 
-      // Display
-      if (lower.includes('display') || lower.includes('inch') || lower.includes('screen') || /1\d(?:\.\d)?["”]/.test(l)) {
+      // Display (Exclude Ports / Port lines like DisplayPort!)
+      const isPortOrConnLine = lower.startsWith('ports') || lower.startsWith('port') || lower.startsWith('connectivity') || lower.startsWith('keyboard');
+      if (!isPortOrConnLine && (lower.startsWith('display') || lower.includes('inch') || lower.includes('screen') || /1\d(?:\.\d)?["”]/.test(l))) {
         display = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
       }
 
       // Touch & 2in1 (Excluding Touch Bar on MacBooks!)
       const hasTouchBar = lower.includes('touch bar') || lower.includes('touchbar');
       const hasTouchscreen = (lower.includes('touch') && !hasTouchBar) || lower.includes('touchscreen') || lower.includes('detachable');
-      const has2in1 = lower.includes('2in1') || lower.includes('2 in 1') || lower.includes('x360') || lower.includes('detachable');
+      const has2in1 = lower.includes('2in1') || lower.includes('2 in 1') || lower.includes('x360') || lower.includes('convertible') || lower.includes('detachable');
 
       if (hasTouchscreen) isTouch = true;
       if (has2in1) is2in1 = true;
@@ -970,7 +1198,7 @@ function parseWhatsAppCatalog(rawText) {
       }
 
       // OS
-      if (lower.includes('os') || lower.includes('operating system') || lower.includes('windows') || lower.includes('macos') || lower.includes('chromeos')) {
+      if (lower.includes('os') || lower.includes('operating system') || lower.includes('windows') || lower.includes('macos') || lower.includes('chromeos') || lower.includes('android') || lower.includes('ipados')) {
         os = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
       }
 
@@ -1009,18 +1237,22 @@ function parseWhatsAppCatalog(rawText) {
     // Brand Identification
     let brand = 'OTHER';
     const titleUpper = cleanTitle.toUpperCase();
-    if (titleUpper.includes('DELL') || titleUpper.includes('ALIENWARE')) brand = 'DELL';
+    if (titleUpper.includes('DELL') || titleUpper.includes('ALIENWARE') || titleUpper.includes('OPTIPLEX')) brand = 'DELL';
     else if (titleUpper.includes('HP') || titleUpper.includes('PROBOOK') || titleUpper.includes('ELITEBOOK') || titleUpper.includes('SPECTRE') || titleUpper.includes('ENVY') || titleUpper.includes('ZBOOK')) brand = 'HP';
-    else if (titleUpper.includes('LENOVO') || titleUpper.includes('THINKPAD') || titleUpper.includes('IDEAPAD')) brand = 'LENOVO';
+    else if (titleUpper.includes('LENOVO') || titleUpper.includes('THINKPAD') || titleUpper.includes('IDEAPAD') || titleUpper.includes('TAB6')) brand = 'LENOVO';
     else if (titleUpper.includes('MICROSOFT') || titleUpper.includes('SURFACE')) brand = 'SURFACE';
-    else if (titleUpper.includes('MACBOOK') || titleUpper.includes('APPLE')) brand = 'MACBOOK';
+    else if (titleUpper.includes('MACBOOK') || titleUpper.includes('APPLE') || titleUpper.includes('IMAC') || titleUpper.includes('IPAD')) brand = 'APPLE';
 
-    // Laptop Category Classification
+    // Device Category Classification (Desktop, Tablet, Workstation, Executive, Convertible, Business)
     let category = 'BUSINESS';
     const textLower = (cleanTitle + ' ' + fullBlockText).toLowerCase();
-    if (textLower.includes('precision') || textLower.includes('zbook') || textLower.includes('p14s') || textLower.includes('alienware') || (textLower.includes('g5') && isDedicatedGpu) || isDedicatedGpu) {
+    if (textLower.includes('imac') || textLower.includes('all-in-one') || textLower.includes('desktop') || textLower.includes('sff') || textLower.includes('optiplex')) {
+      category = 'DESKTOP';
+    } else if (textLower.includes('ipad') || textLower.includes('tab') || textLower.includes('tablet')) {
+      category = 'TABLET';
+    } else if (textLower.includes('precision') || textLower.includes('zbook') || textLower.includes('p14s') || textLower.includes('alienware') || (textLower.includes('g5') && isDedicatedGpu) || isDedicatedGpu) {
       category = 'WORKSTATION';
-    } else if (textLower.includes('spectre') || textLower.includes('envy') || textLower.includes('x1 carbon') || brand === 'MACBOOK' || (brand === 'SURFACE' && !is2in1)) {
+    } else if (textLower.includes('spectre') || textLower.includes('envy') || textLower.includes('x1 carbon') || brand === 'APPLE' || (brand === 'SURFACE' && !is2in1)) {
       category = 'EXECUTIVE';
     } else if (is2in1 || isTouch) {
       category = 'CONVERTIBLE';
@@ -1028,12 +1260,16 @@ function parseWhatsAppCatalog(rawText) {
 
     // Smart Fallbacks for Processor & OS
     if (!processor) {
-      if (brand === 'MACBOOK') processor = cleanTitle.includes('M1') ? 'Apple M1 Chip' : 'Apple Silicon';
+      if (cleanTitle.toLowerCase().includes('ipad')) processor = 'Apple A-Series Chip';
+      else if (cleanTitle.toLowerCase().includes('imac')) processor = 'Intel Processor';
+      else if (brand === 'APPLE') processor = cleanTitle.includes('M1') ? 'Apple M1 Chip' : 'Apple Silicon';
       else if (textLower.includes('chromebook')) processor = 'Chromebook Processor';
       else processor = 'Intel Processor';
     }
     if (!os) {
-      if (brand === 'MACBOOK') os = 'macOS';
+      if (cleanTitle.toLowerCase().includes('ipad')) os = 'iPadOS';
+      else if (cleanTitle.toLowerCase().includes('imac') || brand === 'APPLE') os = 'macOS';
+      else if (cleanTitle.toLowerCase().includes('tab') || textLower.includes('android')) os = 'Android';
       else if (textLower.includes('chromebook')) os = 'ChromeOS';
       else os = 'Windows 11 Pro';
     }
@@ -1071,9 +1307,9 @@ function parseWhatsAppCatalog(rawText) {
       processor: displayProcessor || processor,
       rawProcessor: processor,
       gen,
-      ram: ram || 8,
+      ram: ram || (category === 'TABLET' ? 4 : 8),
       storage: storage || 256,
-      display: display || '14 Inch',
+      display: display || (category === 'DESKTOP' ? '22 Inch' : '14 Inch'),
       isTouch,
       is2in1,
       gpu: fullGpuText,
@@ -1083,13 +1319,13 @@ function parseWhatsAppCatalog(rawText) {
       hasAnyGpu: gpuParts.length > 0,
       os,
       originalPrice,
-      offerPrice: offerPrice || 999,
+      offerPrice: offerPrice || 99,
       embeddedPhotos
     });
   };
 
   const isHeaderLine = (l) => {
-    const lower = l.replaceAll('💻', '').replace(/[*•]/gu, '').toLowerCase().trim();
+    const lower = l.replaceAll('💻', '').replaceAll('🖥️', '').replaceAll('🖥', '').replaceAll('📱', '').replace(/[*•]/gu, '').toLowerCase().trim();
     return lower.includes('laptop price list') || lower.includes('product list') || lower.includes('stock list') || /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\s*updated/i.test(lower);
   };
 
@@ -1100,6 +1336,11 @@ function parseWhatsAppCatalog(rawText) {
     return (
       clean.includes('SERIES') ||
       clean.includes('MODELS') ||
+      clean === 'DELL' ||
+      clean === 'HP' ||
+      clean === 'LENOVO' ||
+      clean === 'APPLE' ||
+      clean === 'MICROSOFT' ||
       clean === 'DELL PRECISION' ||
       clean === 'HP SERIES' ||
       clean === 'LENOVO THINKPAD SERIES' ||
@@ -1110,9 +1351,9 @@ function parseWhatsAppCatalog(rawText) {
 
   const isProductStartLine = (l) => {
     if (isHeaderLine(l) || isGroupHeaderLine(l)) return false;
-    if (l.includes('💻')) return true;
+    if (l.includes('💻') || l.includes('🖥️') || l.includes('🖥') || l.includes('📱')) return true;
     const lower = l.toLowerCase().replace(/[*•]/g, '').trim();
-    return /^\*?(dell|hp|lenovo|microsoft|surface|macbook|apple|thinkpad|latitude|precision|vostro|elitebook|zbook|spectre|envy|ideapad|alienware)\b/i.test(lower);
+    return /^\*?(dell|hp|lenovo|microsoft|surface|macbook|apple|thinkpad|latitude|precision|vostro|elitebook|zbook|spectre|envy|ideapad|alienware|optiplex|imac|ipad|tab)\b/i.test(lower);
   };
 
   for (let i = 0; i < lines.length; i++) {
@@ -1932,6 +2173,8 @@ export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarke
 
       // 2. Category / Purpose
       if (selectedCategory !== 'ALL') {
+        if (selectedCategory === 'DESKTOP' && p.category !== 'DESKTOP') return false;
+        if (selectedCategory === 'TABLET' && p.category !== 'TABLET') return false;
         if (selectedCategory === 'WORKSTATION' && p.category !== 'WORKSTATION') return false;
         if (selectedCategory === 'BUSINESS' && p.category !== 'BUSINESS') return false;
         if (selectedCategory === 'EXECUTIVE' && p.category !== 'EXECUTIVE') return false;
@@ -1939,7 +2182,12 @@ export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarke
       }
 
       // 3. Brand
-      if (selectedBrand !== 'ALL' && p.brand !== selectedBrand) return false;
+      if (selectedBrand !== 'ALL') {
+        const matchesBrand = p.brand === selectedBrand || 
+          (selectedBrand === 'APPLE' && (p.brand === 'APPLE' || p.brand === 'MACBOOK')) ||
+          (selectedBrand === 'MACBOOK' && (p.brand === 'APPLE' || p.brand === 'MACBOOK'));
+        if (!matchesBrand) return false;
+      }
 
       // 4. Series / Model Line
       if (selectedSeries !== 'ALL') {
@@ -2538,11 +2786,17 @@ export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarke
                   {/* Horizontal 1-Tap Quick Filter Chips Bar */}
                   <div style={{ display: 'flex', gap: 6, overflowX: 'auto', width: '100%', maxWidth: '100%', minWidth: 0, paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', boxSizing: 'border-box' }}>
                     {[
-                      { label: 'All Laptops', icon: <Laptop size={13} />, isSelected: selectedBrand === 'ALL' && selectedCategory === 'ALL' && selectedGpu === 'ALL' && selectedCpu === 'ALL', action: () => resetAllFilters() },
-                      { label: 'Workstations', icon: <Layers size={13} />, isSelected: selectedCategory === 'WORKSTATION', action: () => setSelectedCategory(selectedCategory === 'WORKSTATION' ? 'ALL' : 'WORKSTATION') },
+                      { label: activeMarket === 'OM' ? 'All Devices' : 'All Laptops', icon: <Laptop size={13} />, isSelected: selectedBrand === 'ALL' && selectedCategory === 'ALL' && selectedGpu === 'ALL' && selectedCpu === 'ALL', action: () => resetAllFilters() },
+                      ...(activeMarket === 'OM' ? [
+                        { label: 'Desktops / AIO', icon: <Layers size={13} />, isSelected: selectedCategory === 'DESKTOP', action: () => setSelectedCategory(selectedCategory === 'DESKTOP' ? 'ALL' : 'DESKTOP') },
+                        { label: 'Tablets / iPads', icon: <Layers size={13} />, isSelected: selectedCategory === 'TABLET', action: () => setSelectedCategory(selectedCategory === 'TABLET' ? 'ALL' : 'TABLET') },
+                      ] : [
+                        { label: 'Workstations', icon: <Layers size={13} />, isSelected: selectedCategory === 'WORKSTATION', action: () => setSelectedCategory(selectedCategory === 'WORKSTATION' ? 'ALL' : 'WORKSTATION') },
+                      ]),
                       { label: 'DELL', isSelected: selectedBrand === 'DELL', action: () => setSelectedBrand(selectedBrand === 'DELL' ? 'ALL' : 'DELL') },
                       { label: 'HP', isSelected: selectedBrand === 'HP', action: () => setSelectedBrand(selectedBrand === 'HP' ? 'ALL' : 'HP') },
                       { label: 'LENOVO', isSelected: selectedBrand === 'LENOVO', action: () => setSelectedBrand(selectedBrand === 'LENOVO' ? 'ALL' : 'LENOVO') },
+                      { label: 'APPLE', isSelected: selectedBrand === 'APPLE' || selectedBrand === 'MACBOOK', action: () => setSelectedBrand(selectedBrand === 'APPLE' || selectedBrand === 'MACBOOK' ? 'ALL' : 'APPLE') },
                       { label: 'Core i7', icon: <Cpu size={13} />, isSelected: selectedCpu === 'i7', action: () => setSelectedCpu(selectedCpu === 'i7' ? 'ALL' : 'i7') },
                       { label: '16GB RAM', icon: <Zap size={13} />, isSelected: selectedRam === '16', action: () => setSelectedRam(selectedRam === '16' ? 'ALL' : '16') },
                       { label: 'Dedicated GPU', icon: <Zap size={13} />, isSelected: selectedGpu === 'dedicated', action: () => setSelectedGpu(selectedGpu === 'dedicated' ? 'ALL' : 'dedicated') },
@@ -2672,9 +2926,28 @@ export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarke
                             <option value="HP">HP</option>
                             <option value="LENOVO">LENOVO</option>
                             <option value="SURFACE">MICROSOFT SURFACE</option>
-                            <option value="MACBOOK">APPLE MACBOOK</option>
+                            <option value="APPLE">APPLE</option>
                           </select>
                           <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBrand !== 'ALL' ? '#ffffff' : '#64748b' }} />
+                        </div>
+                      </div>
+
+                      {/* Category & Device Type */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Layers size={12} color="#311b92" /> CATEGORY & TYPE
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} style={dropdownStyle(selectedCategory !== 'ALL', '#311b92', '#ffffff')}>
+                            <option value="ALL">All Categories</option>
+                            <option value="DESKTOP">Desktops & All-in-Ones</option>
+                            <option value="TABLET">Tablets & iPads</option>
+                            <option value="WORKSTATION">Workstations</option>
+                            <option value="BUSINESS">Business</option>
+                            <option value="EXECUTIVE">Executive</option>
+                            <option value="CONVERTIBLE">2-in-1 Touch</option>
+                          </select>
+                          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedCategory !== 'ALL' ? '#ffffff' : '#64748b' }} />
                         </div>
                       </div>
 
@@ -2718,6 +2991,7 @@ export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarke
                           <select value={selectedSeries} onChange={e => setSelectedSeries(e.target.value)} style={dropdownStyle(selectedSeries !== 'ALL', '#311b92', '#ffffff')}>
                             <option value="ALL">All Series</option>
                             <option value="Latitude">Dell Latitude</option>
+                            <option value="OptiPlex">Dell OptiPlex</option>
                             <option value="Precision">Dell Precision</option>
                             <option value="Vostro">Dell Vostro</option>
                             <option value="Alienware">Alienware</option>
@@ -2726,12 +3000,16 @@ export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarke
                             <option value="Spectre">HP Spectre</option>
                             <option value="ThinkPad">Lenovo ThinkPad</option>
                             <option value="IdeaPad">Lenovo IdeaPad</option>
+                            <option value="TAB6">Lenovo Tab</option>
                             <option value="Surface">Surface</option>
                             <option value="MacBook">MacBook</option>
+                            <option value="iMac">iMac</option>
+                            <option value="iPad">iPad</option>
                           </select>
                           <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedSeries !== 'ALL' ? '#ffffff' : '#64748b' }} />
                         </div>
                       </div>
+
 
                       {/* GPU / Graphics */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -2899,7 +3177,7 @@ export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarke
                     <option value="HP">HP</option>
                     <option value="LENOVO">LENOVO</option>
                     <option value="SURFACE">MICROSOFT</option>
-                    <option value="MACBOOK">APPLE MAC</option>
+                    <option value="APPLE">APPLE</option>
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBrand !== 'ALL' ? '#ffffff' : '#64748b' }} />
                 </div>
@@ -3046,6 +3324,8 @@ export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarke
                       <div style={{ position: 'relative', width: '100%' }}>
                         <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} style={dropdownStyle(selectedCategory !== 'ALL', '#311b92', '#ffffff')}>
                           <option value="ALL">All Categories</option>
+                          <option value="DESKTOP">Desktops & All-in-Ones</option>
+                          <option value="TABLET">Tablets & iPads</option>
                           <option value="WORKSTATION">Workstation</option>
                           <option value="BUSINESS">Business</option>
                           <option value="EXECUTIVE">Executive</option>

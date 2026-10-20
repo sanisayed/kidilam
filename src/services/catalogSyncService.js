@@ -58,8 +58,9 @@ export function filterValidPhotosMap(map) {
 
 // ─── CATALOG TEXT ─────────────────────────────────────────────────────────────
 
-export async function saveCatalogTextToSupabase(rawText) {
+export async function saveCatalogTextToSupabase(rawText, market = 'AE') {
   if (!isSupabaseReady || !rawText || !rawText.trim()) return false;
+  const rowId = market === 'OM' ? 2 : 1;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/catalog_list`, {
       method: 'POST',
@@ -67,22 +68,23 @@ export async function saveCatalogTextToSupabase(rawText) {
         ...supabaseHeaders(),
         'Prefer': 'resolution=merge-duplicates,return=minimal'
       },
-      body: JSON.stringify({ id: 1, raw_text: rawText, updated_at: new Date().toISOString() })
+      body: JSON.stringify({ id: rowId, raw_text: rawText, updated_at: new Date().toISOString() })
     });
     if (res.ok || res.status === 201 || res.status === 204) {
-      console.log('Catalog text saved to Supabase!');
+      console.log(`Catalog text (${market}) saved to Supabase!`);
       return true;
     }
   } catch (e) {
-    console.warn('saveCatalogTextToSupabase error:', e);
+    console.warn(`saveCatalogTextToSupabase (${market}) error:`, e);
   }
   return false;
 }
 
-export async function fetchCatalogTextFromSupabase() {
+export async function fetchCatalogTextFromSupabase(market = 'AE') {
   if (!isSupabaseReady) return null;
+  const rowId = market === 'OM' ? 2 : 1;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/catalog_list?id=eq.1&select=raw_text`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/catalog_list?id=eq.${rowId}&select=raw_text`, {
       headers: supabaseHeaders()
     });
     if (res.ok) {
@@ -90,7 +92,7 @@ export async function fetchCatalogTextFromSupabase() {
       if (rows && rows.length > 0 && rows[0].raw_text) return rows[0].raw_text;
     }
   } catch (e) {
-    console.warn('fetchCatalogTextFromSupabase error:', e);
+    console.warn(`fetchCatalogTextFromSupabase (${market}) error:`, e);
   }
   return null;
 }
@@ -247,10 +249,16 @@ export async function restorePhotoInSupabase(albumKey, photoUrl = null) {
 
 // ─── COMBINED FACADE (used by WhatsAppCatalogPanel) ────────────────────────────
 
-export async function saveCatalogToCloud(rawText, productPhotos) {
+export async function saveCatalogToCloud(rawText, productPhotos, market = 'AE') {
   // Always update localStorage as fast local cache
+  const storageKey = market === 'OM' ? 'whatsapp_catalog_raw_text_oman' : 'whatsapp_catalog_raw_text_uae';
   try {
-    if (typeof rawText === 'string') localStorage.setItem('whatsapp_catalog_raw_text', rawText);
+    if (typeof rawText === 'string') {
+      localStorage.setItem(storageKey, rawText);
+      if (market === 'AE') {
+        localStorage.setItem('whatsapp_catalog_raw_text', rawText);
+      }
+    }
     if (productPhotos && Object.keys(productPhotos).length > 0) {
       localStorage.setItem('product_photos_v2', JSON.stringify(productPhotos));
     }
@@ -262,7 +270,7 @@ export async function saveCatalogToCloud(rawText, productPhotos) {
   }
 
   if (rawText && rawText.trim().length > 0) {
-    saveCatalogTextToSupabase(rawText).catch(console.warn);
+    saveCatalogTextToSupabase(rawText, market).catch(console.warn);
   }
 
   if (productPhotos && typeof productPhotos === 'object') {
@@ -275,19 +283,23 @@ export async function saveCatalogToCloud(rawText, productPhotos) {
   return true;
 }
 
-export async function fetchCatalogFromCloud() {
+export async function fetchCatalogFromCloud(market = 'AE') {
   let rawText = '';
   let productPhotos = {};
+  const storageKey = market === 'OM' ? 'whatsapp_catalog_raw_text_oman' : 'whatsapp_catalog_raw_text_uae';
 
   if (isSupabaseReady) {
     const [cloudText, cloudPhotos] = await Promise.all([
-      fetchCatalogTextFromSupabase(),
+      fetchCatalogTextFromSupabase(market),
       fetchAllPhotoAlbumsFromSupabase()
     ]);
 
     if (cloudText) {
       rawText = cloudText;
-      try { localStorage.setItem('whatsapp_catalog_raw_text', rawText); } catch {}
+      try {
+        localStorage.setItem(storageKey, rawText);
+        if (market === 'AE') localStorage.setItem('whatsapp_catalog_raw_text', rawText);
+      } catch {}
     }
     if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
       productPhotos = cloudPhotos;
@@ -295,7 +307,7 @@ export async function fetchCatalogFromCloud() {
     }
   } else {
     try {
-      rawText = localStorage.getItem('whatsapp_catalog_raw_text') || '';
+      rawText = localStorage.getItem(storageKey) || (market === 'AE' ? localStorage.getItem('whatsapp_catalog_raw_text') : '') || '';
       const ps = localStorage.getItem('product_photos_v2');
       productPhotos = ps ? filterValidPhotosMap(JSON.parse(ps)) : {};
     } catch {}

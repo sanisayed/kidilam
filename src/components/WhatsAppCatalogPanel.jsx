@@ -622,6 +622,78 @@ Charger
   @~3399/- Aed~
  *Offer price @ 2999/- AED 💰*`;
 
+const DEFAULT_OMAN_STOCK_CATALOG = `💻 *BUYOLOGY OMAN - LAPTOP PRICE LIST (OMR)*
+
+*💻 Dell Latitude 5290 2 IN 1*
+  Processor – Intel Core i5-8th
+  RAM – 8 GB DDR4
+  Storage – 256 GB SSD
+  Display – 12.5 inch , Touch screen ,HD
+  
+  Charger.
+Price@~95/- OMR~
+*Offer price @75/- OMR* 💰*
+━━━━━━━━━━━━━━━
+*💻 Dell Latitude 5510*
+  Processor – Intel core i7
+  10 th Generation
+  RAM – 16 GB RAM  
+  Storage – 256 GB SSD
+  Display – 13.3 Inch , Touch
+  Ports – USB, HDMI, Audio
+  Connectivity - Wi-Fi & Bluetooth
+  Keyboard: Backlit Keyboard 
+  GPU - integrated UHD
+  OS – Windows 11 pro
+  
+  Charger.
+Price@~115/-OMR~
+*Offer Price @85/- OMR💰*
+━━━━━━━━━━━━━━━
+*💻 Dell Latitude 7410*
+  Processor – Intel core i7
+  10 th Generation
+  RAM – 16 GB RAM
+  Storage – 256 GB SSD
+  Display – 14 Inch Full HD 
+  Connectivity - Wi-Fi & Bluetooth
+  Ports - USB, HDMI, LAN & Audio
+  Keyboard: Backlit Keyboard 
+  GPU -integrated UHD
+  OS – Windows 11 pro
+  
+  Charger.
+Price@~130/-OMR~
+**Offer Price @99/- OMR* 💰
+━━━━━━━━━━━━━━━
+*💻 Dell Latitude 7430*
+  Processor – Intel Core i7-12th
+  RAM – 32GB DDR4
+  Storage – 512 GB SSD
+  Display – 14 Inch 
+  Connectivity: Wi-Fi & Bluetooth
+  Ports - USB-C / Thunderbolt, USB-A, HDMI & Audio Jack
+  Keyboard: Backlit Keyboard 
+  GPU - Intel®️ Iris Xe Graphics
+  OS – Windows 11 pro
+  
+  Charger.
+Price@~195/- OMR~
+*Offer price @155/- OMR* 💰
+━━━━━━━━━━━━━━━
+*💻 Lenovo ThinkPad T14 Gen 1*
+  Processor – Intel Core i5-10th
+  RAM – 16 GB RAM
+  Storage – 256 GB SSD
+  Display – 14 Inch Full HD
+  Ports - USB, HDMI, Type-C
+  Keyboard: Backlit Keyboard
+  OS – Windows 11 Pro
+  
+  Charger.
+Price@~115/- OMR~
+*Offer price @85/- OMR* 💰`;
+
 /* =========================================================
    TEXT PARSER UTILITIES
    ========================================================= */
@@ -629,7 +701,7 @@ Charger
 function normalizeModelKey(title) {
   if (!title) return 'prod_unknown';
   const clean = title.toLowerCase()
-    .replace(/\b\d+\s*(gb|tb|ssd|ram|aed|ghz)\b/gi, '')
+    .replace(/\b\d+\s*(gb|tb|ssd|ram|aed|omr|ro|rial|riyal|baisa|ghz)\b/gi, '')
     .replace(/\b(i3|i5|i7|i9|ryzen\s*\d*|core\s*ultra|apple|m1|m2|m3)\b/gi, '')
     .replace(/\b\d+(th|st|nd|rd)\s*gen\b/gi, '')
     .replace(/[^a-z0-9]+/g, '_')
@@ -902,22 +974,22 @@ function parseWhatsAppCatalog(rawText) {
         os = l.replace(/^[^–:-]*[–:-]/, '').replace(/\*/g, '').trim();
       }
 
-      // Original Strikethrough Price: @~999/-AED~, @~2699 AED~/- , @~AED 1499/-~, etc.
+      // Original Strikethrough Price: @~999/-AED~, @~2699 AED~/- , @~AED 1499/-~, @~95/- OMR~, @~RO 120/-~, etc.
       if (l.includes('~')) {
-        const origMatch = l.match(/@?~?\s*(?:AED\s*)?(\d{3,5})\s*(?:AED)?\/?-?\s*(?:AED)?~?/i);
+        const origMatch = l.match(/@?~?\s*(?:AED|OMR|RO|R\.O\.|RIAL|ريال|ر\.ع\.)?\s*(\d+(?:\.\d{1,3})?)\s*(?:AED|OMR|RO|R\.O\.|RIAL|ريال|ر\.ع\.)?\/?-?\s*(?:AED|OMR|RO|R\.O\.|RIAL|ريال|ر\.ع\.)?~?/i);
         if (origMatch) {
           originalPrice = origMatch[1];
         }
       }
 
-      // Offer Price: **Offer Price @699/- AED* 💰, *Offer price @ 2599/- AED 💰*, etc.
+      // Offer Price: **Offer Price @699/- AED* 💰, *Offer price @75/- OMR* 💰, *Offer Price @65/- RO*, etc.
       if (lower.includes('offer price') || lower.includes('offerprice') || (lower.includes('@') && !l.includes('~'))) {
-        const pMatch = l.match(/(?:offer\s*price|offerprice)[\s\S]*?(?:@\s*)?(?:aed\s*)?(\d{2,5})/i) || 
-                      l.match(/@\s*(?:aed\s*)?(\d{2,5})/i) ||
-                      l.match(/(\d{2,5})\s*(?:\/-\s*aed|aed)/i);
+        const pMatch = l.match(/(?:offer\s*price|offerprice)[\s\S]*?(?:@\s*)?(?:AED|OMR|RO|R\.O\.|RIAL|ريال|ر\.ع\.)?\s*(\d+(?:\.\d{1,3})?)/i) || 
+                      l.match(/@\s*(?:AED|OMR|RO|R\.O\.|RIAL|ريال|ر\.ع\.)?\s*(\d+(?:\.\d{1,3})?)/i) || 
+                      l.match(/(\d+(?:\.\d{1,3})?)\s*(?:\/-\s*(?:AED|OMR|RO|R\.O\.|RIAL|ريال|ر\.ع\.)|(?:AED|OMR|RO|R\.O\.|RIAL|ريال|ر\.ع\.))/i);
         if (pMatch) {
-          const val = parseInt(pMatch[1], 10);
-          if (val >= 99) offerPrice = val;
+          const val = parseFloat(pMatch[1]);
+          if (val >= 15) offerPrice = val;
         }
       }
     });
@@ -1111,16 +1183,65 @@ function convertBlobToPng(blob) {
   });
 }
 
-export default function WhatsAppCatalogPanel() {
+export default function WhatsAppCatalogPanel({ activeMarket: propMarket, onMarketChange }) {
   // ── 1. ALL STATE DECLARATIONS AT VERY TOP ──
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [activeMarket, setActiveMarket] = useState(() => {
+    try {
+      return propMarket || localStorage.getItem('buyology_active_market') || 'AE';
+    } catch {
+      return 'AE';
+    }
+  });
+
+  const currencySymbol = activeMarket === 'OM' ? 'OMR' : 'AED';
+
+  // Synchronize if propMarket changes from parent
+  useEffect(() => {
+    if (propMarket && propMarket !== activeMarket) {
+      setActiveMarket(propMarket);
+      setSelectedBudget('ALL');
+      const storageKey = propMarket === 'OM' ? 'whatsapp_catalog_raw_text_oman' : 'whatsapp_catalog_raw_text_uae';
+      const cached = localStorage.getItem(storageKey) || (propMarket === 'AE' ? localStorage.getItem('whatsapp_catalog_raw_text') : '') || '';
+      if (cached && cached.trim().length > 0) {
+        setRawText(cached);
+      } else {
+        const fallback = propMarket === 'OM' ? DEFAULT_OMAN_STOCK_CATALOG : DEFAULT_STOCK_CATALOG;
+        setRawText(fallback);
+        try { localStorage.setItem(storageKey, fallback); } catch {}
+      }
+    }
+  }, [propMarket]);
+
+  const handleMarketChange = (newMarket) => {
+    setActiveMarket(newMarket);
+    try { localStorage.setItem('buyology_active_market', newMarket); } catch {}
+    if (onMarketChange) onMarketChange(newMarket);
+    setSelectedBudget('ALL');
+    const storageKey = newMarket === 'OM' ? 'whatsapp_catalog_raw_text_oman' : 'whatsapp_catalog_raw_text_uae';
+    const cached = localStorage.getItem(storageKey) || (newMarket === 'AE' ? localStorage.getItem('whatsapp_catalog_raw_text') : '') || '';
+    if (cached && cached.trim().length > 0) {
+      setRawText(cached);
+    } else {
+      const fallback = newMarket === 'OM' ? DEFAULT_OMAN_STOCK_CATALOG : DEFAULT_STOCK_CATALOG;
+      setRawText(fallback);
+      try { localStorage.setItem(storageKey, fallback); } catch {}
+    }
+    setToastMessage(newMarket === 'OM' ? '🇴🇲 Switched to Oman Catalog (OMR)' : '🇦🇪 Switched to UAE Catalog (AED)');
+    setTimeout(() => setToastMessage(''), 2500);
+  };
+
   const [rawText, setRawText] = useState(() => {
-    const cached = localStorage.getItem('whatsapp_catalog_raw_text');
+    const market = (() => {
+      try { return propMarket || localStorage.getItem('buyology_active_market') || 'AE'; } catch { return 'AE'; }
+    })();
+    const storageKey = market === 'OM' ? 'whatsapp_catalog_raw_text_oman' : 'whatsapp_catalog_raw_text_uae';
+    const cached = localStorage.getItem(storageKey) || (market === 'AE' ? localStorage.getItem('whatsapp_catalog_raw_text') : '');
     if (cached && cached.trim().length > 0 && !cached.includes('09-09-2026')) {
       return cached;
     }
-    return DEFAULT_STOCK_CATALOG;
+    return market === 'OM' ? DEFAULT_OMAN_STOCK_CATALOG : DEFAULT_STOCK_CATALOG;
   });
   const [productPhotos, setProductPhotos] = useState(() => {
     try {
@@ -1184,11 +1305,15 @@ export default function WhatsAppCatalogPanel() {
 
   const updateAndSaveRawText = useCallback((newText) => {
     setRawText(newText);
+    const storageKey = activeMarket === 'OM' ? 'whatsapp_catalog_raw_text_oman' : 'whatsapp_catalog_raw_text_uae';
     try {
-      localStorage.setItem('whatsapp_catalog_raw_text', newText);
+      localStorage.setItem(storageKey, newText);
+      if (activeMarket === 'AE') {
+        localStorage.setItem('whatsapp_catalog_raw_text', newText);
+      }
     } catch {}
-    saveCatalogToCloud(newText, productPhotos);
-  }, [productPhotos]);
+    saveCatalogToCloud(newText, productPhotos, activeMarket);
+  }, [productPhotos, activeMarket]);
 
   const products = useMemo(() => parseWhatsAppCatalog(rawText), [rawText]);
 
@@ -1258,7 +1383,7 @@ export default function WhatsAppCatalogPanel() {
   OS – ${editForm.os || 'Windows 11 pro'}
   
   Charger.
-*Offer Price @${editForm.offerPrice}/- AED💰*`;
+*Offer Price @${editForm.offerPrice}/- ${currencySymbol}💰*`;
 
     let newRawText = rawText;
     if (p.rawText && newRawText.includes(p.rawText)) {
@@ -1268,7 +1393,7 @@ export default function WhatsAppCatalogPanel() {
     }
 
     updateAndSaveRawText(newRawText);
-    saveCatalogToCloud(newRawText, productPhotos);
+    saveCatalogToCloud(newRawText, productPhotos, activeMarket);
     setEditingProduct(null);
     setToastMessage(`✅ Saved changes for ${editForm.title}!`);
     setTimeout(() => setToastMessage(''), 3500);
@@ -1410,19 +1535,24 @@ export default function WhatsAppCatalogPanel() {
   // On boot, ALWAYS replace local state with server data so ALL devices are 100% in sync.
   useEffect(() => {
     let active = true;
-    fetchCatalogFromCloud().then(({ rawText: cloudText, productPhotos: cloudPhotos }) => {
+    fetchCatalogFromCloud(activeMarket).then(({ rawText: cloudText, productPhotos: cloudPhotos }) => {
       if (!active) return;
+      const defaultCatalog = activeMarket === 'OM' ? DEFAULT_OMAN_STOCK_CATALOG : DEFAULT_STOCK_CATALOG;
+      const storageKey = activeMarket === 'OM' ? 'whatsapp_catalog_raw_text_oman' : 'whatsapp_catalog_raw_text_uae';
 
       if (cloudText && cloudText.trim().length > 0 && !cloudText.includes('09-09-2026')) {
-        // Server has catalog text — all devices take it as ground truth
         setRawText(cloudText);
-        try { localStorage.setItem('whatsapp_catalog_raw_text', cloudText); } catch {}
+        try { localStorage.setItem(storageKey, cloudText); } catch {}
       } else {
-        // Server is empty or has old 09-09-2026 catalog — push 16-09-2026 catalog UP to server
-        console.log('📤 Upgrading to 16-09-2026 catalog text...');
-        setRawText(DEFAULT_STOCK_CATALOG);
-        try { localStorage.setItem('whatsapp_catalog_raw_text', DEFAULT_STOCK_CATALOG); } catch {}
-        saveCatalogToCloud(DEFAULT_STOCK_CATALOG, cloudPhotos || {}).catch(() => {});
+        const localCached = localStorage.getItem(storageKey) || (activeMarket === 'AE' ? localStorage.getItem('whatsapp_catalog_raw_text') : '') || '';
+        if (localCached && localCached.trim().length > 0 && !localCached.includes('09-09-2026')) {
+          setRawText(localCached);
+          saveCatalogToCloud(localCached, cloudPhotos || {}, activeMarket).catch(() => {});
+        } else {
+          setRawText(defaultCatalog);
+          try { localStorage.setItem(storageKey, defaultCatalog); } catch {}
+          saveCatalogToCloud(defaultCatalog, cloudPhotos || {}, activeMarket).catch(() => {});
+        }
       }
 
       if (cloudPhotos && Object.keys(cloudPhotos).length > 0) {
@@ -1433,7 +1563,7 @@ export default function WhatsAppCatalogPanel() {
       }
     });
     return () => { active = false; };
-  }, []);
+  }, [activeMarket]);
 
   // ── LIVE CATALOG & PHOTO POLL (every 8s) ──────────────────────────────────
   // All devices stay 100% in sync with exact same stock text & photo catalog
@@ -1441,7 +1571,7 @@ export default function WhatsAppCatalogPanel() {
     let active = true;
     const pollCatalog = async () => {
       try {
-        const { rawText: cloudText, productPhotos: cloudPhotos } = await fetchCatalogFromCloud();
+        const { rawText: cloudText, productPhotos: cloudPhotos } = await fetchCatalogFromCloud(activeMarket);
         if (!active) return;
         if (cloudText && cloudText.trim().length > 0 && !cloudText.includes('09-09-2026')) {
           setRawText(prev => (prev !== cloudText ? cloudText : prev));
@@ -1460,7 +1590,7 @@ export default function WhatsAppCatalogPanel() {
     };
     const interval = setInterval(pollCatalog, 8000);
     return () => { active = false; clearInterval(interval); };
-  }, []);
+  }, [activeMarket]);
   // ── AUTO-POLL FOR APPROVAL WHEN PENDING ─────────────────────────────────────
   // Every 5s: if we're showing the pending screen, check if master approved us
   useEffect(() => {
@@ -1697,7 +1827,7 @@ export default function WhatsAppCatalogPanel() {
     const stableId = p.stableId || p.id;
     const photos = getPhotos(stableId, p);
 
-    const quoteText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor} ${p.gen ? `(${p.gen})` : ''}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n  Charger.\n*Offer Price @${p.offerPrice}/- AED💰*`;
+    const quoteText = p.rawText || `*💻 ${p.title}*\n  Processor – ${p.processor} ${p.gen ? `(${p.gen})` : ''}\n  RAM – ${p.ram} GB\n  Storage – ${p.storage} GB SSD\n  Display – ${p.display}\n  OS – ${p.os}\n  Charger.\n*Offer Price @${p.offerPrice}/- ${currencySymbol}💰*`;
 
     setSharingId(stableId);
 
@@ -1779,7 +1909,7 @@ export default function WhatsAppCatalogPanel() {
     } finally {
       setSharingId(null);
     }
-  }, [getPhotos, isMobileShareSupported]);
+  }, [getPhotos, isMobileShareSupported, currencySymbol]);
 
   // Filter products cleanly with 100% exact spec matching
   const filteredProducts = useMemo(() => {
@@ -1819,11 +1949,12 @@ export default function WhatsAppCatalogPanel() {
 
       // 5. Customer Budget
       if (selectedBudget !== 'ALL') {
-        const b = parseInt(selectedBudget, 10);
-        if (selectedBudget === '2000+') {
-          if (p.offerPrice < 2000) return false;
+        if (selectedBudget.endsWith('+')) {
+          const minVal = parseInt(selectedBudget, 10);
+          if (p.offerPrice < minVal) return false;
         } else {
-          if (p.offerPrice > b) return false;
+          const maxVal = parseInt(selectedBudget, 10);
+          if (p.offerPrice > maxVal) return false;
         }
       }
 
@@ -2075,20 +2206,38 @@ export default function WhatsAppCatalogPanel() {
               </div>
             </div>
 
-            {/* Cloud Sync Status */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              color: 'rgba(255,255,255,0.85)',
-              background: 'rgba(255,255,255,0.08)',
-              padding: '3px 8px',
-              borderRadius: '9999px'
-            }}>
-              <span className="pulsing-green-dot" />
-              <span>Synced</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* Active Market Badge */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: '0.66rem',
+                fontWeight: 800,
+                color: '#ffffff',
+                background: activeMarket === 'OM' ? 'rgba(16, 185, 129, 0.28)' : 'rgba(124, 58, 237, 0.28)',
+                border: activeMarket === 'OM' ? '1px solid rgba(52, 211, 153, 0.45)' : '1px solid rgba(167, 139, 250, 0.45)',
+                padding: '2px 8px',
+                borderRadius: '9999px'
+              }}>
+                <span>{activeMarket === 'OM' ? '🇴🇲 Oman (OMR)' : '🇦🇪 UAE (AED)'}</span>
+              </div>
+
+              {/* Cloud Sync Status */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                color: 'rgba(255,255,255,0.85)',
+                background: 'rgba(255,255,255,0.08)',
+                padding: '3px 8px',
+                borderRadius: '9999px'
+              }}>
+                <span className="pulsing-green-dot" />
+                <span>Synced</span>
+              </div>
             </div>
           </div>
 
@@ -2397,7 +2546,9 @@ export default function WhatsAppCatalogPanel() {
                       { label: 'Core i7', icon: <Cpu size={13} />, isSelected: selectedCpu === 'i7', action: () => setSelectedCpu(selectedCpu === 'i7' ? 'ALL' : 'i7') },
                       { label: '16GB RAM', icon: <Zap size={13} />, isSelected: selectedRam === '16', action: () => setSelectedRam(selectedRam === '16' ? 'ALL' : '16') },
                       { label: 'Dedicated GPU', icon: <Zap size={13} />, isSelected: selectedGpu === 'dedicated', action: () => setSelectedGpu(selectedGpu === 'dedicated' ? 'ALL' : 'dedicated') },
-                      { label: '< 1500 AED', icon: <Tag size={13} />, isSelected: selectedBudget === '1500', action: () => setSelectedBudget(selectedBudget === '1500' ? 'ALL' : '1500') },
+                      activeMarket === 'OM' 
+                        ? { label: '< 100 OMR', icon: <Tag size={13} />, isSelected: selectedBudget === '100', action: () => setSelectedBudget(selectedBudget === '100' ? 'ALL' : '100') }
+                        : { label: '< 1500 AED', icon: <Tag size={13} />, isSelected: selectedBudget === '1500', action: () => setSelectedBudget(selectedBudget === '1500' ? 'ALL' : '1500') },
                     ].map((chip, idx) => (
                       <button
                         key={idx}
@@ -2534,12 +2685,25 @@ export default function WhatsAppCatalogPanel() {
                         </label>
                         <div style={{ position: 'relative' }}>
                           <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)} style={dropdownStyle(selectedBudget !== 'ALL', '#311b92', '#ffffff')}>
-                            <option value="ALL">All Prices</option>
-                            <option value="500">Under 500 AED</option>
-                            <option value="1000">Under 1000 AED</option>
-                            <option value="1500">Under 1500 AED</option>
-                            <option value="2000">Under 2000 AED</option>
-                            <option value="2000+">2000+ AED</option>
+                            {activeMarket === 'OM' ? (
+                              <>
+                                <option value="ALL">All Prices (OMR)</option>
+                                <option value="50">Under 50 OMR</option>
+                                <option value="75">Under 75 OMR</option>
+                                <option value="100">Under 100 OMR</option>
+                                <option value="150">Under 150 OMR</option>
+                                <option value="150+">150+ OMR</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="ALL">All Prices (AED)</option>
+                                <option value="500">Under 500 AED</option>
+                                <option value="1000">Under 1000 AED</option>
+                                <option value="1500">Under 1500 AED</option>
+                                <option value="2000">Under 2000 AED</option>
+                                <option value="2000+">2000+ AED</option>
+                              </>
+                            )}
                           </select>
                           <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBudget !== 'ALL' ? '#ffffff' : '#64748b' }} />
                         </div>
@@ -2742,12 +2906,25 @@ export default function WhatsAppCatalogPanel() {
 
                 <div style={{ position: 'relative', width: '150px' }}>
                   <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)} style={dropdownStyle(selectedBudget !== 'ALL', '#311b92', '#ffffff')}>
-                    <option value="ALL">All Prices</option>
-                    <option value="500">Under 500 AED</option>
-                    <option value="1000">Under 1000 AED</option>
-                    <option value="1500">Under 1500 AED</option>
-                    <option value="2000">Under 2000 AED</option>
-                    <option value="2000+">2000+ AED</option>
+                    {activeMarket === 'OM' ? (
+                      <>
+                        <option value="ALL">All Prices (OMR)</option>
+                        <option value="50">Under 50 OMR</option>
+                        <option value="75">Under 75 OMR</option>
+                        <option value="100">Under 100 OMR</option>
+                        <option value="150">Under 150 OMR</option>
+                        <option value="150+">150+ OMR</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="ALL">All Prices (AED)</option>
+                        <option value="500">Under 500 AED</option>
+                        <option value="1000">Under 1000 AED</option>
+                        <option value="1500">Under 1500 AED</option>
+                        <option value="2000">Under 2000 AED</option>
+                        <option value="2000+">2000+ AED</option>
+                      </>
+                    )}
                   </select>
                   <ChevronDown size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: selectedBudget !== 'ALL' ? '#ffffff' : '#64748b' }} />
                 </div>
@@ -3219,7 +3396,7 @@ export default function WhatsAppCatalogPanel() {
                                   fontSize: '0.68rem', fontWeight: 800,
                                   boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
                                 }}>
-                                  SAVE AED {savings}
+                                  SAVE {currencySymbol} {savings}
                                 </div>
                               )}
 
@@ -3471,7 +3648,7 @@ export default function WhatsAppCatalogPanel() {
                                 letterSpacing: '-0.02em',
                                 fontFamily: 'var(--font-mono)'
                               }}>
-                                AED {p.offerPrice}/-
+                                {currencySymbol} {p.offerPrice}/-
                               </span>
 
                               {p.originalPrice && (
@@ -3482,7 +3659,7 @@ export default function WhatsAppCatalogPanel() {
                                   fontWeight: 600,
                                   fontFamily: 'var(--font-mono)'
                                 }}>
-                                  AED {p.originalPrice}
+                                  {currencySymbol} {p.originalPrice}
                                 </span>
                               )}
                             </div>
@@ -3661,7 +3838,8 @@ export default function WhatsAppCatalogPanel() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Edit3 size={18} color="#311b92" /> PASTE / EDIT PRODUCT LIST
+                  <Edit3 size={18} color="#311b92" />
+                  {activeMarket === 'OM' ? 'PASTE / EDIT OMAN STOCK LIST (OMR)' : 'PASTE / EDIT UAE STOCK LIST (AED)'}
                 </h3>
                 <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
                   <X size={20} />
@@ -3685,7 +3863,7 @@ export default function WhatsAppCatalogPanel() {
                 }}
                 value={editorInput}
                 onChange={e => setEditorInput(e.target.value)}
-                placeholder="Paste your WhatsApp product list text here..."
+                placeholder={activeMarket === 'OM' ? "Paste your Oman WhatsApp product list text here (OMR / RO)..." : "Paste your UAE WhatsApp product list text here (AED)..."}
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, flexWrap: 'wrap', gap: 10 }}>
@@ -4370,7 +4548,7 @@ export default function WhatsAppCatalogPanel() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>OFFER PRICE (AED)</label>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 5 }}>OFFER PRICE ({currencySymbol})</label>
                     <input
                       type="number"
                       value={editForm.offerPrice}

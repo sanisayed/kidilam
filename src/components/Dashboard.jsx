@@ -4,6 +4,20 @@ import WhatsAppCatalogPanel from './WhatsAppCatalogPanel';
 
 export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [activeMarket, setActiveMarket] = useState(() => {
+    try {
+      return localStorage.getItem('buyology_active_market') || 'AE';
+    } catch {
+      return 'AE';
+    }
+  });
+
+  const handleMarketChange = (newMarket) => {
+    setActiveMarket(newMarket);
+    try {
+      localStorage.setItem('buyology_active_market', newMarket);
+    } catch {}
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -70,8 +84,56 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {!isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Market Switcher: UAE (AED) / Oman (OMR) */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            background: '#f1f5f9',
+            padding: '3px',
+            borderRadius: '9999px',
+            border: '1px solid #e2e8f0',
+            gap: 2
+          }}>
+            <button
+              onClick={() => handleMarketChange('AE')}
+              style={{
+                padding: isMobile ? '4px 8px' : '5px 12px',
+                fontSize: isMobile ? '0.68rem' : '0.74rem',
+                fontWeight: 800,
+                borderRadius: '9999px',
+                border: 'none',
+                cursor: 'pointer',
+                background: activeMarket === 'AE' ? '#311b92' : 'transparent',
+                color: activeMarket === 'AE' ? '#ffffff' : '#64748b',
+                boxShadow: activeMarket === 'AE' ? '0 2px 6px rgba(49, 27, 146, 0.25)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+              title="UAE Market (AED)"
+            >
+              🇦🇪 UAE (AED)
+            </button>
+            <button
+              onClick={() => handleMarketChange('OM')}
+              style={{
+                padding: isMobile ? '4px 8px' : '5px 12px',
+                fontSize: isMobile ? '0.68rem' : '0.74rem',
+                fontWeight: 800,
+                borderRadius: '9999px',
+                border: 'none',
+                cursor: 'pointer',
+                background: activeMarket === 'OM' ? '#047857' : 'transparent',
+                color: activeMarket === 'OM' ? '#ffffff' : '#64748b',
+                boxShadow: activeMarket === 'OM' ? '0 2px 6px rgba(4, 120, 87, 0.25)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+              title="Oman Market (OMR)"
+            >
+              🇴🇲 Oman (OMR)
+            </button>
+          </div>
+
+          {!isMobile && (
             <span style={{ 
               fontSize: '0.75rem', 
               fontWeight: 700, 
@@ -86,13 +148,13 @@ export default function Dashboard() {
             }}>
               <Sparkles size={13} color="#fbbf24" fill="#fbbf24" /> WHATSAPP STOCK MATCHER
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       {/* Main WhatsApp Application */}
       <main style={{ padding: isMobile ? '10px 8px 75px 8px' : '20px 24px', maxWidth: '1600px', margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
-        <WhatsAppCatalogPanel />
+        <WhatsAppCatalogPanel activeMarket={activeMarket} onMarketChange={handleMarketChange} />
       </main>
     </div>
   );
